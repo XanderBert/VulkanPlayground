@@ -1,7 +1,8 @@
 #include "vulkanbase/VulkanBase.h"
 
-void VulkanBase::createCommandPool(){
-	QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
+void VulkanBase::createCommandPool()
+{
+	queueFamilyIndices = findQueueFamilies(physicalDevice);
 
 	VkCommandPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -11,6 +12,7 @@ void VulkanBase::createCommandPool(){
 	if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create command pool!");
 	}
+
 }
 
 
@@ -56,6 +58,9 @@ void VulkanBase::drawFrame(uint32_t imageIndex) {
 	renderPassInfo.pClearValues = &clearColor;
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+
+	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 

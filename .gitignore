@@ -41,3 +41,8 @@ Project/.vs*
 #CMake
 Project/out/*
 out/*
+
+#ImGui
+Project/vulkanbase/imgui/.editorconfig
+Project/vulkanbase/imgui/.gitattributes
+Project/vulkanbase/imgui/.github/*
