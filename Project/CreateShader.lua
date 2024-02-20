@@ -1,0 +1,25 @@
+-- create_shader.lua
+function CreateShader(sourceFileName, destinationFolder, destinationFileName)
+    local sourceFile = io.open(sourceFileName, "r")
+
+    if not sourceFile then
+        print("Failed to open the source file for reading.")
+        return
+    end
+
+    local content = sourceFile:read("*all")
+    sourceFile:close()
+
+    local destinationPath = destinationFolder .. "/" .. destinationFileName
+    local destinationFile = io.open(destinationPath, "w")
+
+    if not destinationFile then
+        print("Failed to open the destination file for writing.")
+        return
+    end
+
+    destinationFile:write(content)
+    destinationFile:close()
+
+    print("Shader file copied successfully to: " .. destinationPath)
+end

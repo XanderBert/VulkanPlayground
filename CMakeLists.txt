@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.27)
 
 # Project Name
 project(VulkanPlayground)
@@ -36,13 +36,6 @@ FetchContent_Populate(imgui
 )
 
 include_directories(${IMGUI_DIR} ${IMGUI_DIR}/backends ..)
-
-
-#target_link_libraries(imgui_vulkan PUBLIC glfw Vulkan::Vulkan)
-#set(LIBRARIES "glfw;Vulkan::Vulkan")
-#add_executable(imgui_vulkan ${sources} ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp ${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp ${IMGUI_DIR}/imgui.cpp ${IMGUI_DIR}/imgui_draw.cpp ${IMGUI_DIR}/imgui_demo.cpp ${IMGUI_DIR}/imgui_tables.cpp ${IMGUI_DIR}/imgui_widgets.cpp)
-#target_link_libraries(imgui_vulkan ${LIBRARIES})
-#target_compile_definitions(imgui_vulkan PUBLIC -DImTextureID=ImU64)
 
 
 # If using validation layers, copy the required JSON files (optional)

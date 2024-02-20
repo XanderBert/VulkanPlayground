@@ -19,8 +19,10 @@
 #include <algorithm>
 
 #include "imgui/imgui.h"
-#include "imgui/imgui_impl_glfw.h"
-#include "imgui/imgui_impl_vulkan.h"
+#include "imgui/backends/imgui_impl_glfw.h"
+#include "imgui/backends/imgui_impl_vulkan.h"
+
+#include "../shaders/ShaderFactory.h"
 
 
 struct ImGui_ImplVulkan_InitInfo;
@@ -41,13 +43,15 @@ struct QueueFamilyIndices {
 	}
 };
 
-struct SwapChainSupportDetails {
+struct SwapChainSupportDetails
+{
 	VkSurfaceCapabilitiesKHR capabilities;
 	std::vector<VkSurfaceFormatKHR> formats;
 	std::vector<VkPresentModeKHR> presentModes;
 };
 
-class VulkanBase {
+class VulkanBase
+{
 public:
 	void run()
 	{
@@ -137,6 +141,7 @@ private:
 
 	void mainLoop()
 	{
+
 		while (!glfwWindowShouldClose(window)) 
 		{
 			glfwPollEvents();
@@ -146,29 +151,31 @@ private:
 			ImGui_ImplGlfw_NewFrame();
 			ImGui::NewFrame();
 
-			bool show_demo_window = true;
-			ImGui::ShowDemoWindow(&show_demo_window);
 
-			{
-				static float f = 0.0f;
-				static int counter = 0;
+			shaderFactory.Render();
+			//bool show_demo_window = true;
+			//ImGui::ShowDemoWindow(&show_demo_window);
 
-				ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+			//{
+			//	static float f = 0.0f;
+			//	static int counter = 0;
 
-				ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-				ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-				
+			//	ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
 
-				ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-				
+			//	ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+			//	ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+			//	
 
-				if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-					counter++;
-				ImGui::SameLine();
-				ImGui::Text("counter = %d", counter);
+			//	ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+			//	
 
-				ImGui::End();
-			}
+			//	if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+			//		counter++;
+			//	ImGui::SameLine();
+			//	ImGui::Text("counter = %d", counter);
+
+			//	ImGui::End();
+			//}
 
 
 		
@@ -226,7 +233,8 @@ private:
 
 	
 
-	void createSurface() {
+	void createSurface()
+	{
 		if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create window surface!");
 		}
@@ -243,6 +251,7 @@ private:
 	GLFWwindow* window;
 	void initWindow();
 
+	ShaderFactory shaderFactory{};
 
 	void drawScene();
 
