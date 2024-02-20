@@ -17,19 +17,24 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT
 	}
 }
 
-std::vector<char> readFile(const std::string& filename) {
+std::vector<char> readFile(const std::string& filename)
+{
 	std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
-	if (!file.is_open()) {
+	if (!file.is_open()) 
+	{
 		throw std::runtime_error("failed to open file!");
 	}
 
-	size_t fileSize = (size_t)file.tellg();
+	//Get the size of the file and use it to allocate a buffer
+	const size_t fileSize = (size_t)file.tellg();
 	std::vector<char> buffer(fileSize);
 
+	//Go to the beginning of the file and read all the bytes at once
 	file.seekg(0);
 	file.read(buffer.data(), fileSize);
 
+	//Close the file and return the buffer filled with the file's contents
 	file.close();
 	return buffer;
 }

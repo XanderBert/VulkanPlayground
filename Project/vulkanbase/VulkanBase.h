@@ -243,11 +243,6 @@ private:
 	GLFWwindow* window;
 	void initWindow();
 
-	VkPipelineShaderStageCreateInfo createFragmentShaderInfo();
-	VkPipelineShaderStageCreateInfo createVertexShaderInfo();
-	VkPipelineVertexInputStateCreateInfo createVertexInputStateInfo();
-	VkPipelineInputAssemblyStateCreateInfo createInputAssemblyStateInfo();
-	VkShaderModule createShaderModule(const std::vector<char>& code);
 
 	void drawScene();
 

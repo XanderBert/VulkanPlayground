@@ -35,11 +35,23 @@ set(SOURCES
     "labwork/Week04.cpp" 
     "labwork/Week05.cpp"
     "labwork/Week06.cpp"
+    "shaders/Shader.h"
 )
 
 # Create the executable
 set(IMGUI_DIR vulkanbase/imgui)
-add_executable(${PROJECT_NAME} ${SOURCES} ${GLSL_SOURCE_FILES}  "vulkanbase/VulkanUtil.cpp" "labwork/Week03.cpp" ${IMGUI_DIR}/imgui_impl_glfw.cpp ${IMGUI_DIR}/imgui_impl_vulkan.cpp ${IMGUI_DIR}/imgui.cpp ${IMGUI_DIR}/imgui_draw.cpp ${IMGUI_DIR}/imgui_demo.cpp ${IMGUI_DIR}/imgui_tables.cpp ${IMGUI_DIR}/imgui_widgets.cpp)
+set (IMGUI_SOURCE_FILES
+    ${IMGUI_DIR}/imgui_impl_glfw.cpp 
+    ${IMGUI_DIR}/imgui_impl_vulkan.cpp 
+    ${IMGUI_DIR}/imgui.cpp 
+    ${IMGUI_DIR}/imgui_draw.cpp 
+    ${IMGUI_DIR}/imgui_demo.cpp 
+    ${IMGUI_DIR}/imgui_tables.cpp 
+    ${IMGUI_DIR}/imgui_widgets.cpp
+)
+
+
+add_executable(${PROJECT_NAME} ${SOURCES} ${GLSL_SOURCE_FILES}  "vulkanbase/VulkanUtil.cpp" "labwork/Week03.cpp" ${IMGUI_SOURCE_FILES} "shaders/Shader.cpp")
 add_dependencies(${PROJECT_NAME} Shaders)
 # Link libraries
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

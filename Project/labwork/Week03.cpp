@@ -1,4 +1,5 @@
 #include "vulkanbase/VulkanBase.h"
+#include "shaders/Shader.h"
 
 void VulkanBase::createFrameBuffers() {
 	swapChainFramebuffers.resize(swapChainImageViews.size());
@@ -114,18 +115,20 @@ void VulkanBase::createGraphicsPipeline() {
 
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 
-	VkPipelineShaderStageCreateInfo vertShaderStageInfo = createVertexShaderInfo();
-	VkPipelineShaderStageCreateInfo fragShaderStageInfo = createFragmentShaderInfo();
 
-	VkPipelineShaderStageCreateInfo shaderStages[] = {
+	VkPipelineShaderStageCreateInfo vertShaderStageInfo = Shader::CreateShaderInfo(device, VK_SHADER_STAGE_VERTEX_BIT, "shader.vert");
+	VkPipelineShaderStageCreateInfo fragShaderStageInfo = Shader::CreateShaderInfo(device, VK_SHADER_STAGE_FRAGMENT_BIT, "shader.frag");
+
+	std::vector shaderStages = 
+	{
 		vertShaderStageInfo,
 		fragShaderStageInfo
 	};
 
-	pipelineInfo.stageCount = 2;
-	pipelineInfo.pStages = shaderStages;
-	pipelineInfo.pVertexInputState = &createVertexInputStateInfo();
-	pipelineInfo.pInputAssemblyState = &createInputAssemblyStateInfo();
+	pipelineInfo.stageCount = shaderStages.size();
+	pipelineInfo.pStages = shaderStages.data();
+	pipelineInfo.pVertexInputState = &Shader::CreateVertexInputStateInfo();
+	pipelineInfo.pInputAssemblyState = &Shader::CreateInputAssemblyStateInfo();
 
 	pipelineInfo.pViewportState = &viewportState;
 	pipelineInfo.pRasterizationState = &rasterizer;
