@@ -1,20 +1,11 @@
 #pragma once
 #include "Shader.h"
-#include "lua.hpp"
-#include "sol/sol.hpp"
-#include <filesystem>
+#include "Luascripts/LuaScriptRunner.h"
 
 class ShaderFactory final
 {
 public:
-	ShaderFactory()
-	{
-		lua.open_libraries(sol::lib::base, sol::lib::io);
-		//Load the Lua Script
-
-	}
-
-
+	ShaderFactory() = default;
 	~ShaderFactory() = default;
 	ShaderFactory(const ShaderFactory&) = delete;
 	ShaderFactory& operator=(const ShaderFactory&) = delete;
@@ -25,7 +16,7 @@ public:
 	{
 		ImGui::Begin("Shader Factory");
 		{
-			ImGui::InputText("Shader Name", m_ShaderName, 13);
+			ImGui::InputText("Shader Name", m_ShaderName, m_ShaderNameSize);
 
 			
 			//Create dropdown for shader type
@@ -46,7 +37,8 @@ public:
 			if (ImGui::Button("Create Shader")) 
 			{
 				//Load the Lua Script
-				lua.script_file("CreateShader.lua");
+				sol::state& lua = LuaScriptRunner::GetInstance().GetLuaRunner();
+				lua.script_file("LuaScripts/CreateShader.lua");
 
 				// Execute the Lua Function
 				const std::function<void(std::string, std::string, std::string)>& CreateShader = lua["CreateShader"];
@@ -56,11 +48,6 @@ public:
 		ImGui::End();
 	}
 private:
-	//create char* of size 15 for shader name
-	char m_ShaderName[15] = {"Test"};
-
-	VkShaderStageFlagBits m_ShaderStage;
-
-	//Lua
-	sol::state lua{};
+	const static int m_ShaderNameSize = 15;
+	char m_ShaderName[m_ShaderNameSize] = {"Test"};
 };

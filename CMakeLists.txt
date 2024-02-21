@@ -27,13 +27,12 @@ include_directories(${Vulkan_INCLUDE_DIRS})
 add_subdirectory(Project)
 
 
-set (IMGUI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Project/vulkanbase/imgui)
-
+set (IMGUI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/includes/imgui)
 # Fetch ImGui
-FetchContent_Populate(imgui
-  URL https://github.com/ocornut/imgui/archive/docking.zip
-  SOURCE_DIR ${IMGUI_DIR}
-)
+#FetchContent_Populate(imgui
+#  URL https://github.com/ocornut/imgui/archive/docking.zip
+#  SOURCE_DIR ${IMGUI_DIR}
+#)
 
 include_directories(${IMGUI_DIR} ${IMGUI_DIR}/backends ..)
 

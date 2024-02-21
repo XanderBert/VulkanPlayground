@@ -36,10 +36,17 @@ set(SOURCES
     "labwork/Week05.cpp"
     "labwork/Week06.cpp"
     "shaders/Shader.h"
+    "shaders/Shader.cpp" 
+    "Patterns/Singleton.h"
+    "LuaScripts/LuaScriptRunner.h"
+    "shaders/ShaderFactory.h"
 )
 
+
+set(EXTERNALS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../includes)
+
 #Set ImGui Source Files
-set(IMGUI_DIR vulkanbase/imgui)
+set(IMGUI_DIR ${EXTERNALS_DIR}/imgui)
 set (IMGUI_SOURCE_FILES
     ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp 
     ${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp 
@@ -49,9 +56,6 @@ set (IMGUI_SOURCE_FILES
     ${IMGUI_DIR}/imgui_tables.cpp 
     ${IMGUI_DIR}/imgui_widgets.cpp
 )
-
-
-set(EXTERNALS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../includes)
 
 #Add the Lua Library
 set (LUA_DIR ${EXTERNALS_DIR}/lua)
@@ -92,12 +96,12 @@ add_library(
     ${LUA_DIR}/lzio.c
 )
 
-set (LUA_SCRIPTS ${CMAKE_CURRENT_SOURCE_DIR}/shaders/CreateShader.lua)
 # Copy the Lua script to the source directory
-configure_file(${LUA_SCRIPTS} ${CMAKE_CURRENT_BINARY_DIR}/CreateShader.lua COPYONLY)
+set (LUA_SCRIPTS ${CMAKE_CURRENT_SOURCE_DIR}/LuaScripts/CreateShader.lua)
+file(COPY ${LUA_SCRIPTS} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/LuaScripts)
 
-set (BASE_SHADERS ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.vert ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.frag)
 # Copy the base shaders to the binary directory
+set (BASE_SHADERS ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.vert ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.frag)
 file(COPY ${BASE_SHADERS} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/shaders)
 
 
@@ -109,8 +113,7 @@ add_executable(
     "vulkanbase/VulkanUtil.cpp" 
     "labwork/Week03.cpp" 
     ${IMGUI_SOURCE_FILES} 
-    "shaders/Shader.cpp" 
-    "shaders/ShaderFactory.h"
+
     ${LUA_SCRIPTS})
 
 
