@@ -17,24 +17,13 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glfw)
 
-
-
 # Find the required packages
-find_package(Vulkan REQUIRED)
+find_package(Vulkan REQUIRED COMPONENTS shaderc_combined)
 
 # Include Directories
 include_directories(${Vulkan_INCLUDE_DIRS})
 add_subdirectory(Project)
-
-
-set (IMGUI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/includes/imgui)
-# Fetch ImGui
-#FetchContent_Populate(imgui
-#  URL https://github.com/ocornut/imgui/archive/docking.zip
-#  SOURCE_DIR ${IMGUI_DIR}
-#)
-
-include_directories(${IMGUI_DIR} ${IMGUI_DIR}/backends ..)
+add_subdirectory(includes)
 
 
 # If using validation layers, copy the required JSON files (optional)

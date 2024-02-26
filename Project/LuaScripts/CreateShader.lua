@@ -11,7 +11,7 @@ function CreateShader(sourceFileName, destinationFolder, destinationFileName)
     local content = sourceFile:read("*all")
     sourceFile:close()
 
-    local destinationPath = destinationFolder .. "/" .. destinationFileName .. ".frag"
+    local destinationPath = destinationFolder .. "/" .. destinationFileName
     local destinationFile = io.open(destinationPath, "wb")
 
     if not destinationFile then

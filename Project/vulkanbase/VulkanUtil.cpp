@@ -38,3 +38,9 @@ std::vector<char> readFile(const std::string& filename)
 	file.close();
 	return buffer;
 }
+
+std::string readFileStr(const std::string& filename)
+{
+	std::vector<char> fileData = readFile(filename);
+	return std::string{ fileData.begin(), fileData.end() };
+}

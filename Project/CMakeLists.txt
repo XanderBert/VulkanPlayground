@@ -2,6 +2,12 @@
 set(SHADER_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/shaders")
 set(SHADER_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/shaders")
 
+# Copy the base shaders to the binary directory
+set(BASE_SHADERS_DIR ${SHADER_SOURCE_DIR}/BaseShaders)
+set(BASE_SHADER_BIN_DIR ${CMAKE_CURRENT_BINARY_DIR}/shaders/BaseShaders)
+file(GLOB_RECURSE BASE_SHADERS "${BASE_SHADERS_DIR}/*")
+file(COPY ${BASE_SHADERS} DESTINATION ${BASE_SHADER_BIN_DIR})
+
 file(GLOB_RECURSE GLSL_SOURCE_FILES
     "${SHADER_SOURCE_DIR}/*.frag"
     "${SHADER_SOURCE_DIR}/*.vert"
@@ -23,12 +29,10 @@ add_custom_target(
     DEPENDS ${SPIRV_BINARY_FILES}
 )
 
-
 set(SOURCES
     "main.cpp"
     "vulkanbase/VulkanBase.h" 
     "vulkanbase/VulkanUtil.h"
-    # Add other source files here
     "labwork/Week01.cpp"
     "labwork/Week02.cpp" 
     "labwork/Week03.cpp" 
@@ -40,6 +44,7 @@ set(SOURCES
     "Patterns/Singleton.h"
     "LuaScripts/LuaScriptRunner.h"
     "shaders/ShaderFactory.h"
+    "shaders/SpirvHelper.h"
 )
 
 
@@ -57,52 +62,9 @@ set (IMGUI_SOURCE_FILES
     ${IMGUI_DIR}/imgui_widgets.cpp
 )
 
-#Add the Lua Library
-set (LUA_DIR ${EXTERNALS_DIR}/lua)
-add_library(
-    lua STATIC
-    ${LUA_DIR}/lapi.c
-    ${LUA_DIR}/lauxlib.c
-    ${LUA_DIR}/lbaselib.c
-    ${LUA_DIR}/lcode.c
-    ${LUA_DIR}/lcorolib.c
-    ${LUA_DIR}/lctype.c
-    ${LUA_DIR}/ldblib.c
-    ${LUA_DIR}/ldebug.c
-    ${LUA_DIR}/ldo.c
-    ${LUA_DIR}/ldump.c
-    ${LUA_DIR}/lfunc.c
-    ${LUA_DIR}/lgc.c
-    ${LUA_DIR}/linit.c
-    ${LUA_DIR}/liolib.c
-    ${LUA_DIR}/llex.c
-    ${LUA_DIR}/lmathlib.c
-    ${LUA_DIR}/lmem.c
-    ${LUA_DIR}/loadlib.c
-    ${LUA_DIR}/lobject.c
-    ${LUA_DIR}/lopcodes.c
-    ${LUA_DIR}/loslib.c
-    ${LUA_DIR}/lparser.c
-    ${LUA_DIR}/lstate.c
-    ${LUA_DIR}/lstring.c
-    ${LUA_DIR}/lstrlib.c
-    ${LUA_DIR}/ltable.c
-    ${LUA_DIR}/ltablib.c
-    ${LUA_DIR}/ltm.c
-    ${LUA_DIR}/lua.c
-    ${LUA_DIR}/lundump.c
-    ${LUA_DIR}/lutf8lib.c
-    ${LUA_DIR}/lvm.c
-    ${LUA_DIR}/lzio.c
-)
-
 # Copy the Lua script to the source directory
 set (LUA_SCRIPTS ${CMAKE_CURRENT_SOURCE_DIR}/LuaScripts/CreateShader.lua)
 file(COPY ${LUA_SCRIPTS} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/LuaScripts)
-
-# Copy the base shaders to the binary directory
-set (BASE_SHADERS ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.vert ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.frag)
-file(COPY ${BASE_SHADERS} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/shaders)
 
 
 # Create the executable
@@ -113,8 +75,8 @@ add_executable(
     "vulkanbase/VulkanUtil.cpp" 
     "labwork/Week03.cpp" 
     ${IMGUI_SOURCE_FILES} 
-
-    ${LUA_SCRIPTS})
+    ${LUA_SCRIPTS} 
+    "shaders/SpirvHelper.h")
 
 
 
@@ -128,4 +90,11 @@ target_include_directories(
     PRIVATE ${IMGUI_DIR}
 )
 
-target_link_libraries(${PROJECT_NAME} PRIVATE ${Vulkan_LIBRARIES} glfw lua)
+string(REPLACE ".lib" "d.lib" SHADERC_DEBUG ${Vulkan_shaderc_combined_LIBRARY})
+target_link_libraries(
+    ${PROJECT_NAME} 
+    PRIVATE ${Vulkan_LIBRARIES}
+    PUBLIC debug ${SHADERC_DEBUG} optimized ${Vulkan_shaderc_combined_LIBRARY}
+    glfw 
+    lua
+)

@@ -1,6 +1,8 @@
 #pragma once
 #include "Shader.h"
 #include "Luascripts/LuaScriptRunner.h"
+#include "glslang/SPIRV/GlslangToSpv.h"
+#include "SpirvHelper.h"
 
 class ShaderFactory final
 {
@@ -21,33 +23,45 @@ public:
 			
 			//Create dropdown for shader type
 			ImGui::Text("Shader Type");
-			ImGui::SameLine();
+			if(ImGui::BeginListBox("##ShaderType"))
+			{
+				if (ImGui::Selectable("Vertex")) { m_ShaderType = shaderc_vertex_shader; m_ShaderExtension = ".vert"; }
+				if (ImGui::Selectable("Fragment")) { m_ShaderType = shaderc_fragment_shader; m_ShaderExtension = ".frag"; }
+				if (ImGui::Selectable("Geometry")) { m_ShaderType = shaderc_geometry_shader; }
+				if (ImGui::Selectable("Compute")) { m_ShaderType = shaderc_compute_shader; }
+				if (ImGui::Selectable("Tessellation Control")) { m_ShaderType = shaderc_tess_control_shader; }
+				if (ImGui::Selectable("Tessellation Evaluation")) { m_ShaderType = shaderc_tess_evaluation_shader; }
+				ImGui::EndListBox();
+			}
 
-	
-			//ImGui::BeginListBox("##ShaderType");
-			//{
-			//	if (ImGui::Selectable("Vertex")) { m_ShaderStage = VK_SHADER_STAGE_VERTEX_BIT; }
-			//	if (ImGui::Selectable("Fragment")) { m_ShaderStage = VK_SHADER_STAGE_FRAGMENT_BIT; }
-			//	if (ImGui::Selectable("Geometry")) {}
-			//	if (ImGui::Selectable("Tessellation Control")) {}
-			//	if (ImGui::Selectable("Tessellation Evaluation")) {}
-			//}
-			//ImGui::EndListBox();
+
+
 
 			if (ImGui::Button("Create Shader")) 
 			{
-				//Load the Lua Script
+				// Execute the Lua Function to create the base shader
 				sol::state& lua = LuaScriptRunner::GetInstance().GetLuaRunner();
 				lua.script_file("LuaScripts/CreateShader.lua");
-
-				// Execute the Lua Function
 				const std::function<void(std::string, std::string, std::string)>& CreateShader = lua["CreateShader"];
-				CreateShader("shaders/shader.frag", "shaders", m_ShaderName);
+
+
+				const std::string shaderName = m_ShaderName + m_ShaderExtension;
+
+
+				//Create the actual shader based on the BaseShaders
+				CreateShader("shaders/BaseShaders/BaseShader" + m_ShaderExtension, "shaders", shaderName);
+
+
+				//Compile the new shader
+				SpirvHelper::CompileAndSaveShader(shaderName, m_ShaderType, "shaders/" + shaderName);
 			}
 		}
 		ImGui::End();
 	}
+
 private:
-	const static int m_ShaderNameSize = 15;
-	char m_ShaderName[m_ShaderNameSize] = {"Test"};
+	inline const static int m_ShaderNameSize = 15;
+	inline static char m_ShaderName[m_ShaderNameSize] = {"Test"};
+	inline static std::string m_ShaderExtension{ ".frag" };
+	inline static shaderc_shader_kind m_ShaderType{ shaderc_vertex_shader };
 };
