@@ -24,6 +24,7 @@ foreach(GLSL ${GLSL_SOURCE_FILES})
     list(APPEND SPIRV_BINARY_FILES ${SPIRV})
 endforeach(GLSL)
 
+
 add_custom_target(
     Shaders 
     DEPENDS ${SPIRV_BINARY_FILES}
@@ -33,7 +34,6 @@ set(SOURCES
     "main.cpp"
     "vulkanbase/VulkanBase.h" 
     "vulkanbase/VulkanUtil.h"
-    "labwork/Week01.cpp"
     "labwork/Week02.cpp" 
     "labwork/Week03.cpp" 
     "labwork/Week04.cpp" 

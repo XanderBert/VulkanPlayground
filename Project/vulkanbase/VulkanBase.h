@@ -26,19 +26,16 @@
 
 
 struct ImGui_ImplVulkan_InitInfo;
-const std::vector<const char*> validationLayers = {
-	"VK_LAYER_KHRONOS_validation"
-};
+const std::vector validationLayers = { "VK_LAYER_KHRONOS_validation" };
+const std::vector deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
-const std::vector<const char*> deviceExtensions = {
-	VK_KHR_SWAPCHAIN_EXTENSION_NAME
-};
-
-struct QueueFamilyIndices {
+struct QueueFamilyIndices
+{
 	std::optional<uint32_t> graphicsFamily;
 	std::optional<uint32_t> presentFamily;
 
-	bool isComplete() {
+	bool isComplete() const
+	{
 		return graphicsFamily.has_value() && presentFamily.has_value();
 	}
 };
@@ -63,7 +60,8 @@ public:
 	}
 
 private:
-	void initVulkan() {
+	void initVulkan()
+	{
 		// week 06
 		createInstance();
 		setupDebugMessenger();
@@ -92,7 +90,7 @@ private:
 	void initImGui()
 	{
 
-		// Create Descriptor Pool
+		// Create Descriptor Pool TODO: Move to a separate function
 		// The example only requires a single combined image sampler descriptor for the font image and only uses one descriptor set (for that)
 		// If you wish to load e.g. additional textures you may need to alter pools sizes.
 		{
@@ -146,45 +144,23 @@ private:
 		{
 			glfwPollEvents();
 
-			// Start the Dear ImGui frame
+			// Start the Dear ImGui frame 
 			ImGui_ImplVulkan_NewFrame();
 			ImGui_ImplGlfw_NewFrame();
 			ImGui::NewFrame();
 
 
+			
+
 			shaderFactory.Render();
-			//bool show_demo_window = true;
-			//ImGui::ShowDemoWindow(&show_demo_window);
-
-			//{
-			//	static float f = 0.0f;
-			//	static int counter = 0;
-
-			//	ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
-
-			//	ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-			//	ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-			//	
-
-			//	ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-			//	
-
-			//	if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-			//		counter++;
-			//	ImGui::SameLine();
-			//	ImGui::Text("counter = %d", counter);
-
-			//	ImGui::End();
-			//}
-
+			ImGui::Render();
+			drawFrame();
 
 		
 
 			// week 06
-			ImGui::Render();
 			
 
-			drawFrame();
 		}
 		vkDeviceWaitIdle(device);
 	}
@@ -203,7 +179,8 @@ private:
 		vkDestroyFence(device, inFlightFence, nullptr);
 
 		vkDestroyCommandPool(device, commandPool, nullptr);
-		for (auto framebuffer : swapChainFramebuffers) {
+		for (const auto framebuffer : swapChainFramebuffers) 
+		{
 			vkDestroyFramebuffer(device, framebuffer, nullptr);
 		}
 
@@ -211,13 +188,16 @@ private:
 		vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
 		vkDestroyRenderPass(device, renderPass, nullptr);
 
-		for (auto imageView : swapChainImageViews) {
+		for (const auto imageView : swapChainImageViews) 
+		{
 			vkDestroyImageView(device, imageView, nullptr);
 		}
 
-		if (enableValidationLayers) {
+		if (enableValidationLayers) 
+		{
 			DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
 		}
+
 		vkDestroySwapchainKHR(device, swapChain, nullptr);
 		vkDestroyDevice(device, nullptr);
 
@@ -235,7 +215,8 @@ private:
 
 	void createSurface()
 	{
-		if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
+		if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) 
+		{
 			throw std::runtime_error("failed to create window surface!");
 		}
 	}
@@ -249,11 +230,20 @@ private:
 	// with the correct internal state.
 
 	GLFWwindow* window;
-	void initWindow();
+	void initWindow()
+	{
+		glfwInit();
+		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+		window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
+	}
 
 	ShaderFactory shaderFactory{};
 
-	void drawScene();
+	void drawScene() const
+	{
+		vkCmdDraw(commandBuffer, 6, 1, 0, 0);
+	}
 
 	// Week 02
 	// Queue families
@@ -270,7 +260,7 @@ private:
 
 	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 
-	void drawFrame(uint32_t imageIndex);
+	void drawFrame(uint32_t imageIndex) const;
 	void createCommandBuffer();
 	void createCommandPool();
 	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
@@ -339,7 +329,8 @@ private:
 
 
 
-	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
+	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
+	{
 		std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
 		return VK_FALSE;
 	}

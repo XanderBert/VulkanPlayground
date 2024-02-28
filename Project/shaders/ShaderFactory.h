@@ -27,14 +27,12 @@ public:
 			{
 				if (ImGui::Selectable("Vertex")) { m_ShaderType = shaderc_vertex_shader; m_ShaderExtension = ".vert"; }
 				if (ImGui::Selectable("Fragment")) { m_ShaderType = shaderc_fragment_shader; m_ShaderExtension = ".frag"; }
-				if (ImGui::Selectable("Geometry")) { m_ShaderType = shaderc_geometry_shader; }
-				if (ImGui::Selectable("Compute")) { m_ShaderType = shaderc_compute_shader; }
-				if (ImGui::Selectable("Tessellation Control")) { m_ShaderType = shaderc_tess_control_shader; }
-				if (ImGui::Selectable("Tessellation Evaluation")) { m_ShaderType = shaderc_tess_evaluation_shader; }
+				if (ImGui::Selectable("Geometry")) { m_ShaderType = shaderc_geometry_shader; m_ShaderExtension = ".geom"; }
+				if (ImGui::Selectable("Compute")) { m_ShaderType = shaderc_compute_shader; m_ShaderExtension = ".comp"; }
+				if (ImGui::Selectable("Tessellation Control")) { m_ShaderType = shaderc_tess_control_shader; m_ShaderExtension = ".tesc";}
+				if (ImGui::Selectable("Tessellation Evaluation")) { m_ShaderType = shaderc_tess_evaluation_shader; m_ShaderExtension = ".tese";}
 				ImGui::EndListBox();
 			}
-
-
 
 
 			if (ImGui::Button("Create Shader")) 
