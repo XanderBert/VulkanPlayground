@@ -45,7 +45,7 @@ set(SOURCES
     "LuaScripts/LuaScriptRunner.h"
     "shaders/ShaderFactory.h"
     "shaders/SpirvHelper.h"
-)
+ "shaders/ShaderFileWatcher.h")
 
 
 set(EXTERNALS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../includes)
@@ -91,10 +91,13 @@ target_include_directories(
 )
 
 string(REPLACE ".lib" "d.lib" SHADERC_DEBUG ${Vulkan_shaderc_combined_LIBRARY})
+#ignore warning LNK4099
+target_link_options(${PROJECT_NAME}  PUBLIC "/ignore:4099")
 target_link_libraries(
     ${PROJECT_NAME} 
     PRIVATE ${Vulkan_LIBRARIES}
     PUBLIC debug ${SHADERC_DEBUG} optimized ${Vulkan_shaderc_combined_LIBRARY}
     glfw 
     lua
+    PRIVATE efsw-static
 )

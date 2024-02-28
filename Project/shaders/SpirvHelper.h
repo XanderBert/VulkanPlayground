@@ -11,6 +11,10 @@ struct SpirvHelper
 		//Read the file
 		std::string shaderString = readFileStr(source);
 
+        std::cout << "Compiling shader: " << sourceName << std::endl;
+        std::cout << "Shader source: " << shaderString << std::endl;
+
+
 		//Create a compiler and its options
 	    const shaderc::Compiler compiler{};
         shaderc::CompileOptions options{};

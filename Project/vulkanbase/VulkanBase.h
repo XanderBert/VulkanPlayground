@@ -23,6 +23,7 @@
 #include "imgui/backends/imgui_impl_vulkan.h"
 
 #include "../shaders/ShaderFactory.h"
+#include "../shaders/ShaderFileWatcher.h"
 
 
 struct ImGui_ImplVulkan_InitInfo;
@@ -151,8 +152,9 @@ private:
 
 
 			
-
+			//TODO: Move
 			shaderFactory.Render();
+
 			ImGui::Render();
 			drawFrame();
 
@@ -165,7 +167,7 @@ private:
 		vkDeviceWaitIdle(device);
 	}
 
-	void cleanup()
+	void cleanup() const
 	{
 		ImGui_ImplVulkan_Shutdown();
 		ImGui_ImplGlfw_Shutdown();
@@ -238,7 +240,9 @@ private:
 		window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
 	}
 
+	//TODO Move
 	ShaderFactory shaderFactory{};
+	ShaderFileWatcher shaderFileWatcher{};
 
 	void drawScene() const
 	{
@@ -258,7 +262,7 @@ private:
 	//
 
 
-	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
+	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) const;
 
 	void drawFrame(uint32_t imageIndex) const;
 	void createCommandBuffer();

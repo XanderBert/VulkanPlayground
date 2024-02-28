@@ -1,3 +1,6 @@
+add_subdirectory(efsw)
+
+
 set (LUA_DIR lua)
 add_library(
     lua STATIC

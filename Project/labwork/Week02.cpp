@@ -67,7 +67,8 @@ void VulkanBase::drawFrame(uint32_t imageIndex) const
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-	
+	//IMGUI
+	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
@@ -85,8 +86,7 @@ void VulkanBase::drawFrame(uint32_t imageIndex) const
 	scissor.extent = swapChainExtent;
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-	//IMGUI
-	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
+
 
 	drawScene();
 	vkCmdEndRenderPass(commandBuffer);
