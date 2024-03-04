@@ -1,6 +1,7 @@
 #include "vulkanbase/VulkanBase.h"
 
-void VulkanBase::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
+void VulkanBase::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo)
+{
 	createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
 	createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
@@ -9,18 +10,21 @@ void VulkanBase::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInf
 }
 
 
-void VulkanBase::setupDebugMessenger() {
+void VulkanBase::setupDebugMessenger()
+{
 	if (!enableValidationLayers) return;
 
 	VkDebugUtilsMessengerCreateInfoEXT createInfo;
 	populateDebugMessengerCreateInfo(createInfo);
 
-	if (CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS) {
+	if (CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS) 
+	{
 		throw std::runtime_error("failed to set up debug messenger!");
 	}
 }
 
-void VulkanBase::createSyncObjects() {
+void VulkanBase::createSyncObjects()
+{
 	VkSemaphoreCreateInfo semaphoreInfo{};
 	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
@@ -30,21 +34,27 @@ void VulkanBase::createSyncObjects() {
 
 	if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphore) != VK_SUCCESS ||
 		vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphore) != VK_SUCCESS ||
-		vkCreateFence(device, &fenceInfo, nullptr, &inFlightFence) != VK_SUCCESS) {
+		vkCreateFence(device, &fenceInfo, nullptr, &inFlightFence) != VK_SUCCESS) 
+	{
 		throw std::runtime_error("failed to create synchronization objects for a frame!");
 	}
 
 }
 
-void VulkanBase::drawFrame() {
+void VulkanBase::drawFrame()
+{
 	vkWaitForFences(device, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
 	vkResetFences(device, 1, &inFlightFence);
 
 	uint32_t imageIndex;
 	vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
 
-	vkResetCommandBuffer(commandBuffer, /*VkCommandBufferResetFlagBits*/ 0);
-	recordCommandBuffer(commandBuffer, imageIndex);
+
+	CommandBufferManager::ResetCommandBuffer(device, commandPool, commandBuffer);
+	CommandBufferManager::BeginCommandBufferRecording(commandBuffer, false, false);
+	drawFrame(imageIndex);
+	CommandBufferManager::EndCommandBufferRecording(commandBuffer);
+
 
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -54,17 +64,19 @@ void VulkanBase::drawFrame() {
 	submitInfo.waitSemaphoreCount = 1;
 	submitInfo.pWaitSemaphores = waitSemaphores;
 	submitInfo.pWaitDstStageMask = waitStages;
-
 	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &commandBuffer;
-
+	submitInfo.pCommandBuffers = &commandBuffer.Handle;
 	VkSemaphore signalSemaphores[] = { renderFinishedSemaphore };
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signalSemaphores;
 
-	if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFence) != VK_SUCCESS) {
+	if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFence) != VK_SUCCESS) 
+	{
 		throw std::runtime_error("failed to submit draw command buffer!");
 	}
+
+	CommandBufferManager::SubmitCommandBuffer(commandBuffer);
+
 
 	VkPresentInfoKHR presentInfo{};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -81,17 +93,20 @@ void VulkanBase::drawFrame() {
 	vkQueuePresentKHR(presentQueue, &presentInfo);
 }
 
-bool checkValidationLayerSupport() {
+bool checkValidationLayerSupport()
+{
 	uint32_t layerCount;
 	vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 
 	std::vector<VkLayerProperties> availableLayers(layerCount);
 	vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
 
-	for (const char* layerName : validationLayers) {
+	for (const char* layerName : validationLayers) 
+	{
 		bool layerFound = false;
 
-		for (const auto& layerProperties : availableLayers) {
+		for (const auto& layerProperties : availableLayers) 
+		{
 			if (strcmp(layerName, layerProperties.layerName) == 0) {
 				layerFound = true;
 				break;
@@ -106,21 +121,24 @@ bool checkValidationLayerSupport() {
 	return true;
 }
 
-std::vector<const char*> VulkanBase::getRequiredExtensions() {
+std::vector<const char*> VulkanBase::getRequiredExtensions()
+{
 	uint32_t glfwExtensionCount = 0;
 	const char** glfwExtensions;
 	glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
 	std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
 
-	if (enableValidationLayers) {
+	if (enableValidationLayers) 
+	{
 		extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 	}
 
 	return extensions;
 }
 
-bool VulkanBase::checkDeviceExtensionSupport(VkPhysicalDevice device) {
+bool VulkanBase::checkDeviceExtensionSupport(VkPhysicalDevice device)
+{
 	uint32_t extensionCount;
 	vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
 
@@ -129,15 +147,18 @@ bool VulkanBase::checkDeviceExtensionSupport(VkPhysicalDevice device) {
 
 	std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
 
-	for (const auto& extension : availableExtensions) {
+	for (const auto& extension : availableExtensions) 
+	{
 		requiredExtensions.erase(extension.extensionName);
 	}
 
 	return requiredExtensions.empty();
 }
 
-void VulkanBase::createInstance() {
-	if (enableValidationLayers && !checkValidationLayerSupport()) {
+void VulkanBase::createInstance()
+{
+	if (enableValidationLayers && !checkValidationLayerSupport()) 
+	{
 		throw std::runtime_error("validation layers requested, but not available!");
 	}
 
@@ -158,14 +179,16 @@ void VulkanBase::createInstance() {
 	createInfo.ppEnabledExtensionNames = extensions.data();
 
 	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
-	if (enableValidationLayers) {
+	if (enableValidationLayers) 
+	{
 		createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
 		createInfo.ppEnabledLayerNames = validationLayers.data();
 
 		populateDebugMessengerCreateInfo(debugCreateInfo);
 		createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
 	}
-	else {
+	else 
+	{
 		createInfo.enabledLayerCount = 0;
 
 		createInfo.pNext = nullptr;

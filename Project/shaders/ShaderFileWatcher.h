@@ -2,6 +2,7 @@
 #include "efsw/include/efsw/efsw.hpp"
 #include "SpirvHelper.h"
 #include "efsw/System.hpp"
+#include "../vulkanbase/VulkanBase.h"
 
 class ShaderListener : public efsw::FileWatchListener
 {

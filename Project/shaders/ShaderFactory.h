@@ -12,7 +12,7 @@ public:
 	ShaderFactory(ShaderFactory&&) = delete;
 	ShaderFactory& operator=(ShaderFactory&&) = delete;
 
-	void Render() 
+	static void Render()
 	{
 
 		ImGui::Begin("Shader Factory");

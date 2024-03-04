@@ -44,3 +44,27 @@ std::string readFileStr(const std::string& filename)
 	std::vector<char> fileData = readFile(filename);
 	return std::string{ fileData.begin(), fileData.end() };
 }
+
+uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties, VkPhysicalDevice physicalDevice)
+{
+	//find info about the available memory types
+	VkPhysicalDeviceMemoryProperties memProperties;
+	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+
+
+	for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
+	{
+		//typeFilter parameter will be used to specify the bit field of memory types that are suitable.
+		//so we can check if the memory type i is suitable by checking if the bit is set to 1
+
+		//We also need to check if the memory type is suitable for the buffer that we are trying to create
+		//We can do this by checking the memoryTypeBits field against the properties that we need
+		if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
+		{
+			return i;
+		}
+	}
+
+	throw std::runtime_error("failed to find suitable memory type!");
+}
+

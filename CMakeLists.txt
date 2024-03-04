@@ -20,11 +20,12 @@ FetchContent_MakeAvailable(glfw)
 # Find the required packages
 find_package(Vulkan REQUIRED COMPONENTS shaderc_combined)
 
+
 # Include Directories
 include_directories(${Vulkan_INCLUDE_DIRS})
 add_subdirectory(Project)
 add_subdirectory(includes)
-
+#find_package(VulkanMemoryAllocator CONFIG REQUIRED)
 
 # If using validation layers, copy the required JSON files (optional)
 # add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD

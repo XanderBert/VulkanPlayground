@@ -1,4 +1,6 @@
-#define _NO_DEBUG_HEAP = 1
+//#define _NO_DEBUG_HEAP = 1
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
 #include "vulkanbase/VulkanBase.h"
 int main()

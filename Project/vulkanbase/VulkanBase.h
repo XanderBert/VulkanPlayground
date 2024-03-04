@@ -24,22 +24,18 @@
 
 #include "../shaders/ShaderFactory.h"
 #include "../shaders/ShaderFileWatcher.h"
+#include "Core/CommandBuffer.h"
+#include "Core/CommandPool.h"
+#include "Core/QueueFamilyIndices.h"
+#include "Mesh/Mesh.h"
+
 
 
 struct ImGui_ImplVulkan_InitInfo;
 const std::vector validationLayers = { "VK_LAYER_KHRONOS_validation" };
 const std::vector deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
-struct QueueFamilyIndices
-{
-	std::optional<uint32_t> graphicsFamily;
-	std::optional<uint32_t> presentFamily;
 
-	bool isComplete() const
-	{
-		return graphicsFamily.has_value() && presentFamily.has_value();
-	}
-};
 
 struct SwapChainSupportDetails
 {
@@ -54,8 +50,12 @@ public:
 	void run()
 	{
 		initWindow();
+
 		initVulkan();
 		initImGui();
+
+
+
 		mainLoop();
 		cleanup();
 	}
@@ -75,14 +75,17 @@ private:
 		// week 04 
 		createSwapChain();
 		createImageViews();
-		
+
+		//Create Mesh
+		m_pMesh = new Mesh(device, vertices, physicalDevice);
+
 		// week 03
 		createRenderPass();
 		createGraphicsPipeline();
 		createFrameBuffers();
 		// week 02
-		createCommandPool();
-		createCommandBuffer();
+		CommandPool::CreateCommandPool(device, physicalDevice, surface, commandPool);
+		CommandBufferManager::CreateCommandBuffer(device, commandPool, commandBuffer);
 
 		// week 06
 		createSyncObjects();
@@ -123,17 +126,16 @@ private:
 		init_info.Instance = instance;
 		init_info.PhysicalDevice = physicalDevice;
 		init_info.Device = device;
-		init_info.QueueFamily = queueFamilyIndices.graphicsFamily.value();
+		init_info.QueueFamily = QueueFamilyIndices::FindQueueFamilies(physicalDevice, surface).graphicsFamily.value();
 		init_info.Queue = graphicsQueue;
 		init_info.PipelineCache = VK_NULL_HANDLE;
-		//init_info.DescriptorPool = VK_NULL_HANDLE;
 		init_info.DescriptorPool = descriptorPool;
 		init_info.Allocator = VK_NULL_HANDLE;
 		init_info.MinImageCount = 2;
 		init_info.ImageCount = static_cast<uint32_t>(swapChainImages.size());
 		init_info.CheckVkResultFn = nullptr;
 		init_info.RenderPass = renderPass;
-		//init_info.CheckVkResultFn = check_vk_result;
+		//init_info.CheckVkResultFn = debugCallback;
 		ImGui_ImplVulkan_Init(&init_info);
 	
 	}
@@ -144,21 +146,14 @@ private:
 		while (!glfwWindowShouldClose(window)) 
 		{
 			glfwPollEvents();
+			//createGraphicsPipeline();
 
 			// Start the Dear ImGui frame 
 			ImGui_ImplVulkan_NewFrame();
 			ImGui_ImplGlfw_NewFrame();
 			ImGui::NewFrame();
 
-
-			
-			//TODO: Move
-			shaderFactory.Render();
-
-			ImGui::Render();
 			drawFrame();
-
-		
 
 			// week 06
 			
@@ -200,6 +195,8 @@ private:
 			DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
 		}
 
+		delete m_pMesh;
+
 		vkDestroySwapchainKHR(device, swapChain, nullptr);
 		vkDestroyDevice(device, nullptr);
 
@@ -223,13 +220,6 @@ private:
 		}
 	}
 
-	
-
-	// Week 01: 
-	// Actual window
-	// simple fragment + vertex shader creation functions
-	// These 5 functions should be refactored into a separate C++ class
-	// with the correct internal state.
 
 	GLFWwindow* window;
 	void initWindow()
@@ -240,35 +230,82 @@ private:
 		window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
 	}
 
-	//TODO Move
-	ShaderFactory shaderFactory{};
+	//TODO : Move to a separate class
 	ShaderFileWatcher shaderFileWatcher{};
 
-	void drawScene() const
+
+
+
+	//Temporary data
+	std::vector<Vertex> vertices =
 	{
-		vkCmdDraw(commandBuffer, 6, 1, 0, 0);
+	{{0.0f, -0.5f}, {1.0f, 1.0f, 1.0f}},
+	{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+	{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+		{ {0.0f, -0.5f}, {1.0f, 1.0f, 1.0f}},
+	{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+	{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+	};
+
+	VkCommandPool commandPool{};
+	CommandBuffer commandBuffer{};
+	//Imgui Setup reasons 
+	VkDescriptorPool descriptorPool;
+
+
+	void drawFrame(uint32_t imageIndex) const
+	{
+		VkRenderPassBeginInfo renderPassInfo{};
+		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		renderPassInfo.renderPass = renderPass;
+		renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
+		renderPassInfo.renderArea.offset = { 0, 0 };
+		renderPassInfo.renderArea.extent = swapChainExtent;
+
+		constexpr VkClearValue clearColor = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
+		renderPassInfo.clearValueCount = 1;
+		renderPassInfo.pClearValues = &clearColor;
+
+		//Begin Render Pass
+		vkCmdBeginRenderPass(commandBuffer.Handle, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+		//Bin the Pipeline
+		vkCmdBindPipeline(commandBuffer.Handle, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+
+
+		//Set the viewport
+		VkViewport viewport{};
+		viewport.x = 0.0f;
+		viewport.y = 0.0f;
+		viewport.width = (float)swapChainExtent.width;
+		viewport.height = (float)swapChainExtent.height;
+		viewport.minDepth = 0.0f;
+		viewport.maxDepth = 1.0f;
+		vkCmdSetViewport(commandBuffer.Handle, 0, 1, &viewport);
+
+
+		//Set the scissor
+		VkRect2D scissor{};
+		scissor.offset = { 0, 0 };
+		scissor.extent = swapChainExtent;
+		vkCmdSetScissor(commandBuffer.Handle, 0, 1, &scissor);
+
+		//Draw The actual scene
+		ShaderFactory::Render();
+		ImGui::Render();
+		m_pMesh->Bind(commandBuffer.Handle);
+		m_pMesh->Render(commandBuffer.Handle);
+		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer.Handle);
+
+
+		//End the render pass
+		vkCmdEndRenderPass(commandBuffer.Handle);
 	}
 
-	// Week 02
-	// Queue families
-	// CommandBuffer concept
 
-	VkCommandPool commandPool;
-	VkCommandBuffer commandBuffer;
+	void createGraphicsPipeline();
+	Mesh* m_pMesh{};
 
-	//Imgui Setup reasons
-	QueueFamilyIndices queueFamilyIndices;
-	VkDescriptorPool descriptorPool;
-	//
-
-
-	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) const;
-
-	void drawFrame(uint32_t imageIndex) const;
-	void createCommandBuffer();
-	void createCommandPool();
-	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
-	
 	// Week 03
 	// Renderpass concept
 	// Graphics pipeline
@@ -280,7 +317,7 @@ private:
 
 	void createFrameBuffers();
 	void createRenderPass();
-	void createGraphicsPipeline();
+
 
 	// Week 04
 	// Swap chain and image view support
@@ -307,6 +344,7 @@ private:
 	VkQueue presentQueue;
 	
 	void pickPhysicalDevice();
+
 	bool isDeviceSuitable(VkPhysicalDevice device);
 	void createLogicalDevice();
 

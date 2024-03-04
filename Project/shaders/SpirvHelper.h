@@ -56,5 +56,7 @@ struct SpirvHelper
 		std::ofstream file(source + ".spv", std::ios::binary);
 		file.write((char*)shaderBinary.data(), shaderBinary.size() * sizeof(uint32_t));
 		file.close();
+
+
 	}
 };

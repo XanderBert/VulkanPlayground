@@ -1,27 +1,29 @@
 #include "Shader.h"
+#include "../Mesh/Vertex.h"
 
 VkPipelineShaderStageCreateInfo Shader::CreateShaderInfo(const VkDevice& device, VkShaderStageFlagBits shaderStage, const std::string& fileName)
 {
 	const std::string fileLocation = "shaders/" + fileName + ".spv";
-	const std::vector<char> fragShaderCode = readFile(fileLocation);
+	const std::vector<char> shaderCode = readFile(fileLocation);
 
-	const VkShaderModule fragShaderModule = CreateShaderModule(device, fragShaderCode);
+	VkPipelineShaderStageCreateInfo shaderStageInfo{};
+	shaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	shaderStageInfo.stage = shaderStage;
+	shaderStageInfo.module = CreateShaderModule(device, shaderCode);;
+	shaderStageInfo.pName = "main";
 
-	VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
-	fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	fragShaderStageInfo.stage = shaderStage;
-	fragShaderStageInfo.module = fragShaderModule;
-	fragShaderStageInfo.pName = "main";
-
-	return fragShaderStageInfo;
+	return shaderStageInfo;
 }
 
 VkPipelineVertexInputStateCreateInfo Shader::CreateVertexInputStateInfo()
 {
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	vertexInputInfo.vertexBindingDescriptionCount = 0;
-	vertexInputInfo.vertexAttributeDescriptionCount = 0;
+
+	vertexInputInfo.vertexBindingDescriptionCount = 1;
+	vertexInputInfo.pVertexBindingDescriptions = &m_VertexInputBindingDescription;
+	vertexInputInfo.vertexAttributeDescriptionCount = m_VertexInputAttributeDescription.size();
+	vertexInputInfo.pVertexAttributeDescriptions = m_VertexInputAttributeDescription.data();
 
 	return vertexInputInfo;
 }

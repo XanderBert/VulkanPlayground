@@ -34,7 +34,7 @@ set(SOURCES
     "main.cpp"
     "vulkanbase/VulkanBase.h" 
     "vulkanbase/VulkanUtil.h"
-    "labwork/Week02.cpp" 
+     
     "labwork/Week03.cpp" 
     "labwork/Week04.cpp" 
     "labwork/Week05.cpp"
@@ -45,7 +45,14 @@ set(SOURCES
     "LuaScripts/LuaScriptRunner.h"
     "shaders/ShaderFactory.h"
     "shaders/SpirvHelper.h"
- "shaders/ShaderFileWatcher.h")
+    "shaders/ShaderFileWatcher.h" 
+    "Mesh/Vertex.h" 
+    "Mesh/Mesh.h" 
+    "Mesh/Mesh.cpp" 
+    "Core/CommandBuffer.h" 
+    "Core/CommandBuffer.cpp" 
+    "Core/CommandPool.h" 
+    "Core/CommandPool.cpp" "Core/QueueFamilyIndices.h")
 
 
 set(EXTERNALS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../includes)
@@ -100,4 +107,5 @@ target_link_libraries(
     glfw 
     lua
     PRIVATE efsw-static
+    PRIVATE glm
 )

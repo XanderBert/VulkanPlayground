@@ -18,4 +18,6 @@ public:
 private:
 	static VkShaderModule CreateShaderModule(const VkDevice& device, const std::vector<char>& code);
 
+	inline static VkVertexInputBindingDescription m_VertexInputBindingDescription = Vertex::GetBindingDescription();
+	inline static std::array<VkVertexInputAttributeDescription, 2> m_VertexInputAttributeDescription = Vertex::GetAttributeDescriptions();
 };
