@@ -3,8 +3,8 @@ set(SHADER_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/shaders")
 set(SHADER_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/shaders")
 
 # Copy the base shaders to the binary directory
-set(BASE_SHADERS_DIR ${SHADER_SOURCE_DIR}/BaseShaders)
-set(BASE_SHADER_BIN_DIR ${CMAKE_CURRENT_BINARY_DIR}/shaders/BaseShaders)
+set(BASE_SHADERS_DIR ${SHADER_SOURCE_DIR})
+set(BASE_SHADER_BIN_DIR ${CMAKE_CURRENT_BINARY_DIR}/shaders)
 file(GLOB_RECURSE BASE_SHADERS "${BASE_SHADERS_DIR}/*")
 file(COPY ${BASE_SHADERS} DESTINATION ${BASE_SHADER_BIN_DIR})
 
@@ -52,7 +52,9 @@ set(SOURCES
     "Core/CommandBuffer.h" 
     "Core/CommandBuffer.cpp" 
     "Core/CommandPool.h" 
-    "Core/CommandPool.cpp" "Core/QueueFamilyIndices.h")
+    "Core/CommandPool.cpp" 
+    "Core/QueueFamilyIndices.h" 
+    "Core/GraphicsPipeline.h" "Core/GraphicsPipeline.cpp" "Patterns/ServiceLocator.h" "vulkanbase/VulkanTypes.h" "Scene/Scene.h" "Scene/Scene.cpp" "Core/ImGuiWrapper.h")
 
 
 set(EXTERNALS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../includes)

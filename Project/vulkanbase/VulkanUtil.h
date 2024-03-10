@@ -1,29 +1,12 @@
 #pragma once
-
-#pragma once
-
-#define VK_USE_PLATFORM_WIN32_KHR
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-#define GLFW_EXPOSE_NATIVE_WIN32
-#include <optional>
-#include <GLFW/glfw3native.h>
-
-
-const uint32_t WIDTH = 800;
-const uint32_t HEIGHT = 600;
-
+#include <vulkan/vulkan.h>
+#include <vector>
+#include <fstream>
 #ifdef NDEBUG
 const bool enableValidationLayers = false;
 #else
 const bool enableValidationLayers = true;
 #endif
-
-#include <vector>
-#include <fstream>
-
-
-
 
 VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
 

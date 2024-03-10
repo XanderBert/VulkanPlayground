@@ -2,15 +2,15 @@
 #include "efsw/include/efsw/efsw.hpp"
 #include "SpirvHelper.h"
 #include "efsw/System.hpp"
-#include "../vulkanbase/VulkanBase.h"
+#include "../Core/GraphicsPipeline.h"
 
 class ShaderListener : public efsw::FileWatchListener
 {
 public:
-	void handleFileAction(efsw::WatchID watchid, const std::string& dir,
-		const std::string& filename, efsw::Action action,
-		std::string oldFilename) override
 
+	ShaderListener() = default;
+
+	void handleFileAction(efsw::WatchID watchid, const std::string& dir, const std::string& filename, efsw::Action action,	std::string oldFilename) override
 	{
 		//Wait for a bit to make sure the file is done being written (as sometimes it is not done yet)
 		efsw::System::sleep(100);
@@ -28,14 +28,18 @@ public:
 
 			//Compile and Save the shader
 			SpirvHelper::CompileAndSaveShader(filename, kind, "shaders/" + filename);
+			
+
+			//TODO:: Make some kind of event system to notify the GraphicsPipeline to recreate the pipeline
+			//GraphicsPipeline::RecreateGraphicsPipeline();
 		}
 	}
 
 private:
-	shaderc_shader_kind GetShaderKind(const std::string& filename)
+	static shaderc_shader_kind GetShaderKind(const std::string& filename)
 	{
 		// pick the last 4 characters of the filename
-		std::string extension = filename.substr(filename.size() - 5, 5);
+		const std::string extension = filename.substr(filename.size() - 5, 5);
 
 		//return the kind based on the extionsion
 		if(extension == ".vert") return shaderc_glsl_vertex_shader;
@@ -70,6 +74,6 @@ public:
 	ShaderFileWatcher& operator=(ShaderFileWatcher&&) = delete;
 
 private:
-	std::unique_ptr<efsw::FileWatcher> m_FileWatcher;
-	std::unique_ptr<ShaderListener> m_Listener;
+	inline static std::unique_ptr<efsw::FileWatcher> m_FileWatcher;
+	inline static std::unique_ptr<ShaderListener> m_Listener;
 };

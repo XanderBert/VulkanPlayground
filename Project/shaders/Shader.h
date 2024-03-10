@@ -1,6 +1,7 @@
 #pragma once
 #include "vulkanbase/VulkanBase.h"
 
+struct Vertex;
 class Shader final
 {
 public:
@@ -18,6 +19,7 @@ public:
 private:
 	static VkShaderModule CreateShaderModule(const VkDevice& device, const std::vector<char>& code);
 
+	//TODO: the lifetime of these variables are too long
 	inline static VkVertexInputBindingDescription m_VertexInputBindingDescription = Vertex::GetBindingDescription();
 	inline static std::array<VkVertexInputAttributeDescription, 2> m_VertexInputAttributeDescription = Vertex::GetAttributeDescriptions();
 };

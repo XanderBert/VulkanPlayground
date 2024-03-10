@@ -1,6 +1,8 @@
 #pragma once
 #include <vulkan/vulkan.h>
-#include "vulkanbase/VulkanUtil.h"
+
+#include "vulkanbase/VulkanTypes.h"
+
 
 class CommandPool final
 {
@@ -12,5 +14,5 @@ class CommandPool final
 	CommandPool(CommandPool&&) = delete;
 	CommandPool& operator=(CommandPool&&) = delete;
 
-	static void CreateCommandPool(const VkDevice& device, const VkPhysicalDevice& physicalDevice, const VkSurfaceKHR& surface, VkCommandPool& commandPool);
+	static void CreateCommandPool(const VulkanContext* context, VkCommandPool& commandPool);
 };

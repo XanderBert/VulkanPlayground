@@ -1,7 +1,11 @@
 #include "vulkanbase/VulkanBase.h"
 
-SwapChainSupportDetails VulkanBase::querySwapChainSupport(VkPhysicalDevice device) {
+SwapChainSupportDetails VulkanBase::querySwapChainSupport(VkPhysicalDevice device)
+{
 	SwapChainSupportDetails details;
+
+	VkSurfaceKHR surface = m_pContext->surface;
+
 
 	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
 
@@ -48,9 +52,10 @@ VkExtent2D VulkanBase::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabili
 	if (capabilities.currentExtent.width != (std::numeric_limits<uint32_t>::max)()) {
 		return capabilities.currentExtent;
 	}
-	else {
+	else 
+	{
 		int width, height;
-		glfwGetFramebufferSize(window, &width, &height);
+		glfwGetFramebufferSize(m_pContext->window.Ptr(), &width, &height);
 
 		VkExtent2D actualExtent = {
 			static_cast<uint32_t>(width),
@@ -64,7 +69,12 @@ VkExtent2D VulkanBase::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabili
 	}
 }
 
-void VulkanBase::createSwapChain() {
+void VulkanBase::createSwapChain()
+{
+	VkPhysicalDevice physicalDevice = m_pContext->physicalDevice;
+	VkSurfaceKHR surface = m_pContext->surface;
+	VkDevice device = m_pContext->device;
+
 	SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice);
 
 	VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
@@ -109,13 +119,13 @@ void VulkanBase::createSwapChain() {
 
 	createInfo.oldSwapchain = VK_NULL_HANDLE;
 
-	if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain) != VK_SUCCESS) {
+	if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &m_pContext->swapchain) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create swap chain!");
 	}
 
-	vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
+	vkGetSwapchainImagesKHR(device, m_pContext->swapchain, &imageCount, nullptr);
 	swapChainImages.resize(imageCount);
-	vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
+	vkGetSwapchainImagesKHR(device, m_pContext->swapchain, &imageCount, swapChainImages.data());
 
 	swapChainImageFormat = surfaceFormat.format;
 	swapChainExtent = extent;
@@ -140,7 +150,7 @@ void VulkanBase::createImageViews() {
 		createInfo.subresourceRange.baseArrayLayer = 0;
 		createInfo.subresourceRange.layerCount = 1;
 
-		if (vkCreateImageView(device, &createInfo, nullptr, &swapChainImageViews[i]) != VK_SUCCESS) {
+		if (vkCreateImageView(m_pContext->device, &createInfo, nullptr, &swapChainImageViews[i]) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create image views!");
 		}
 	}

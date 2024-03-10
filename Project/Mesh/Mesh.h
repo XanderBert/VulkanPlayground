@@ -1,13 +1,14 @@
 #pragma once
+#include "vulkan/vulkan.h"
 #include <vector>
 
-#include "Vertex.h"
-
+class VulkanContext;
+struct Vertex;
 class Mesh final
 {
 public:
-	Mesh(const VkDevice& pDevice, const std::vector<Vertex>& vertices, VkPhysicalDevice physicalDevice);
-	~Mesh();
+	Mesh(const std::vector<Vertex>& vertices);
+	~Mesh() = default;
 
 	Mesh(const Mesh&) = delete;
 	Mesh(Mesh&&) = delete;
@@ -16,6 +17,8 @@ public:
 
 	void Bind(VkCommandBuffer commandBuffer) const;
 	void Render(VkCommandBuffer commandBuffer) const;
+	void CleanUp() const;
+	//void SetShader(const VkPipelineShaderStageCreateInfo& shaderInfo);
 
 private:
 	void CreateVertexBuffer(const std::vector<Vertex>& vertices, VkPhysicalDevice physicalDevice);

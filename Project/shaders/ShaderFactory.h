@@ -1,5 +1,6 @@
 #pragma once
 #include "Luascripts/LuaScriptRunner.h"
+#include "Patterns/ServiceLocator.h"
 
 
 class ShaderFactory final
@@ -37,7 +38,7 @@ public:
 			if (ImGui::Button("Create Shader")) 
 			{
 				// Execute the Lua Function to create the base shader
-				sol::state& lua = LuaScriptRunner::GetInstance().GetLuaRunner();
+				sol::state& lua = ServiceLocator::GetService<LuaScriptRunner>()->GetLuaRunner();
 				lua.script_file("LuaScripts/CreateShader.lua");
 				const std::function<void(std::string, std::string, std::string)>& CreateShader = lua["CreateShader"];
 

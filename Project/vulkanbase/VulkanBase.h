@@ -1,35 +1,27 @@
 #pragma once
 
 #define VK_USE_PLATFORM_WIN32_KHR
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-#define GLFW_EXPOSE_NATIVE_WIN32
-#include <GLFW/glfw3native.h>
 #include "VulkanUtil.h"
 
 #include <iostream>
-#include <stdexcept>
 #include <vector>
-#include <cstring>
-#include <cstdlib>
 #include <cstdint>
 #include <optional>
-#include <set>
-#include <limits>
-#include <algorithm>
 
-#include "imgui/imgui.h"
-#include "imgui/backends/imgui_impl_glfw.h"
-#include "imgui/backends/imgui_impl_vulkan.h"
 
-#include "../shaders/ShaderFactory.h"
+#include "Mesh/Vertex.h"
+
 #include "../shaders/ShaderFileWatcher.h"
 #include "Core/CommandBuffer.h"
 #include "Core/CommandPool.h"
+#include "Core/GraphicsPipeline.h"
 #include "Core/QueueFamilyIndices.h"
-#include "Mesh/Mesh.h"
 
 
+#include "../Patterns/ServiceLocator.h"
+#include "VulkanTypes.h"
+#include "Scene/Scene.h"
+#include "../Core/ImGuiWrapper.h"
 
 struct ImGui_ImplVulkan_InitInfo;
 const std::vector validationLayers = { "VK_LAYER_KHRONOS_validation" };
@@ -44,18 +36,17 @@ struct SwapChainSupportDetails
 	std::vector<VkPresentModeKHR> presentModes;
 };
 
+
 class VulkanBase
 {
 public:
 	void run()
 	{
-		initWindow();
+		ServiceConfigurator::Configure();
 
 		initVulkan();
-		initImGui();
-
-
-
+		ImGuiWrapper::Initialize(graphicsQueue, swapChainImages.size(), renderPass);
+		m_pScene = std::make_unique<Scene>();
 		mainLoop();
 		cleanup();
 	}
@@ -64,9 +55,10 @@ private:
 	void initVulkan()
 	{
 		// week 06
-		createInstance();
+		m_pContext = ServiceLocator::GetService<VulkanContext>();
+ 		createInstance();
 		setupDebugMessenger();
-		createSurface();
+		m_pContext->CreateSurface();
 
 		// week 05
 		pickPhysicalDevice();
@@ -76,100 +68,38 @@ private:
 		createSwapChain();
 		createImageViews();
 
-		//Create Mesh
-		m_pMesh = new Mesh(device, vertices, physicalDevice);
-
 		// week 03
 		createRenderPass();
 		createGraphicsPipeline();
 		createFrameBuffers();
-		// week 02
-		CommandPool::CreateCommandPool(device, physicalDevice, surface, commandPool);
-		CommandBufferManager::CreateCommandBuffer(device, commandPool, commandBuffer);
+	
+		CommandPool::CreateCommandPool(m_pContext, commandPool);
+		CommandBufferManager::CreateCommandBuffer(m_pContext->device, commandPool, commandBuffer);
 
 		// week 06
 		createSyncObjects();
 	}
 
-	void initImGui()
-	{
 
-		// Create Descriptor Pool TODO: Move to a separate function
-		// The example only requires a single combined image sampler descriptor for the font image and only uses one descriptor set (for that)
-		// If you wish to load e.g. additional textures you may need to alter pools sizes.
-		{
-			VkDescriptorPoolSize pool_sizes[] =
-			{
-				{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
-			};
-
-			VkDescriptorPoolCreateInfo pool_info = {};
-			pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-			pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-			pool_info.maxSets = 1;
-			pool_info.poolSizeCount = (uint32_t)IM_ARRAYSIZE(pool_sizes);
-			pool_info.pPoolSizes = pool_sizes;
-			auto err = vkCreateDescriptorPool(device, &pool_info, nullptr, &descriptorPool);
-		}
-
-
-
-
-		IMGUI_CHECKVERSION();
-		ImGui::CreateContext();
-		ImGuiIO& io = ImGui::GetIO(); (void)io;
-		ImGui::StyleColorsDark();
-
-
-		ImGui_ImplGlfw_InitForVulkan(window, true);
-		ImGui_ImplVulkan_InitInfo init_info = {};
-		init_info.Instance = instance;
-		init_info.PhysicalDevice = physicalDevice;
-		init_info.Device = device;
-		init_info.QueueFamily = QueueFamilyIndices::FindQueueFamilies(physicalDevice, surface).graphicsFamily.value();
-		init_info.Queue = graphicsQueue;
-		init_info.PipelineCache = VK_NULL_HANDLE;
-		init_info.DescriptorPool = descriptorPool;
-		init_info.Allocator = VK_NULL_HANDLE;
-		init_info.MinImageCount = 2;
-		init_info.ImageCount = static_cast<uint32_t>(swapChainImages.size());
-		init_info.CheckVkResultFn = nullptr;
-		init_info.RenderPass = renderPass;
-		//init_info.CheckVkResultFn = debugCallback;
-		ImGui_ImplVulkan_Init(&init_info);
-	
-	}
 
 	void mainLoop()
 	{
 
-		while (!glfwWindowShouldClose(window)) 
+		while (!glfwWindowShouldClose(m_pContext->window.Ptr())) 
 		{
-			glfwPollEvents();
-			//createGraphicsPipeline();
-
-			// Start the Dear ImGui frame 
-			ImGui_ImplVulkan_NewFrame();
-			ImGui_ImplGlfw_NewFrame();
-			ImGui::NewFrame();
-
+			glfwPollEvents();			
+			ImGuiWrapper::NewFrame();
 			drawFrame();
-
-			// week 06
-			
-
 		}
-		vkDeviceWaitIdle(device);
+
+		vkDeviceWaitIdle(m_pContext->device);
 	}
 
 	void cleanup() const
 	{
-		ImGui_ImplVulkan_Shutdown();
-		ImGui_ImplGlfw_Shutdown();
-		ImGui::DestroyContext();
+		ImGuiWrapper::Cleanup();
 
-		vkDestroyDescriptorPool(device, descriptorPool, nullptr);
-
+		const VkDevice device = m_pContext->device;
 
 		vkDestroySemaphore(device, renderFinishedSemaphore, nullptr);
 		vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
@@ -181,8 +111,8 @@ private:
 			vkDestroyFramebuffer(device, framebuffer, nullptr);
 		}
 
-		vkDestroyPipeline(device, graphicsPipeline, nullptr);
-		vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+		GraphicsPipeline::Cleanup(device);
+
 		vkDestroyRenderPass(device, renderPass, nullptr);
 
 		for (const auto imageView : swapChainImageViews) 
@@ -192,65 +122,24 @@ private:
 
 		if (enableValidationLayers) 
 		{
-			DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
+			DestroyDebugUtilsMessengerEXT(m_pContext->instance, debugMessenger, nullptr);
 		}
 
-		delete m_pMesh;
-
-		vkDestroySwapchainKHR(device, swapChain, nullptr);
-		vkDestroyDevice(device, nullptr);
-
-		vkDestroySurfaceKHR(instance, surface, nullptr);
-		vkDestroyInstance(instance, nullptr);
-
-
-		glfwDestroyWindow(window);
-		glfwTerminate();
-	}
-
-	
-
-	
-
-	void createSurface()
-	{
-		if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) 
-		{
-			throw std::runtime_error("failed to create window surface!");
-		}
+		m_pScene->CleanUp();
+		m_pContext->CleanUp();
 	}
 
 
-	GLFWwindow* window;
-	void initWindow()
-	{
-		glfwInit();
-		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-		window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
-	}
+	VulkanContext* m_pContext{};
+	std::unique_ptr<Scene> m_pScene;
 
-	//TODO : Move to a separate class
+	//TODO : Move to a separate class (Service?)
 	ShaderFileWatcher shaderFileWatcher{};
 
 
 
-
-	//Temporary data
-	std::vector<Vertex> vertices =
-	{
-	{{0.0f, -0.5f}, {1.0f, 1.0f, 1.0f}},
-	{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-	{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-		{ {0.0f, -0.5f}, {1.0f, 1.0f, 1.0f}},
-	{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-	{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
-	};
-
 	VkCommandPool commandPool{};
 	CommandBuffer commandBuffer{};
-	//Imgui Setup reasons 
-	VkDescriptorPool descriptorPool;
 
 
 	void drawFrame(uint32_t imageIndex) const
@@ -270,7 +159,7 @@ private:
 		vkCmdBeginRenderPass(commandBuffer.Handle, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 		//Bin the Pipeline
-		vkCmdBindPipeline(commandBuffer.Handle, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+		vkCmdBindPipeline(commandBuffer.Handle, VK_PIPELINE_BIND_POINT_GRAPHICS, GraphicsPipeline::GetGraphicsPipeline());
 
 
 		//Set the viewport
@@ -290,11 +179,8 @@ private:
 		scissor.extent = swapChainExtent;
 		vkCmdSetScissor(commandBuffer.Handle, 0, 1, &scissor);
 
-		//Draw The actual scene
-		ShaderFactory::Render();
-		ImGui::Render();
-		m_pMesh->Bind(commandBuffer.Handle);
-		m_pMesh->Render(commandBuffer.Handle);
+		//Render The actual scene
+		m_pScene->Render(commandBuffer.Handle);
 		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer.Handle);
 
 
@@ -302,17 +188,12 @@ private:
 		vkCmdEndRenderPass(commandBuffer.Handle);
 	}
 
-
-	void createGraphicsPipeline();
-	Mesh* m_pMesh{};
-
+	void createGraphicsPipeline() const;
 	// Week 03
 	// Renderpass concept
 	// Graphics pipeline
 	
 	std::vector<VkFramebuffer> swapChainFramebuffers;
-	VkPipelineLayout pipelineLayout;
-	VkPipeline graphicsPipeline;
 	VkRenderPass renderPass;
 
 	void createFrameBuffers();
@@ -322,7 +203,6 @@ private:
 	// Week 04
 	// Swap chain and image view support
 
-	VkSwapchainKHR swapChain;
 	std::vector<VkImage> swapChainImages;
 	VkFormat swapChainImageFormat;
 	VkExtent2D swapChainExtent;
@@ -338,8 +218,6 @@ private:
 
 	// Week 05 
 	// Logical and physical device
-
-	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 	VkQueue graphicsQueue;
 	VkQueue presentQueue;
 	
@@ -350,26 +228,19 @@ private:
 
 	// Week 06
 	// Main initialization
-
-	VkInstance instance;
 	VkDebugUtilsMessengerEXT debugMessenger;
-	VkDevice device = VK_NULL_HANDLE;
-	VkSurfaceKHR surface;
-
 	VkSemaphore imageAvailableSemaphore;
 	VkSemaphore renderFinishedSemaphore;
 	VkFence inFlightFence;
 
-	void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
 	void setupDebugMessenger();
-	std::vector<const char*> getRequiredExtensions();
 	bool checkDeviceExtensionSupport(VkPhysicalDevice device);
 	void createInstance();
+	std::vector<const char*> getRequiredExtensions();
+	void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
 
 	void createSyncObjects();
 	void drawFrame();
-
-
 
 	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
 	{

@@ -1,17 +1,17 @@
 #include "Mesh.h"
 #include <stdexcept>
 #include "vulkanbase/VulkanUtil.h"
+#include "vulkanbase/VulkanTypes.h"
+#include "Vertex.h"
+#include "Patterns/ServiceLocator.h"
 
-Mesh::Mesh(const VkDevice& pDevice, const std::vector<Vertex>& vertices, VkPhysicalDevice physicalDevice)
+Mesh::Mesh(const std::vector<Vertex>& vertices)
 {
-	m_pDevice = pDevice;
-	CreateVertexBuffer(vertices, physicalDevice);
-}
+	const VulkanContext* context = ServiceLocator::GetService<VulkanContext>();
+	m_pDevice = context->device;
 
-Mesh::~Mesh()
-{
-	vkDestroyBuffer(m_pDevice, m_VertexBuffer, nullptr);
-	vkFreeMemory(m_pDevice, m_VertexBufferMemory, nullptr);
+
+	CreateVertexBuffer(vertices, context->physicalDevice);
 }
 
 void Mesh::Bind(VkCommandBuffer commandBuffer) const
@@ -25,6 +25,12 @@ void Mesh::Bind(VkCommandBuffer commandBuffer) const
 void Mesh::Render(VkCommandBuffer commandBuffer) const
 {
 	vkCmdDraw(commandBuffer, m_VertexCount, 1, 0, 0);
+}
+
+void Mesh::CleanUp() const
+{
+	vkDestroyBuffer(m_pDevice, m_VertexBuffer, nullptr);
+	vkFreeMemory(m_pDevice, m_VertexBufferMemory, nullptr);
 }
 
 void Mesh::CreateVertexBuffer(const std::vector<Vertex>& vertices, VkPhysicalDevice physicalDevice)

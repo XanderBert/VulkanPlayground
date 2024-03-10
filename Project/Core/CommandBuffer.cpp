@@ -97,15 +97,13 @@ void CommandBufferManager::ResetCommandBuffer(const VkDevice& device, const VkCo
 	commandBuffer.State = CommandBufferState::Ready;
 }
 
-void CommandBufferManager::CreateCommandBufferSingleUse(const VkDevice& device, const VkCommandPool& commandPool,
-	CommandBuffer& commandBuffer)
+void CommandBufferManager::CreateCommandBufferSingleUse(const VkDevice& device, const VkCommandPool& commandPool, CommandBuffer& commandBuffer)
 {
 	CreateCommandBuffer(device, commandPool, commandBuffer);
 	BeginCommandBufferRecording(commandBuffer, true, false);
 }
 
-void CommandBufferManager::EndCommandBufferSingleUse(const VkDevice& device, const VkCommandPool& commandPool,
-	CommandBuffer& commandBuffer, VkQueue queue)
+void CommandBufferManager::EndCommandBufferSingleUse(const VkDevice& device, const VkCommandPool& commandPool, CommandBuffer& commandBuffer, VkQueue queue)
 {
 	EndCommandBufferRecording(commandBuffer);
 
@@ -119,7 +117,7 @@ void CommandBufferManager::EndCommandBufferSingleUse(const VkDevice& device, con
 		throw std::runtime_error("failed to submit draw command buffer!");
 	}
 
-	//there is not enough overhead to justify using fences for single use command buffers
+	//there is not enough overhead to justify using fences for single use command buffers (for now at least)
 	vkQueueWaitIdle(queue);
 
 	FreeCommandBuffer(device, commandPool, commandBuffer);
