@@ -18,7 +18,6 @@ public:
 	void Bind(VkCommandBuffer commandBuffer) const;
 	void Render(VkCommandBuffer commandBuffer) const;
 	void CleanUp() const;
-	//void SetShader(const VkPipelineShaderStageCreateInfo& shaderInfo);
 
 private:
 	void CreateVertexBuffer(const std::vector<Vertex>& vertices, VkPhysicalDevice physicalDevice);

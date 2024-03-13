@@ -5,45 +5,90 @@
 #include <vector>
 #include <vulkan/vulkan.h>
 
+#include "RenderPass.h"
+
 class Shader;
 class GraphicsPipeline final
 {
 public:
 	GraphicsPipeline() = default;
 	~GraphicsPipeline() = default;
+
+
 	GraphicsPipeline(const GraphicsPipeline&) = delete;
 	GraphicsPipeline& operator=(const GraphicsPipeline&) = delete;
 	GraphicsPipeline(GraphicsPipeline&&) = delete;
 	GraphicsPipeline& operator=(GraphicsPipeline&&) = delete;
 
-	static void SetShaders(const std::vector<VkPipelineShaderStageCreateInfo>& shaders, const VkRenderPass& renderPass, const VkDevice& device);
-	static void Cleanup(const VkDevice& device)
+	void CreatePipeline(const VkDevice& device, const VkFormat& swapChainImageFormat, const std::vector<VkPipelineShaderStageCreateInfo>& shaders);
+
+	void Cleanup(const VkDevice& device) const
 	{
+
 		vkDestroyPipeline(device, m_GraphicsPipeline, nullptr);
 		vkDestroyPipelineLayout(device, m_PipelineLayout, nullptr);
+		vkDestroyRenderPass(device, m_RenderPass, nullptr);
 	}
 
-	//static void RecreateGraphicsPipeline()
-	//{
-	//	SetShaders(m_LastUsedShaders, m_RenderPass, m_Device);
-	//}
-	static VkPipelineLayout GetPipelineLayout()
+	const VkPipeline& GetPipeline() const
 	{
-		//check if pipeline layout is created
-		assert(m_PipelineLayout != VK_NULL_HANDLE);
-		return m_PipelineLayout;
-	}
-	static VkPipeline GetGraphicsPipeline()
-	{
-		//check if graphics pipeline is created
-		assert(m_GraphicsPipeline != VK_NULL_HANDLE);
 		return m_GraphicsPipeline;
 	}
 
-private:
-	inline static VkPipelineLayout m_PipelineLayout{};
-	inline static VkPipeline m_GraphicsPipeline{};
+	const VkPipelineLayout& GetPipelineLayout() const
+	{
+		return m_PipelineLayout;
+	}
 
+	VkRenderPass GetRenderPass() const
+	{
+		return m_RenderPass;
+	}
+
+private:
+	friend class GraphicsPipelineBuilder;
+
+
+	void SetShaders(const std::vector<VkPipelineShaderStageCreateInfo>& shaders)
+	{
+		m_ActiveShaders = shaders;
+	}
+	bool HasRenderPass() const
+	{
+		return m_RenderPass != VK_NULL_HANDLE;
+	}
+	bool HasShaders() const
+	{
+		return !m_ActiveShaders.empty();
+	}
+	bool IsReadyForInitialization() const
+	{
+		return HasRenderPass() && HasShaders();
+	}
+
+	std::vector<VkPipelineShaderStageCreateInfo> m_ActiveShaders{};
+	VkRenderPass m_RenderPass{ VK_NULL_HANDLE};
+	VkPipelineLayout m_PipelineLayout{};
+	VkPipeline m_GraphicsPipeline{};
+};
+
+
+
+
+class GraphicsPipelineBuilder final
+{
+public:
+	GraphicsPipelineBuilder() = default;
+	~GraphicsPipelineBuilder() = default;
+	GraphicsPipelineBuilder(const GraphicsPipelineBuilder&) = delete;
+	GraphicsPipelineBuilder& operator=(const GraphicsPipelineBuilder&) = delete;
+	GraphicsPipelineBuilder(GraphicsPipelineBuilder&&) = delete;
+	GraphicsPipelineBuilder& operator=(GraphicsPipelineBuilder&&) = delete;
+
+	static void CreatePipeline(GraphicsPipeline& graphicsPipeline, const VkDevice& device);
+
+
+private:
 	static VkPipelineViewportStateCreateInfo CreateViewportState()
 	{
 		VkPipelineViewportStateCreateInfo viewportState{};
@@ -106,21 +151,16 @@ private:
 		return dynamicState;
 	}
 
-	static void CreatePipelineLayout(const VkDevice& device)
+	static void CreatePipelineLayout(const VkDevice& device, VkPipelineLayout& pipelineLayout)
 	{
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		pipelineLayoutInfo.setLayoutCount = 0;
 		pipelineLayoutInfo.pushConstantRangeCount = 0;
 
-		if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &m_PipelineLayout) != VK_SUCCESS)
+		if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
 		{
 			throw std::runtime_error("failed to create pipeline layout!");
 		}
 	}
-
-	//TODO Should be used with some kind of service locator
-	//inline static std::vector<VkPipelineShaderStageCreateInfo> m_LastUsedShaders{};
-	//inline  VkRenderPass m_RenderPass{};
-	//inline  VkDevice m_Device{};
 };

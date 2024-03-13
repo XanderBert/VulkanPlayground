@@ -1,8 +1,6 @@
 #pragma once
 #include <vulkan/vulkan.h>
 
-
-//for ease of use in the future we will track the state as otherwise is only tracked internally by Vulkan
 enum class CommandBufferState : uint8_t
 {
 	NotAllocated,

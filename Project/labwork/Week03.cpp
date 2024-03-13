@@ -1,5 +1,7 @@
 #include "vulkanbase/VulkanBase.h"
 #include <Core/GraphicsPipeline.h>
+
+#include "Core/RenderPass.h"
 #include "shaders/Shader.h"
 
 void VulkanBase::createFrameBuffers()
@@ -15,7 +17,7 @@ void VulkanBase::createFrameBuffers()
 
 		VkFramebufferCreateInfo framebufferInfo{};
 		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		framebufferInfo.renderPass = renderPass;
+		framebufferInfo.renderPass = m_pGraphicsPipeline.GetRenderPass();
 		framebufferInfo.attachmentCount = 1;
 		framebufferInfo.pAttachments = attachments;
 		framebufferInfo.width = swapChainExtent.width;
@@ -31,48 +33,14 @@ void VulkanBase::createFrameBuffers()
 
 
 
-void VulkanBase::createRenderPass()
+
+
+void VulkanBase::createGraphicsPipeline()
 {
-	VkAttachmentDescription colorAttachment{};
-	colorAttachment.format = swapChainImageFormat;
-	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-	VkAttachmentReference colorAttachmentRef{};
-	colorAttachmentRef.attachment = 0;
-	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-	VkSubpassDescription subpass{};
-	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpass.colorAttachmentCount = 1;
-	subpass.pColorAttachments = &colorAttachmentRef;
-
-	VkRenderPassCreateInfo renderPassInfo{};
-	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	renderPassInfo.attachmentCount = 1;
-	renderPassInfo.pAttachments = &colorAttachment;
-	renderPassInfo.subpassCount = 1;
-	renderPassInfo.pSubpasses = &subpass;
-
-	if (vkCreateRenderPass(m_pContext->device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) 
-	{
-		throw std::runtime_error("failed to create render pass!");
-	}
-}
-
-void VulkanBase::createGraphicsPipeline() const
-{
-
 	const VkDevice device = m_pContext->device;
 
-	//Todo make a encapsulating material class for specifying shaders
-	VkPipelineShaderStageCreateInfo vertShaderStageInfo = Shader::CreateShaderInfo(device, VK_SHADER_STAGE_VERTEX_BIT, "shader.vert");
-	VkPipelineShaderStageCreateInfo fragShaderStageInfo = Shader::CreateShaderInfo(device, VK_SHADER_STAGE_FRAGMENT_BIT, "shader.frag");
+	const VkPipelineShaderStageCreateInfo vertShaderStageInfo = Shader::CreateShaderInfo(device, VK_SHADER_STAGE_VERTEX_BIT, "shader.vert");
+	const VkPipelineShaderStageCreateInfo fragShaderStageInfo = Shader::CreateShaderInfo(device, VK_SHADER_STAGE_FRAGMENT_BIT, "shader.frag");
 
 	const std::vector shaderStages = 
 	{
@@ -80,7 +48,9 @@ void VulkanBase::createGraphicsPipeline() const
 		fragShaderStageInfo
 	};
 
-	GraphicsPipeline::SetShaders(shaderStages, renderPass, device);
+
+	m_pGraphicsPipeline.CreatePipeline(device, swapChainImageFormat, shaderStages);
+
 
 	vkDestroyShaderModule(device, vertShaderStageInfo.module, nullptr);
 	vkDestroyShaderModule(device, fragShaderStageInfo.module, nullptr);

@@ -53,21 +53,14 @@ private:
 class VulkanContext 
 {
 public:
-	VulkanContext()
-	{
-		//Setup members here
-	}
-
+	VulkanContext() = default;
 	~VulkanContext() = default;
 	VulkanContext(const VulkanContext&) = delete;
 	VulkanContext& operator=(const VulkanContext&) = delete;
 	VulkanContext(VulkanContext&&) = delete;
 	VulkanContext& operator=(VulkanContext&&) = delete;
 
-
-
 	//Week 06
-
 	void CreateSurface()
 	{
 		if (glfwCreateWindowSurface(instance, window.Ptr(), nullptr, &surface) != VK_SUCCESS)
@@ -91,5 +84,4 @@ public:
 		vkDestroySurfaceKHR(instance, surface, nullptr);
 		vkDestroyInstance(instance, nullptr);
 	}
-private:
 };

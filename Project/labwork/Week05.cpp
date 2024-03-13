@@ -93,7 +93,8 @@ void VulkanBase::createLogicalDevice()
 		createInfo.enabledLayerCount = 0;
 	}
 
-	if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &m_pContext->device) != VK_SUCCESS) {
+	if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &m_pContext->device) != VK_SUCCESS) 
+	{
 		throw std::runtime_error("failed to create logical device!");
 	}
 

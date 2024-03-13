@@ -25,7 +25,8 @@
 
 struct ImGui_ImplVulkan_InitInfo;
 const std::vector validationLayers = { "VK_LAYER_KHRONOS_validation" };
-const std::vector deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+//const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME, VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME};
+const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
 
 
@@ -43,9 +44,8 @@ public:
 	void run()
 	{
 		ServiceConfigurator::Configure();
-
 		initVulkan();
-		ImGuiWrapper::Initialize(graphicsQueue, swapChainImages.size(), renderPass);
+		ImGuiWrapper::Initialize(graphicsQueue, swapChainImages.size(), m_pGraphicsPipeline.GetRenderPass());
 		m_pScene = std::make_unique<Scene>();
 		mainLoop();
 		cleanup();
@@ -69,7 +69,6 @@ private:
 		createImageViews();
 
 		// week 03
-		createRenderPass();
 		createGraphicsPipeline();
 		createFrameBuffers();
 	
@@ -111,9 +110,8 @@ private:
 			vkDestroyFramebuffer(device, framebuffer, nullptr);
 		}
 
-		GraphicsPipeline::Cleanup(device);
+		m_pGraphicsPipeline.Cleanup(device);
 
-		vkDestroyRenderPass(device, renderPass, nullptr);
 
 		for (const auto imageView : swapChainImageViews) 
 		{
@@ -146,7 +144,7 @@ private:
 	{
 		VkRenderPassBeginInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = renderPass;
+		renderPassInfo.renderPass = m_pGraphicsPipeline.GetRenderPass();
 		renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = swapChainExtent;
@@ -159,7 +157,7 @@ private:
 		vkCmdBeginRenderPass(commandBuffer.Handle, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 		//Bin the Pipeline
-		vkCmdBindPipeline(commandBuffer.Handle, VK_PIPELINE_BIND_POINT_GRAPHICS, GraphicsPipeline::GetGraphicsPipeline());
+		vkCmdBindPipeline(commandBuffer.Handle, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pGraphicsPipeline.GetPipeline());
 
 
 		//Set the viewport
@@ -188,16 +186,16 @@ private:
 		vkCmdEndRenderPass(commandBuffer.Handle);
 	}
 
-	void createGraphicsPipeline() const;
+	void createGraphicsPipeline();
 	// Week 03
+	GraphicsPipeline m_pGraphicsPipeline{};
 	// Renderpass concept
 	// Graphics pipeline
-	
+
+
 	std::vector<VkFramebuffer> swapChainFramebuffers;
-	VkRenderPass renderPass;
 
 	void createFrameBuffers();
-	void createRenderPass();
 
 
 	// Week 04
