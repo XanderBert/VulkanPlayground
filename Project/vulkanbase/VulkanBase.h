@@ -49,7 +49,7 @@ public:
 	{
 		ServiceConfigurator::Configure();
 		initVulkan();
-		ImGuiWrapper::Initialize(graphicsQueue, swapChainImages.size());
+		ImGuiWrapper::Initialize(graphicsQueue, swapChainImages.size(), &swapChainImageFormat, swapChainImages);
 		m_pScene = std::make_unique<Scene>();
 		mainLoop();
 		cleanup();
@@ -82,7 +82,6 @@ private:
 
 		// week 03
 		createGraphicsPipeline();
-		createFrameBuffers();
 	
 		CommandPool::CreateCommandPool(m_pContext, commandPool);
 		CommandBufferManager::CreateCommandBuffer(m_pContext->device, commandPool, commandBuffer);

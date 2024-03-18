@@ -90,23 +90,7 @@ void VulkanBase::drawFrame()
 		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 		VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 });
 
-
-	//tools::InsertImageMemoryBarrier(
-	//	commandBuffer.Handle,
-	//	depthStencil.image,
-	//	0,
-	//	VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-	//	VK_IMAGE_LAYOUT_UNDEFINED,
-	//	VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-	//	VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-	//	VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-	//	VkImageSubresourceRange{ VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, 0, 1, 0, 1 });
-
-	
-
-
 	drawFrame(imageIndex);
-
 
 
 	tools::InsertImageMemoryBarrier(commandBuffer.Handle,
