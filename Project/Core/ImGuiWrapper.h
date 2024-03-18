@@ -17,7 +17,7 @@ public:
 	ImGuiWrapper& operator=(ImGuiWrapper&&) = delete;
 	
 
-	static void Initialize(VkQueue graphicsQueue, uint32_t imageCount, VkRenderPass renderPass) 
+	static void Initialize(VkQueue graphicsQueue, uint32_t imageCount) 
 	{
 		const auto m_pContext = ServiceLocator::GetService<VulkanContext>();
 
@@ -53,12 +53,14 @@ public:
 		init_info.QueueFamily = QueueFamilyIndices::FindQueueFamilies(m_pContext->physicalDevice, m_pContext->surface).graphicsFamily.value();
 		init_info.Queue = graphicsQueue;
 		init_info.PipelineCache = VK_NULL_HANDLE;
+		init_info.PipelineRenderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
 		init_info.DescriptorPool = descriptorPool;
 		init_info.Allocator = VK_NULL_HANDLE;
 		init_info.MinImageCount = 2;
 		init_info.ImageCount = imageCount;
 		init_info.CheckVkResultFn = nullptr;
-		init_info.RenderPass = renderPass;
+		init_info.RenderPass = nullptr;
+		init_info.UseDynamicRendering = true;
 		ImGui_ImplVulkan_Init(&init_info);
 	}
 

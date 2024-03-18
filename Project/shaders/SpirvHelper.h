@@ -9,7 +9,7 @@ struct SpirvHelper
     static std::vector<uint32_t> CompileShader(const std::string& sourceName, shaderc_shader_kind kind, const std::string& source, bool optimize = false) 
     {
 		//Read the file
-		std::string shaderString = readFileStr(source);
+		std::string shaderString = tools::readFileStr(source);
 
         std::cout << "Compiling shader: " << sourceName << std::endl;
         std::cout << "Shader source: " << shaderString << std::endl;

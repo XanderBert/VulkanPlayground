@@ -27,7 +27,6 @@ public:
 
 		vkDestroyPipeline(device, m_GraphicsPipeline, nullptr);
 		vkDestroyPipelineLayout(device, m_PipelineLayout, nullptr);
-		vkDestroyRenderPass(device, m_RenderPass, nullptr);
 	}
 
 	const VkPipeline& GetPipeline() const
@@ -40,11 +39,6 @@ public:
 		return m_PipelineLayout;
 	}
 
-	VkRenderPass GetRenderPass() const
-	{
-		return m_RenderPass;
-	}
-
 private:
 	friend class GraphicsPipelineBuilder;
 
@@ -53,21 +47,14 @@ private:
 	{
 		m_ActiveShaders = shaders;
 	}
-	bool HasRenderPass() const
-	{
-		return m_RenderPass != VK_NULL_HANDLE;
-	}
+	
 	bool HasShaders() const
 	{
 		return !m_ActiveShaders.empty();
 	}
-	bool IsReadyForInitialization() const
-	{
-		return HasRenderPass() && HasShaders();
-	}
+
 
 	std::vector<VkPipelineShaderStageCreateInfo> m_ActiveShaders{};
-	VkRenderPass m_RenderPass{ VK_NULL_HANDLE};
 	VkPipelineLayout m_PipelineLayout{};
 	VkPipeline m_GraphicsPipeline{};
 };
@@ -85,7 +72,7 @@ public:
 	GraphicsPipelineBuilder(GraphicsPipelineBuilder&&) = delete;
 	GraphicsPipelineBuilder& operator=(GraphicsPipelineBuilder&&) = delete;
 
-	static void CreatePipeline(GraphicsPipeline& graphicsPipeline, const VkDevice& device);
+	static void CreatePipeline(GraphicsPipeline& graphicsPipeline, const VkDevice& device, const VkFormat& swapChainImageFormat);
 
 
 private:

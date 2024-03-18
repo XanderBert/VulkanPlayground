@@ -60,7 +60,7 @@ void Mesh::CreateVertexBuffer(const std::vector<Vertex>& vertices, VkPhysicalDev
 	VkMemoryAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	allocInfo.allocationSize = memRequirements.size;
-	allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, physicalDevice);
+	allocInfo.memoryTypeIndex = tools::findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, physicalDevice);
 
 	if (vkAllocateMemory(m_pDevice, &allocInfo, nullptr, &m_VertexBufferMemory) != VK_SUCCESS)
 	{

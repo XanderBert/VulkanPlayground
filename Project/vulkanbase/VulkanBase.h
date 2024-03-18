@@ -2,7 +2,7 @@
 
 #define VK_USE_PLATFORM_WIN32_KHR
 #include "VulkanUtil.h"
-
+#include <vulkan/vulkan.h>
 #include <iostream>
 #include <vector>
 #include <cstdint>
@@ -25,9 +25,13 @@
 
 struct ImGui_ImplVulkan_InitInfo;
 const std::vector validationLayers = { "VK_LAYER_KHRONOS_validation" };
-//const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME, VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME};
-const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-
+const std::vector<const char*> deviceExtensions = 
+{
+	VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+	VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
+	VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME,
+	VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME,
+};
 
 
 struct SwapChainSupportDetails
@@ -45,7 +49,7 @@ public:
 	{
 		ServiceConfigurator::Configure();
 		initVulkan();
-		ImGuiWrapper::Initialize(graphicsQueue, swapChainImages.size(), m_pGraphicsPipeline.GetRenderPass());
+		ImGuiWrapper::Initialize(graphicsQueue, swapChainImages.size());
 		m_pScene = std::make_unique<Scene>();
 		mainLoop();
 		cleanup();
@@ -67,6 +71,14 @@ private:
 		// week 04 
 		createSwapChain();
 		createImageViews();
+
+
+		// Since we use an extension, we need to expliclity load the function pointers for extension related Vulkan commands
+		vkCmdBeginRenderingKHR = reinterpret_cast<PFN_vkCmdBeginRenderingKHR>(vkGetDeviceProcAddr(m_pContext->device, "vkCmdBeginRenderingKHR"));
+		vkCmdEndRenderingKHR = reinterpret_cast<PFN_vkCmdEndRenderingKHR>(vkGetDeviceProcAddr(m_pContext->device, "vkCmdEndRenderingKHR"));
+
+
+
 
 		// week 03
 		createGraphicsPipeline();
@@ -105,10 +117,6 @@ private:
 		vkDestroyFence(device, inFlightFence, nullptr);
 
 		vkDestroyCommandPool(device, commandPool, nullptr);
-		for (const auto framebuffer : swapChainFramebuffers) 
-		{
-			vkDestroyFramebuffer(device, framebuffer, nullptr);
-		}
 
 		m_pGraphicsPipeline.Cleanup(device);
 
@@ -120,7 +128,7 @@ private:
 
 		if (enableValidationLayers) 
 		{
-			DestroyDebugUtilsMessengerEXT(m_pContext->instance, debugMessenger, nullptr);
+			tools::DestroyDebugUtilsMessengerEXT(m_pContext->instance, debugMessenger, nullptr);
 		}
 
 		m_pScene->CleanUp();
@@ -142,21 +150,24 @@ private:
 
 	void drawFrame(uint32_t imageIndex) const
 	{
-		VkRenderPassBeginInfo renderPassInfo{};
-		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = m_pGraphicsPipeline.GetRenderPass();
-		renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
-		renderPassInfo.renderArea.offset = { 0, 0 };
-		renderPassInfo.renderArea.extent = swapChainExtent;
+		VkRenderingAttachmentInfoKHR colorAttachmentInfo{};
+		colorAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
+		colorAttachmentInfo.imageView = swapChainImageViews[imageIndex];
+		colorAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		colorAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		colorAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		colorAttachmentInfo.clearValue = {{0.0f, 0.0f, 0.0f, 1.0f}};
 
-		constexpr VkClearValue clearColor = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
-		renderPassInfo.clearValueCount = 1;
-		renderPassInfo.pClearValues = &clearColor;
+		VkRenderingInfoKHR renderInfo{};
+		renderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
+		renderInfo.renderArea = { 0, 0, swapChainExtent.width, swapChainExtent.height };
+		renderInfo.layerCount = 1;
+		renderInfo.colorAttachmentCount = 1;
+		renderInfo.pColorAttachments = &colorAttachmentInfo;
 
-		//Begin Render Pass
-		vkCmdBeginRenderPass(commandBuffer.Handle, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-		//Bin the Pipeline
+
+		//Bind the Pipeline
 		vkCmdBindPipeline(commandBuffer.Handle, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pGraphicsPipeline.GetPipeline());
 
 
@@ -177,26 +188,24 @@ private:
 		scissor.extent = swapChainExtent;
 		vkCmdSetScissor(commandBuffer.Handle, 0, 1, &scissor);
 
+
+
+		vkCmdBeginRenderingKHR(commandBuffer.Handle, &renderInfo);
+
+
 		//Render The actual scene
 		m_pScene->Render(commandBuffer.Handle);
 		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer.Handle);
 
 
-		//End the render pass
-		vkCmdEndRenderPass(commandBuffer.Handle);
+		vkCmdEndRenderingKHR(commandBuffer.Handle);
 	}
 
 	void createGraphicsPipeline();
 	// Week 03
 	GraphicsPipeline m_pGraphicsPipeline{};
-	// Renderpass concept
-	// Graphics pipeline
-
-
-	std::vector<VkFramebuffer> swapChainFramebuffers;
-
-	void createFrameBuffers();
-
+	PFN_vkCmdBeginRenderingKHR vkCmdBeginRenderingKHR{ VK_NULL_HANDLE };
+	PFN_vkCmdEndRenderingKHR vkCmdEndRenderingKHR{ VK_NULL_HANDLE };
 
 	// Week 04
 	// Swap chain and image view support

@@ -3,22 +3,28 @@
 
 void GraphicsPipeline::CreatePipeline(const VkDevice& device, const VkFormat& swapChainImageFormat, const std::vector<VkPipelineShaderStageCreateInfo>& shaders)
 {
-	//TODO: Cleanup the Pipeline if it already existed and Check if the RenderPass should be deleted/created 
-	RenderPass::CreateRenderPass(device, swapChainImageFormat, m_RenderPass);
 	SetShaders(shaders);
-	GraphicsPipelineBuilder::CreatePipeline(*this, device);
+	GraphicsPipelineBuilder::CreatePipeline(*this, device, swapChainImageFormat);
 }
 
-void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline, const VkDevice& device)
+void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline, const VkDevice& device, const VkFormat& swapChainImageFormat)
 {
 	//Check if ShadersStages are set
-	if(!graphicsPipeline.IsReadyForInitialization())
+	if(!graphicsPipeline.HasShaders())
 	{
 		throw std::runtime_error("GraphicsPipelineBuilder::CreatePipeline()");
 	}
 
 	//destroy previous pipeline layout and graphics pipeline
-	//graphicsPipeline.Cleanup(device);
+	graphicsPipeline.Cleanup(device);
+
+
+	//Create dynamic rendering structure
+	VkPipelineRenderingCreateInfoKHR pipelineRenderingCreateInfo{};
+	pipelineRenderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
+	pipelineRenderingCreateInfo.colorAttachmentCount = 1;
+	pipelineRenderingCreateInfo.pColorAttachmentFormats = &swapChainImageFormat;
+
 
 	CreatePipelineLayout(device, graphicsPipeline.m_PipelineLayout);
 
@@ -45,9 +51,11 @@ void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline,
 	pipelineInfo.pColorBlendState = &CreateColorBlending(colorBlendAttachment);
 	pipelineInfo.pDynamicState = &CreateDynamicState(dynamicStates);
 	pipelineInfo.layout = graphicsPipeline.m_PipelineLayout;
-	pipelineInfo.renderPass = graphicsPipeline.m_RenderPass;
+	pipelineInfo.pNext = &pipelineRenderingCreateInfo;
+	pipelineInfo.renderPass = nullptr;
 	pipelineInfo.subpass = 0;
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
+	
 
 	if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline.m_GraphicsPipeline) != VK_SUCCESS)
 	{

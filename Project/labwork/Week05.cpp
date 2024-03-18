@@ -72,16 +72,20 @@ void VulkanBase::createLogicalDevice()
 
 	VkPhysicalDeviceFeatures deviceFeatures{};
 
+
+	VkPhysicalDeviceDynamicRenderingFeaturesKHR dynamicRenderingFeature{};
+	dynamicRenderingFeature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR;
+	dynamicRenderingFeature.dynamicRendering = VK_TRUE;
+
+
 	VkDeviceCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-
 	createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
 	createInfo.pQueueCreateInfos = queueCreateInfos.data();
-
 	createInfo.pEnabledFeatures = &deviceFeatures;
-
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
 	createInfo.ppEnabledExtensionNames = deviceExtensions.data();
+	createInfo.pNext = &dynamicRenderingFeature;
 
 	if (enableValidationLayers) 
 	{

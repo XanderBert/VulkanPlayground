@@ -4,7 +4,7 @@
 VkPipelineShaderStageCreateInfo Shader::CreateShaderInfo(const VkDevice& device, VkShaderStageFlagBits shaderStage, const std::string& fileName)
 {
 	const std::string fileLocation = "shaders/" + fileName + ".spv";
-	const std::vector<char> shaderCode = readFile(fileLocation);
+	const std::vector<char> shaderCode = tools::readFile(fileLocation);
 
 	VkPipelineShaderStageCreateInfo shaderStageInfo{};
 	shaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
