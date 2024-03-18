@@ -5,7 +5,10 @@
 
 
 
+
+//#include "Core/Logger.h"
 #include "vulkanbase/VulkanBase.h"
+
 int main()
 {
 	//DISABLE_LAYER_AMD_SWITCHABLE_GRAPHICS_1 = 1

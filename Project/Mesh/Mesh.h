@@ -20,11 +20,12 @@ public:
 	void CleanUp() const;
 
 private:
-	void CreateVertexBuffer(const std::vector<Vertex>& vertices, VkPhysicalDevice physicalDevice);
+	void CreateVertexBuffer(const std::vector<Vertex>& vertices);
 
-	VkDevice m_pDevice;
+	VulkanContext* m_pContext;
 
 	VkBuffer m_VertexBuffer;
 	VkDeviceMemory m_VertexBufferMemory;
+
 	uint32_t m_VertexCount;
 };

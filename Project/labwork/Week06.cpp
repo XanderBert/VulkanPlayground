@@ -74,7 +74,7 @@ void VulkanBase::drawFrame()
 	vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
 
 
-	CommandBufferManager::ResetCommandBuffer(device, commandPool, commandBuffer);
+	CommandBufferManager::ResetCommandBuffer(commandBuffer);
 	CommandBufferManager::BeginCommandBufferRecording(commandBuffer, false, false);
 
 	// With dynamic rendering there are no subpass dependencies, so we need to take care of proper layout transitions by using barriers
@@ -121,7 +121,7 @@ void VulkanBase::drawFrame()
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signalSemaphores;
 
-	if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFence) != VK_SUCCESS) 
+	if (vkQueueSubmit(m_pContext->graphicsQueue, 1, &submitInfo, inFlightFence) != VK_SUCCESS) 
 	{
 		throw std::runtime_error("failed to submit draw command buffer!");
 	}

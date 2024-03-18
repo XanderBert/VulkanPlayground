@@ -48,8 +48,6 @@ private:
 };
 
 
-
-//TODO Make this class static?
 class VulkanContext 
 {
 public:
@@ -69,6 +67,9 @@ public:
 		}
 	}
 
+	//TODO Store a CommandPool Manager here? (typically there would be 1 command pool for each thread)-> the same can be done for the graphics queue
+	VkQueue graphicsQueue{};
+	VkCommandPool commandPool{};
     VkInstance instance{};
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
     VkDevice device = VK_NULL_HANDLE;
@@ -79,6 +80,7 @@ public:
 
     void CleanUp() const
     {
+		vkDestroyCommandPool(device, commandPool, nullptr);
 		vkDestroySwapchainKHR(device, swapchain, nullptr);
 		vkDestroyDevice(device, nullptr);
 		vkDestroySurfaceKHR(instance, surface, nullptr);

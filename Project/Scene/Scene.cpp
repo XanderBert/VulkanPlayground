@@ -1,10 +1,10 @@
 #include "Scene.h"
-
+#include "Mesh/Mesh.h"
 #include "Mesh/Vertex.h"
-
-
 #include "shaders/ShaderFactory.h"
 #include "imgui.h"
+#include <Core/Logger.h>
+
 
 Scene::Scene()
 {
@@ -43,6 +43,7 @@ void Scene::Render(VkCommandBuffer commandBuffer) const
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 	ImGui::End();
 
+	VulkanLogger::Log.Render("Vulkan Log: ");
 
 	ImGui::Render();
 

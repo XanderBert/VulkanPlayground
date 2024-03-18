@@ -54,7 +54,7 @@ set(SOURCES
     "Core/CommandPool.h" 
     "Core/CommandPool.cpp" 
     "Core/QueueFamilyIndices.h" 
-    "Core/GraphicsPipeline.h" "Core/GraphicsPipeline.cpp" "Patterns/ServiceLocator.h" "vulkanbase/VulkanTypes.h" "Scene/Scene.h" "Scene/Scene.cpp" "Core/ImGuiWrapper.h" "Core/RenderPass.h" "Core/RenderPass.cpp" "Mesh/Material.h")
+    "Core/GraphicsPipeline.h" "Core/GraphicsPipeline.cpp" "Patterns/ServiceLocator.h" "vulkanbase/VulkanTypes.h" "Scene/Scene.h" "Scene/Scene.cpp" "Core/ImGuiWrapper.h" "Core/RenderPass.h" "Core/RenderPass.cpp" "Mesh/Material.h" "Core/Buffer.h" "Core/Buffer.cpp" "Core/Logger.h")
 
 
 set(EXTERNALS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../includes)

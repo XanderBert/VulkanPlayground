@@ -1,5 +1,8 @@
 #pragma once
 
+
+
+
 #define VK_USE_PLATFORM_WIN32_KHR
 #include "VulkanUtil.h"
 #include <vulkan/vulkan.h>
@@ -22,6 +25,7 @@
 #include "VulkanTypes.h"
 #include "Scene/Scene.h"
 #include "../Core/ImGuiWrapper.h"
+#include "Core/Logger.h"
 
 struct ImGui_ImplVulkan_InitInfo;
 const std::vector validationLayers = { "VK_LAYER_KHRONOS_validation" };
@@ -49,7 +53,7 @@ public:
 	{
 		ServiceConfigurator::Configure();
 		initVulkan();
-		ImGuiWrapper::Initialize(graphicsQueue, swapChainImages.size(), &swapChainImageFormat, swapChainImages);
+		ImGuiWrapper::Initialize(m_pContext->graphicsQueue, swapChainImages.size(), &swapChainImageFormat, swapChainImages);
 		m_pScene = std::make_unique<Scene>();
 		mainLoop();
 		cleanup();
@@ -83,8 +87,8 @@ private:
 		// week 03
 		createGraphicsPipeline();
 	
-		CommandPool::CreateCommandPool(m_pContext, commandPool);
-		CommandBufferManager::CreateCommandBuffer(m_pContext->device, commandPool, commandBuffer);
+		CommandPool::CreateCommandPool(m_pContext);
+		CommandBufferManager::CreateCommandBuffer(m_pContext, commandBuffer);
 
 		// week 06
 		createSyncObjects();
@@ -115,7 +119,7 @@ private:
 		vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
 		vkDestroyFence(device, inFlightFence, nullptr);
 
-		vkDestroyCommandPool(device, commandPool, nullptr);
+	
 
 		m_pGraphicsPipeline.Cleanup(device);
 
@@ -143,7 +147,7 @@ private:
 
 
 
-	VkCommandPool commandPool{};
+	
 	CommandBuffer commandBuffer{};
 
 
@@ -224,7 +228,6 @@ private:
 
 	// Week 05 
 	// Logical and physical device
-	VkQueue graphicsQueue;
 	VkQueue presentQueue;
 	
 	void pickPhysicalDevice();
@@ -250,7 +253,22 @@ private:
 
 	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
 	{
-		std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+		VulkanLogger::LogLevel logLevel = VulkanLogger::LogLevel::LOGERROR;
+
+		switch (messageSeverity)
+		{
+		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
+		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+			logLevel = VulkanLogger::LogLevel::INFO;
+			break;
+		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+			logLevel = VulkanLogger::LogLevel::WARNING;
+			break;
+		default:
+			break;
+		}
+
+		LogMessage(logLevel, pCallbackData->pMessage);
 		return VK_FALSE;
 	}
 };

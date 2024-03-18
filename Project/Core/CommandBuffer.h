@@ -1,6 +1,8 @@
 #pragma once
 #include <vulkan/vulkan.h>
 
+class VulkanContext;
+
 enum class CommandBufferState : uint8_t
 {
 	NotAllocated,
@@ -29,16 +31,16 @@ public:
 	CommandBufferManager& operator=(const CommandBufferManager&) = delete;
 	CommandBufferManager& operator=(CommandBufferManager&&) = delete;
 
-	static void CreateCommandBuffer(const VkDevice& device, const VkCommandPool& commandPool, CommandBuffer& commandBuffer, bool isPrimary = true);
+	static void CreateCommandBuffer(const VulkanContext* vulkanContext, CommandBuffer& commandBuffer, bool isPrimary = true);
 	static void FreeCommandBuffer(const VkDevice& device, const VkCommandPool& commandPool, CommandBuffer& commandBuffer);
 
 	static void BeginCommandBufferRecording(CommandBuffer& commandBuffer, bool isRenderpassContinue, bool isSimultaneous, bool isSingeUse = false);
 	static void EndCommandBufferRecording(CommandBuffer& commandBuffer);
 
 	static void SubmitCommandBuffer(CommandBuffer& commandBuffer);
-	static void ResetCommandBuffer(const VkDevice& device, const VkCommandPool& commandPool, CommandBuffer& commandBuffer);
+	static void ResetCommandBuffer(CommandBuffer& commandBuffer);
 
-	static void CreateCommandBufferSingleUse(const VkDevice& device, const VkCommandPool& commandPool, CommandBuffer& commandBuffer);
-	static void EndCommandBufferSingleUse(const VkDevice& device, const VkCommandPool& commandPool, CommandBuffer& commandBuffer, VkQueue queue);
+	static void CreateCommandBufferSingleUse(const VulkanContext* vulkanContext, CommandBuffer& commandBuffer);
+	static void EndCommandBufferSingleUse(const VulkanContext* vulkanContext, CommandBuffer& commandBuffer);
 };
 

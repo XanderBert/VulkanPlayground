@@ -1,8 +1,9 @@
 #include "CommandBuffer.h"
 #include <stdexcept>
+#include "vulkanbase/VulkanTypes.h"
 
 
-void CommandBufferManager::CreateCommandBuffer(const VkDevice& device, const VkCommandPool& commandPool,CommandBuffer& commandBuffer, bool isPrimary )
+void CommandBufferManager::CreateCommandBuffer(const VulkanContext* vulkanContext, CommandBuffer& commandBuffer, bool isPrimary )
 {
 	//reset the command buffer
 	commandBuffer.Handle = VK_NULL_HANDLE;
@@ -12,14 +13,14 @@ void CommandBufferManager::CreateCommandBuffer(const VkDevice& device, const VkC
 	{
 		VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
 		nullptr,
-		commandPool,
+		vulkanContext->commandPool,
 		level,
 		1
 	};
 
 	commandBuffer.State = CommandBufferState::NotAllocated;
 
-	if (vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer.Handle) != VK_SUCCESS)
+	if (vkAllocateCommandBuffers(vulkanContext->device, &allocInfo, &commandBuffer.Handle) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to allocate command buffers!");
 	}
@@ -86,24 +87,22 @@ void CommandBufferManager::SubmitCommandBuffer(CommandBuffer& commandBuffer)
 		throw std::runtime_error("Command buffer not ready for submission");
 	}
 
-
-
 	commandBuffer.State = CommandBufferState::Submitted;
 }
 
-void CommandBufferManager::ResetCommandBuffer(const VkDevice& device, const VkCommandPool& commandPool, CommandBuffer& commandBuffer)
+void CommandBufferManager::ResetCommandBuffer(CommandBuffer& commandBuffer)
 {
 	vkResetCommandBuffer(commandBuffer.Handle, 0);
 	commandBuffer.State = CommandBufferState::Ready;
 }
 
-void CommandBufferManager::CreateCommandBufferSingleUse(const VkDevice& device, const VkCommandPool& commandPool, CommandBuffer& commandBuffer)
+void CommandBufferManager::CreateCommandBufferSingleUse(const VulkanContext* vulkanContext, CommandBuffer& commandBuffer)
 {
-	CreateCommandBuffer(device, commandPool, commandBuffer);
-	BeginCommandBufferRecording(commandBuffer, true, false);
+	CreateCommandBuffer(vulkanContext, commandBuffer);
+	BeginCommandBufferRecording(commandBuffer, false, false, true);
 }
 
-void CommandBufferManager::EndCommandBufferSingleUse(const VkDevice& device, const VkCommandPool& commandPool, CommandBuffer& commandBuffer, VkQueue queue)
+void CommandBufferManager::EndCommandBufferSingleUse(const VulkanContext* vulkanContext, CommandBuffer& commandBuffer)
 {
 	EndCommandBufferRecording(commandBuffer);
 
@@ -112,13 +111,13 @@ void CommandBufferManager::EndCommandBufferSingleUse(const VkDevice& device, con
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &commandBuffer.Handle;
 
-	if (vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS)
+	if (vkQueueSubmit(vulkanContext->graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to submit draw command buffer!");
 	}
 
 	//there is not enough overhead to justify using fences for single use command buffers (for now at least)
-	vkQueueWaitIdle(queue);
+	vkQueueWaitIdle(vulkanContext->graphicsQueue);
 
-	FreeCommandBuffer(device, commandPool, commandBuffer);
+	FreeCommandBuffer(vulkanContext->device, vulkanContext->commandPool, commandBuffer);
 }

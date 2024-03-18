@@ -104,6 +104,6 @@ void VulkanBase::createLogicalDevice()
 
 
 
-	vkGetDeviceQueue(m_pContext->device, indices.graphicsFamily.value(), 0, &graphicsQueue);
+	vkGetDeviceQueue(m_pContext->device, indices.graphicsFamily.value(), 0, &m_pContext->graphicsQueue);
 	vkGetDeviceQueue(m_pContext->device, indices.presentFamily.value(), 0, &presentQueue);
 }
