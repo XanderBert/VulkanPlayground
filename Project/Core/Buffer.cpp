@@ -37,16 +37,7 @@ namespace Core
 			vkBindBufferMemory(device, buffer, bufferMemory, 0);
 		}
 
-		void CreateStagingBuffer(VulkanContext* vulkanContext, VkDeviceSize size,const std::vector<Vertex>& vertices, VkBuffer& buffer, VkDeviceMemory& bufferMemory)
-		{
-			CreateBuffer(vulkanContext, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, buffer, bufferMemory);
-
-			//Copy the vertex data to the staging buffer
-			void* data;
-			vkMapMemory(vulkanContext->device, bufferMemory, 0, size, 0, &data);
-			memcpy(data, vertices.data(), size);
-			vkUnmapMemory(vulkanContext->device, bufferMemory);
-		}
+		
 
 		void CopyBuffer(VulkanContext* vulkanContext, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
 		{

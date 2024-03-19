@@ -9,28 +9,29 @@
 Scene::Scene()
 {
 	//Temporary data
-	const std::vector<Vertex> vertices =
-	{
-	{{0.0f, -0.5f}, {1.0f, 1.0f, 1.0f}},
-	{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-	{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-	{ {0.0f, -0.5f}, {1.0f, 1.0f, 1.0f}},
-	{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-	{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
-	};
+	//const std::vector<Vertex> vertices =
+	//{
+	//{{0.0f, -0.5f}, {1.0f, 1.0f, 1.0f}},
+	//{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+	//{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+	//{ {0.0f, -0.5f}, {1.0f, 1.0f, 1.0f}},
+	//{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+	//{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+	//};
 
 	const std::vector<Vertex> vertices2 =
 	{
-	{{1.0f, -0.5f}, {1.0f, 0.0f, 1.0f}},
-	{{1.5f, 0.5f}, {1.0f, 1.0f, 0.0f}},
-	{{-1.5f, 0.5f}, {0.0f, 1.0f, 1.0f}},
-	{ {1.0f, -0.5f}, {1.0f, 0.0f, 1.0f}},
-	{{1.5f, 0.5f}, {1.0f, 1.0f, 0.0f}},
-	{{-1.5f, 0.5f}, {0.0f, 1.0f, 1.0f}}
+
+	{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+	{{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+	{{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+	{{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
 	};
 
-	AddMesh(vertices);
-	AddMesh(vertices2);
+	const std::vector<uint16_t> indices = {0, 1, 2, 2, 3, 0};
+
+	//AddMesh(vertices);
+	AddMesh(vertices2, indices);
 }
 
 void Scene::Render(VkCommandBuffer commandBuffer) const
@@ -54,9 +55,9 @@ void Scene::Render(VkCommandBuffer commandBuffer) const
 	}
 }
 
-void Scene::AddMesh(const std::vector<Vertex>& vertices)
+void Scene::AddMesh(const std::vector<Vertex>& vertices, const std::vector<uint16_t>& indices)
 {
-	m_Meshes.push_back(std::make_unique<Mesh>(vertices));
+	m_Meshes.push_back(std::make_unique<Mesh>(vertices, indices));
 }
 
 void Scene::CleanUp() const
