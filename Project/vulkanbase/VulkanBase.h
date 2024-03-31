@@ -53,7 +53,7 @@ public:
 	{
 		ServiceConfigurator::Configure();
 		initVulkan();
-		ImGuiWrapper::Initialize(m_pContext->graphicsQueue, swapChainImages.size(), &swapChainImageFormat, swapChainImages);
+		ImGuiWrapper::Initialize(m_pContext->graphicsQueue, swapChainImages.size(), &m_pContext->swapChainImageFormat, swapChainImages);
 		m_pScene = std::make_unique<Scene>();
 		mainLoop();
 		cleanup();
@@ -81,11 +81,6 @@ private:
 		vkCmdBeginRenderingKHR = reinterpret_cast<PFN_vkCmdBeginRenderingKHR>(vkGetDeviceProcAddr(m_pContext->device, "vkCmdBeginRenderingKHR"));
 		vkCmdEndRenderingKHR = reinterpret_cast<PFN_vkCmdEndRenderingKHR>(vkGetDeviceProcAddr(m_pContext->device, "vkCmdEndRenderingKHR"));
 
-
-
-
-		// week 03
-		createGraphicsPipeline();
 	
 		CommandPool::CreateCommandPool(m_pContext);
 		CommandBufferManager::CreateCommandBuffer(m_pContext, commandBuffer);
@@ -119,9 +114,6 @@ private:
 		vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
 		vkDestroyFence(device, inFlightFence, nullptr);
 
-	
-
-		m_pGraphicsPipeline.Cleanup(device);
 
 
 		for (const auto imageView : swapChainImageViews) 
@@ -163,7 +155,7 @@ private:
 
 		VkRenderingInfoKHR renderInfo{};
 		renderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
-		renderInfo.renderArea = { 0, 0, swapChainExtent.width, swapChainExtent.height };
+		renderInfo.renderArea = { 0, 0, m_pContext->swapChainExtent.width, m_pContext->swapChainExtent.height };
 		renderInfo.layerCount = 1;
 		renderInfo.colorAttachmentCount = 1;
 		renderInfo.pColorAttachments = &colorAttachmentInfo;
@@ -171,15 +163,16 @@ private:
 
 
 		//Bind the Pipeline
-		vkCmdBindPipeline(commandBuffer.Handle, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pGraphicsPipeline.GetPipeline());
+		//vkCmdBindPipeline(commandBuffer.Handle, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pScene->GetMeshes().at(0)->GetPipeline());
+		
 
 
 		//Set the viewport
 		VkViewport viewport{};
 		viewport.x = 0.0f;
 		viewport.y = 0.0f;
-		viewport.width = (float)swapChainExtent.width;
-		viewport.height = (float)swapChainExtent.height;
+		viewport.width = (float)m_pContext->swapChainExtent.width;
+		viewport.height = (float)m_pContext->swapChainExtent.height;
 		viewport.minDepth = 0.0f;
 		viewport.maxDepth = 1.0f;
 		vkCmdSetViewport(commandBuffer.Handle, 0, 1, &viewport);
@@ -188,9 +181,10 @@ private:
 		//Set the scissor
 		VkRect2D scissor{};
 		scissor.offset = { 0, 0 };
-		scissor.extent = swapChainExtent;
+		scissor.extent = m_pContext->swapChainExtent;
 		vkCmdSetScissor(commandBuffer.Handle, 0, 1, &scissor);
 
+		
 
 
 		vkCmdBeginRenderingKHR(commandBuffer.Handle, &renderInfo);
@@ -204,18 +198,16 @@ private:
 		vkCmdEndRenderingKHR(commandBuffer.Handle);
 	}
 
-	void createGraphicsPipeline();
-	// Week 03
-	GraphicsPipeline m_pGraphicsPipeline{};
+
+
 	PFN_vkCmdBeginRenderingKHR vkCmdBeginRenderingKHR{ VK_NULL_HANDLE };
 	PFN_vkCmdEndRenderingKHR vkCmdEndRenderingKHR{ VK_NULL_HANDLE };
 
 	// Week 04
 	// Swap chain and image view support
-
 	std::vector<VkImage> swapChainImages;
-	VkFormat swapChainImageFormat;
-	VkExtent2D swapChainExtent;
+
+
 
 	std::vector<VkImageView> swapChainImageViews;
 

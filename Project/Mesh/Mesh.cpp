@@ -1,26 +1,58 @@
 #include "Mesh.h"
-#include <stdexcept>
-#include "vulkanbase/VulkanUtil.h"
-#include "vulkanbase/VulkanTypes.h"
+#include <chrono>
+
+#include "../vulkanbase/VulkanTypes.h"
 #include "Vertex.h"
-#include "Core/Buffer.h"
-#include "Core/Logger.h"
 #include "Patterns/ServiceLocator.h"
+
 
 Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<uint16_t>& indices)
 {
 	m_pContext = ServiceLocator::GetService<VulkanContext>();
 	CreateVertexBuffer(vertices);
 	CreateIndexBuffer(indices);
+
+	m_pMaterial = std::make_unique<Material>(m_pContext);
+	m_pMaterial->AddShader("shader.vert", ShaderType::VertexShader);
+	m_pMaterial->AddShader("shader.frag", ShaderType::FragmentShader);
+
+
+	float time = 1.1f;
+	glm::mat4x4 model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	glm::mat4x4 view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	glm::mat4x4 proj = glm::perspective(glm::radians(45.0f), m_pContext->swapChainExtent.width / (float)m_pContext->swapChainExtent.height, 0.1f, 10.0f);
+	proj[1][1] *= -1;
+
+
+	m_VariableHandles.push_back(m_pMaterial->AddShaderVariable(model));
+	m_VariableHandles.push_back(m_pMaterial->AddShaderVariable(view));
+	m_VariableHandles.push_back(m_pMaterial->AddShaderVariable(proj));
+
+	m_pMaterial->CreatePipeline();
 }
 
 void Mesh::Bind(VkCommandBuffer commandBuffer) const
 {
+	static auto startTime = std::chrono::high_resolution_clock::now();
+	auto currentTime = std::chrono::high_resolution_clock::now();
+	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+
+	glm::mat4x4 model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	glm::mat4x4 view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	glm::mat4x4 proj = glm::perspective(glm::radians(45.0f), m_pContext->swapChainExtent.width / (float)m_pContext->swapChainExtent.height, 0.1f, 10.0f);
+	proj[1][1] *= -1;
+
+	m_pMaterial->UpdateShaderVariable(m_VariableHandles[0], model);
+	m_pMaterial->UpdateShaderVariable(m_VariableHandles[1], view);
+	m_pMaterial->UpdateShaderVariable(m_VariableHandles[2], proj);
+
+	m_pMaterial->Bind(commandBuffer);
+
+
 	const VkBuffer vertexBuffers[] = { m_VertexBuffer };
 	constexpr VkDeviceSize offsets[] = { 0 };
 
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-
 	vkCmdBindIndexBuffer(commandBuffer, m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
 }
 
@@ -32,6 +64,8 @@ void Mesh::Render(VkCommandBuffer commandBuffer) const
 
 void Mesh::CleanUp() const
 {
+	m_pMaterial->CleanUp();
+
 	vkDestroyBuffer(m_pContext->device, m_VertexBuffer, nullptr);
 	vkFreeMemory(m_pContext->device, m_VertexBufferMemory, nullptr);
 

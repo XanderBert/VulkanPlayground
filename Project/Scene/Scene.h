@@ -1,10 +1,13 @@
 #pragma once
 #include <vector>
 #include <memory>
+#include "Camera/Camera.h"
 #include <vulkan/vulkan.h>
+#include "Mesh/Mesh.h"
+
 
 struct Vertex;
-#include "Mesh/Mesh.h"
+
 
 class Scene final
 {
@@ -22,6 +25,23 @@ public:
 
 	void CleanUp() const;
 
+
+	std::vector<Mesh*> GetMeshes() const
+	{
+		std::vector<Mesh*> meshes{};
+		meshes.reserve(m_Meshes.size());
+		for (const auto& mesh : m_Meshes)
+		{
+			meshes.push_back(mesh.get());
+		}
+		return meshes;
+	}
+
+	//void SetCamera(std::unique_ptr<Camera> pCamera);
+	//Camera* GetCamera() const;
+
+
 private:
 	std::vector<std::unique_ptr<Mesh>> m_Meshes{};
+	std::unique_ptr<Camera> m_pCamera;
 };

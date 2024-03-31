@@ -20,11 +20,15 @@ public:
 	GraphicsPipeline(GraphicsPipeline&&) = delete;
 	GraphicsPipeline& operator=(GraphicsPipeline&&) = delete;
 
-	void CreatePipeline(const VkDevice& device, const VkFormat& swapChainImageFormat, const std::vector<VkPipelineShaderStageCreateInfo>& shaders);
+	void CreatePipeline(const VkDevice& device, const VkFormat& swapChainImageFormat, const std::vector<VkPipelineShaderStageCreateInfo>& shaders, VkDescriptorSetLayout descriptorSetLayout);
+
+	void BindPipeline(const VkCommandBuffer& commandBuffer) const
+	{
+		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
+	}
 
 	void Cleanup(const VkDevice& device) const
 	{
-
 		vkDestroyPipeline(device, m_GraphicsPipeline, nullptr);
 		vkDestroyPipelineLayout(device, m_PipelineLayout, nullptr);
 	}
@@ -72,7 +76,7 @@ public:
 	GraphicsPipelineBuilder(GraphicsPipelineBuilder&&) = delete;
 	GraphicsPipelineBuilder& operator=(GraphicsPipelineBuilder&&) = delete;
 
-	static void CreatePipeline(GraphicsPipeline& graphicsPipeline, const VkDevice& device, const VkFormat& swapChainImageFormat);
+	static void CreatePipeline(GraphicsPipeline& graphicsPipeline, const VkDevice& device, const VkFormat& swapChainImageFormat, VkDescriptorSetLayout descriptorSetLayout);
 
 
 private:
@@ -95,7 +99,7 @@ private:
 		rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
 		rasterizer.lineWidth = 1.0f;
 		rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-		rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+		rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 		rasterizer.depthBiasEnable = VK_FALSE;
 
 		return rasterizer;
@@ -138,16 +142,5 @@ private:
 		return dynamicState;
 	}
 
-	static void CreatePipelineLayout(const VkDevice& device, VkPipelineLayout& pipelineLayout)
-	{
-		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutInfo.setLayoutCount = 0;
-		pipelineLayoutInfo.pushConstantRangeCount = 0;
-
-		if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to create pipeline layout!");
-		}
-	}
+	static void CreatePipelineLayout(const VkDevice& device, VkPipelineLayout& pipelineLayout, VkDescriptorSetLayout descriptorSetLayout);
 };

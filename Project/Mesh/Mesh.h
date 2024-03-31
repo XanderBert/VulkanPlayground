@@ -1,9 +1,16 @@
 #pragma once
-#include "vulkan/vulkan.h"
+#include <vulkan/vulkan.h>
 #include <vector>
+#include <memory>
+#include "Material.h"
 
+class Material;
 class VulkanContext;
 struct Vertex;
+
+ 
+
+
 class Mesh final
 {
 public:
@@ -36,4 +43,8 @@ private:
 
 	uint16_t m_VertexCount;
 	uint16_t m_IndexCount;
+
+	std::unique_ptr<Material> m_pMaterial;
+	std::vector<uint16_t> m_VariableHandles;
+
 };

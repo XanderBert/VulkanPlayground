@@ -42,6 +42,3 @@ struct Vertex
 		return attributeDescriptions;
 	}
 };
-
-
-

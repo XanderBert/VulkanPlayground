@@ -1,13 +1,14 @@
 #include "GraphicsPipeline.h"
 #include "../shaders/Shader.h"
+#include "Descriptor.h"
 
-void GraphicsPipeline::CreatePipeline(const VkDevice& device, const VkFormat& swapChainImageFormat, const std::vector<VkPipelineShaderStageCreateInfo>& shaders)
+void GraphicsPipeline::CreatePipeline(const VkDevice& device, const VkFormat& swapChainImageFormat, const std::vector<VkPipelineShaderStageCreateInfo>& shaders, VkDescriptorSetLayout descriptorSetLayout)
 {
 	SetShaders(shaders);
-	GraphicsPipelineBuilder::CreatePipeline(*this, device, swapChainImageFormat);
+	GraphicsPipelineBuilder::CreatePipeline(*this, device, swapChainImageFormat, descriptorSetLayout);
 }
 
-void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline, const VkDevice& device, const VkFormat& swapChainImageFormat)
+void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline, const VkDevice& device, const VkFormat& swapChainImageFormat, VkDescriptorSetLayout descriptorSetLayout)
 {
 	//Check if ShadersStages are set
 	if(!graphicsPipeline.HasShaders())
@@ -26,7 +27,7 @@ void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline,
 	pipelineRenderingCreateInfo.pColorAttachmentFormats = &swapChainImageFormat;
 
 
-	CreatePipelineLayout(device, graphicsPipeline.m_PipelineLayout);
+	CreatePipelineLayout(device, graphicsPipeline.m_PipelineLayout, descriptorSetLayout);
 
 	VkPipelineColorBlendAttachmentState colorBlendAttachment{};
 	colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
@@ -61,4 +62,15 @@ void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline,
 	{
 		throw std::runtime_error("failed to create graphics pipeline!");
 	}
+}
+
+void GraphicsPipelineBuilder::CreatePipelineLayout(const VkDevice& device, VkPipelineLayout& pipelineLayout, VkDescriptorSetLayout descriptorSetLayout)
+{
+	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	pipelineLayoutInfo.setLayoutCount = 1;
+	pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
+	pipelineLayoutInfo.pushConstantRangeCount = 0;
+
+	VulkanCheck(vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout), "Failed To Create PipelineLayout")
 }

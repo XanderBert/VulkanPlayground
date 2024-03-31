@@ -34,8 +34,6 @@ set(SOURCES
     "main.cpp"
     "vulkanbase/VulkanBase.h" 
     "vulkanbase/VulkanUtil.h"
-     
-    "labwork/Week03.cpp" 
     "labwork/Week04.cpp" 
     "labwork/Week05.cpp"
     "labwork/Week06.cpp"
@@ -54,7 +52,23 @@ set(SOURCES
     "Core/CommandPool.h" 
     "Core/CommandPool.cpp" 
     "Core/QueueFamilyIndices.h" 
-    "Core/GraphicsPipeline.h" "Core/GraphicsPipeline.cpp" "Patterns/ServiceLocator.h" "vulkanbase/VulkanTypes.h" "Scene/Scene.h" "Scene/Scene.cpp" "Core/ImGuiWrapper.h" "Core/RenderPass.h" "Core/RenderPass.cpp" "Mesh/Material.h" "Core/Buffer.h" "Core/Buffer.cpp" "Core/Logger.h")
+    "Core/GraphicsPipeline.h" 
+    "Core/GraphicsPipeline.cpp" 
+    "Patterns/ServiceLocator.h" 
+    "vulkanbase/VulkanTypes.h" 
+    "Scene/Scene.h" 
+    "Scene/Scene.cpp" 
+    "Core/ImGuiWrapper.h" 
+    "Core/RenderPass.h" 
+    "Core/RenderPass.cpp" 
+    "Mesh/Material.h" 
+    "Core/Buffer.h" 
+    "Core/Buffer.cpp" 
+    "Core/Logger.h" 
+    "Camera/Camera.h" 
+    "Camera/Camera.cpp"
+    "Core/Descriptor.h"
+    "Core/Descriptor.cpp" "Mesh/Material.cpp")
 
 
 set(EXTERNALS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../includes)
@@ -82,7 +96,7 @@ add_executable(
     ${SOURCES} 
     ${GLSL_SOURCE_FILES}  
     "vulkanbase/VulkanUtil.cpp" 
-    "labwork/Week03.cpp" 
+     
     ${IMGUI_SOURCE_FILES} 
     ${LUA_SCRIPTS} 
     "shaders/SpirvHelper.h")

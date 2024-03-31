@@ -74,7 +74,11 @@ public:
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
     VkDevice device = VK_NULL_HANDLE;
     VkSurfaceKHR surface{};
+
     VkSwapchainKHR swapchain{};
+	VkExtent2D swapChainExtent;
+	VkFormat swapChainImageFormat;
+
 	Window window{};
 
 
