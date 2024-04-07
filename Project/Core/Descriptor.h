@@ -12,7 +12,7 @@ namespace Descriptor
 {
 	//manages allocation of descriptor sets.
 	//Will keep creating new descriptor pools once they get filled. it will reset the entire thing and reuse pools.
-	class DescriptorAllocator
+	class DescriptorAllocator final
 	{
 	public:
 		DescriptorAllocator() = default;
@@ -67,7 +67,7 @@ namespace Descriptor
 
 
 	//Caches for DescriptorSetLayouts to avoid creating duplicated layouts
-	class DescriptorLayoutCache
+	class DescriptorLayoutCache final
 	{
 	public:
 		DescriptorLayoutCache() = default;
@@ -108,7 +108,7 @@ namespace Descriptor
 
 
 	//allocate and write a descriptor set and its layout automatically.
-	class DescriptorBuilder
+	class DescriptorBuilder final
 	{
 	public:
 		DescriptorBuilder() = default;
@@ -134,8 +134,6 @@ namespace Descriptor
 		DescriptorLayoutCache* m_Cache;
 		DescriptorAllocator* m_Allocator;
 	};
-
-
 
 	VkDescriptorPool CreatePool(VkDevice device, const DescriptorAllocator::PoolSizes& poolSizes, int maxSets, VkDescriptorPoolCreateFlags flags = 0);
 }

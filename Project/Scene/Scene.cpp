@@ -1,13 +1,13 @@
 #include "Scene.h"
-
-#include <chrono>
-
 #include "Mesh/Mesh.h"
 #include "Mesh/Vertex.h"
 #include "shaders/ShaderFactory.h"
 #include "imgui.h"
 #include <Core/Logger.h>
 #include "../Mesh/ModelLoader.h"
+#include <Timer/GameTimer.h>
+
+#include "Input/Input.h"
 
 
 Scene::Scene()
@@ -40,25 +40,33 @@ Scene::Scene()
 
 	Input::BindFunction({ GLFW_KEY_W, Input::KeyType::Hold }, Camera::MoveForward);
 	Input::BindFunction({ GLFW_KEY_S, Input::KeyType::Hold }, Camera::MoveBackward);
-	Input::BindFunction({ GLFW_KEY_A, Input::KeyType::Hold }, Camera::MoveLeft);
-	Input::BindFunction({ GLFW_KEY_D, Input::KeyType::Hold }, Camera::MoveRight);
+	Input::BindFunction({ GLFW_KEY_A, Input::KeyType::Hold }, Camera::MoveRight);
+	Input::BindFunction({ GLFW_KEY_D, Input::KeyType::Hold }, Camera::MoveLeft);
+
+	//Input::BindFunction({ GLFW_KEY_Q, Input::KeyType::Hold }, Camera::MoveUp);
+	//Input::BindFunction({ GLFW_KEY_E, Input::KeyType::Hold }, Camera::MoveDown);
+	//Input::BindFunction({ GLFW_KEY_ESCAPE, Input::KeyType::Press }, []() { glfwSetWindowShouldClose(ServiceLocator::GetWindow()->GetWindow(), GLFW_TRUE); });
+
+
+	Input::BindFunction({ GLFW_MOUSE_BUTTON_RIGHT, Input::KeyType::Press }, Camera::OnRightPressed);
+	Input::AddMouseMovementListener(Camera::OnMouseMoved);
 }
+
 
 void Scene::Render(VkCommandBuffer commandBuffer) const
 {
-	static auto startTime = std::chrono::high_resolution_clock::now();
-	const auto currentTime = std::chrono::high_resolution_clock::now();
-	const float deltaTime = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-	Camera::Update(deltaTime);
-
-
+	GameTimer::UpdateDelta();
 	//ShaderFactory::Render();
 
-	//Create window and render FPS
-	ImGui::Begin("Info");   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+
+	const ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGui::Begin("Info");
+	ImGui::Text("Application average %.3f ms", 1000.0f / io.Framerate);
+	ImGui::Text("%.1f FPS", io.Framerate);
+	ImGui::Text("DeltaTime: %.5f", GameTimer::GetDeltaTime());
+	ImGui::DragFloat3("Camera Position", glm::value_ptr(Camera::GetPosition()), 0.1f);
 	ImGui::End();
+
 
 	VulkanLogger::Log.Render("Vulkan Log: ");
 
@@ -69,8 +77,6 @@ void Scene::Render(VkCommandBuffer commandBuffer) const
 		mesh->Bind(commandBuffer);
 		mesh->Render(commandBuffer);
 	}
-
-	startTime = currentTime;
 }
 
 void Scene::AddMesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices)

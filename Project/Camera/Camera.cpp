@@ -1,81 +1,14 @@
 #include "Camera.h"
-#include <algorithm>
-#include <chrono>
-#include <iostream>
-#include <ostream>
-#include <glm/gtc/matrix_transform.hpp>
-
-void Camera::Update(const float elapsedTime)
-{
-    
-
-    // Keyboard Input
-    //const uint8_t* pKeyboardState = SDL_GetKeyboardState(nullptr);
-
-    // Mouse Input
-    //int mouseX{}, mouseY{};
-    //const uint32_t mouseState = SDL_GetRelativeMouseState(&mouseX, &mouseY);
-
-    // Speed and limit constants
-    constexpr float keyboardMovementSpeed{ 10.0f };
-    constexpr float mouseMovementSpeed{ 2.0f };
-    constexpr float angularSpeed{ 50.0f * MathConstants::TO_RADIANS };
-
-    // The total movement of this frame
-    //glm::vec3 direction{};
-
-    // Calculate new position with keyboard inputs
-    //direction += (pKeyboardState[SDL_SCANCODE_W] || pKeyboardState[SDL_SCANCODE_Z]) * m_Forward * keyboardMovementSpeed * deltaTime;
-    //direction -= pKeyboardState[SDL_SCANCODE_S] * m_Forward * keyboardMovementSpeed * deltaTime;
-    //direction -= (pKeyboardState[SDL_SCANCODE_Q] || pKeyboardState[SDL_SCANCODE_A]) * m_Right * keyboardMovementSpeed * deltaTime;
-    //direction += pKeyboardState[SDL_SCANCODE_D] * m_Right * keyboardMovementSpeed * deltaTime;
-
-#ifndef IMGUI_DISABLE  
-    //if (!ImGui::GetIO().WantCaptureMouse)
-#endif
-
-	// Calculate new position and rotation with mouse inputs
-    {
-        //switch (mouseState)
-        //{
-        //case SDL_BUTTON_LMASK: // LEFT CLICK
-        //    direction -= m_Forward * (mouseY * mouseMovementSpeed * deltaTime);
-        //    m_Yaw += mouseX * angularSpeed * deltaTime;
-        //    break;
-        //case SDL_BUTTON_RMASK: // RIGHT CLICK
-        //    m_Yaw += mouseX * angularSpeed * deltaTime;
-        //    m_Pitch -= mouseY * angularSpeed * deltaTime;
-        //    break;
-        //case SDL_BUTTON_X2: // BOTH CLICK
-        //    direction.y -= mouseY * mouseMovementSpeed * deltaTime;
-        //    break;
-        //}
-    }
-
-    m_Pitch = std::clamp(m_Pitch, -89.f * MathConstants::TO_RADIANS, 89.f * MathConstants::TO_RADIANS);
-
-
-    //Movement calculations
-    constexpr float shiftSpeed{ 4.0f };
-    //direction *= 1.0f + pKeyboardState[SDL_SCANCODE_LSHIFT] * (shiftSpeed - 1.0f);
-
-    m_Origin += m_Direction * elapsedTime;
-    m_Direction = glm::vec3(0.f, 0.f, 0.f);
-}
+#include "Input/Input.h"
+#include "Timer/GameTimer.h"
+#include "Core/Logger.h"
+#include <glm/ext/matrix_clip_space.hpp>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 glm::mat4 Camera::GetViewMatrix()
 {
-    //Calculate the new forward vector with the new pitch and yaw
-    //glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), m_Pitch, glm::vec3(1.0f, 0.0f, 0.0f)); // Rotation about X axis
-    //rotationMatrix = glm::rotate(rotationMatrix, m_Yaw, glm::vec3(0.0f, 1.0f, 0.0f)); // Rotation about Y axis
-
-   //m_Forward = normalize(glm::vec3(rotationMatrix * glm::vec4(MathConstants::FORWARD,0.f))); // Transforming UnitZ by rotationMatrix
-   //m_Right = normalize(glm::cross(MathConstants::FORWARD, m_Forward)); // Taking cross product of UnitY and forward
-
-
-    const glm::mat4 viewMatrix = glm::lookAt(m_Origin, glm::vec3{0,0,0}, glm::vec3(0.0f, 0.0f, 1.0f));
-
-    return viewMatrix;
+    return glm::lookAt(m_Origin, m_Origin + m_Forward, m_Up);
 }
 
 glm::mat4 Camera::GetProjectionMatrix(float aspectRatio)
@@ -96,4 +29,78 @@ glm::mat4 Camera::GetViewInverseMatrix()
 glm::mat4 Camera::GetViewProjectionMatrix(float aspectRatio)
 {
     return GetProjectionMatrix(aspectRatio) * GetViewMatrix();
+}
+
+void Camera::MoveForward()
+{
+	const glm::vec3 moveDirection = m_Forward * m_KeyboardMovementSpeed * GameTimer::GetDeltaTime();
+	m_Origin += moveDirection;
+}
+
+void Camera::MoveBackward()
+{
+	const glm::vec3 moveDirection = -m_Forward * m_KeyboardMovementSpeed * GameTimer::GetDeltaTime();
+	m_Origin += moveDirection;
+}
+
+void Camera::MoveRight()
+{
+	const glm::vec3 moveDirection = m_Right * m_KeyboardMovementSpeed * GameTimer::GetDeltaTime();
+	m_Origin += moveDirection;
+}
+
+void Camera::MoveLeft()
+{
+	const glm::vec3 moveDirection = -m_Right * m_KeyboardMovementSpeed * GameTimer::GetDeltaTime();
+	m_Origin += moveDirection;
+}
+
+
+void Camera::OnRightPressed()
+{
+	m_DragStartPos = Input::GetMousePosition();
+}
+
+void Camera::OnMouseMoved(glm::vec2 mousePos)
+{
+	if(!Input::IsMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT)) return;
+
+	const glm::vec2 delta = mousePos - m_DragStartPos;
+
+	//Horizontal rotation
+	float pitch{};
+	if (delta.x > 0) pitch -= m_AngularMovementSpeed * GameTimer::GetDeltaTime();
+	else if (delta.x < 0) pitch += m_AngularMovementSpeed * GameTimer::GetDeltaTime();
+
+	// Clamp pitch to avoid gimbal lock
+	pitch = std::clamp(pitch, -89.f * MathConstants::TO_RADIANS, 89.f * MathConstants::TO_RADIANS);
+
+
+	//Vertical rotation
+	float yaw{};
+	if (delta.y > 0) yaw += m_AngularMovementSpeed * GameTimer::GetDeltaTime();
+	else if (delta.y < 0) yaw -= m_AngularMovementSpeed * GameTimer::GetDeltaTime();
+
+	//Apply rotation
+	glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), pitch, m_Up);
+	rotationMatrix = glm::rotate(rotationMatrix, yaw, m_Right);
+
+	//Recalculate the forward, right and up vectors
+	m_Forward = glm::normalize(glm::vec3(rotationMatrix * glm::vec4(m_Forward, 0.f)));
+	m_Right = glm::normalize(glm::cross(MathConstants::UP, m_Forward));
+	m_Up = glm::normalize(glm::cross(m_Forward, m_Right));
+
+
+	//Update the drag start position
+	m_DragStartPos = mousePos;
+}
+
+void Camera::SetFOV(float fov)
+{
+	m_Fov = fov * MathConstants::TO_HALFRADIANS;
+}
+
+float Camera::GetFOV()
+{
+	return m_Fov / MathConstants::TO_HALFRADIANS;
 }

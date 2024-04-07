@@ -23,6 +23,7 @@
 #include "../Core/ImGuiWrapper.h"
 #include "Core/DepthResource.h"
 #include "Core/Logger.h"
+#include <Input/Input.h>
 
 struct ImGui_ImplVulkan_InitInfo;
 const std::vector validationLayers = { "VK_LAYER_KHRONOS_validation" };
@@ -52,6 +53,7 @@ public:
 		initVulkan();
 		ImGuiWrapper::Initialize(m_pContext->graphicsQueue, swapChainImages.size(), &m_pContext->swapChainImageFormat, swapChainImages);
 		m_pScene = std::make_unique<Scene>();
+		Input::SetupInput(m_pContext->window.Ptr());
 		mainLoop();
 		cleanup();
 	}

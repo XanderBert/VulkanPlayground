@@ -2,10 +2,6 @@
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
-
-
-
-
 //#include "Core/Logger.h"
 #include "vulkanbase/VulkanBase.h"
 
@@ -17,11 +13,11 @@ int main()
 	//_putenv_s("DISABLE_LAYER_NV_OPTIMUS_1", "1");
 	VulkanBase app;
 
-	try 
+	try
 	{
 		app.run();
 	}
-	catch (const std::exception& e) 
+	catch (const std::exception& e)
 	{
 		std::cerr << e.what() << std::endl;
 		return EXIT_FAILURE;

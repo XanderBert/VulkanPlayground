@@ -1,14 +1,13 @@
 #pragma once
+
 #include <vulkan/vulkan.h>
 #include <vulkanbase/VulkanUtil.h>
-
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 #include <iostream>
 #include <vector>
-#include "Input/Input.h"
 
 
 class Window
@@ -39,15 +38,13 @@ private:
 	const uint32_t HEIGHT = 600;
 
 
-	void InitWindow()
+	inline void InitWindow()
 	{
 		glfwInit();
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 		m_pWindow = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
-
-
-		Input::SetupInput(m_pWindow);
+		glfwMakeContextCurrent(m_pWindow);
 	}
 };
 
@@ -63,7 +60,7 @@ public:
 	VulkanContext& operator=(VulkanContext&&) = delete;
 
 	//Week 06
-	void CreateSurface()
+	inline void CreateSurface()
 	{
 		if (glfwCreateWindowSurface(instance, window.Ptr(), nullptr, &surface) != VK_SUCCESS)
 		{
@@ -86,7 +83,7 @@ public:
 	Window window{};
 
 
-    void CleanUp() const
+    inline void CleanUp() const
     {
 		vkDestroyCommandPool(device, commandPool, nullptr);
 		vkDestroySwapchainKHR(device, swapchain, nullptr);
