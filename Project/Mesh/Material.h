@@ -112,7 +112,7 @@ public:
 
 	void CleanUp() const;
 
-	void Bind(VkCommandBuffer commandBuffer) const;
+	void Bind(VkCommandBuffer commandBuffer, const glm::mat4x4& pushConstantMatrix) const;
 	void AddShader(const std::string& shaderPath, ShaderType shaderType);
 
 	//void AddShaderVariable(const glm::vec3& vector);

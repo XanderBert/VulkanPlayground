@@ -1,5 +1,6 @@
 #pragma once
 
+#include "DepthResource.h"
 #include "imgui/imgui.h"
 #include "imgui/backends/imgui_impl_glfw.h"
 #include "imgui/backends/imgui_impl_vulkan.h"
@@ -65,6 +66,7 @@ public:
 		init_info.PipelineRenderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
 		init_info.PipelineRenderingCreateInfo.pColorAttachmentFormats = swapChainImageFormat;
 		init_info.PipelineRenderingCreateInfo.colorAttachmentCount = 1;
+		init_info.PipelineRenderingCreateInfo.depthAttachmentFormat = DepthResource::DepthResource::GetFormat();
 
 		ImGui_ImplVulkan_Init(&init_info);
 	}

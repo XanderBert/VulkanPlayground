@@ -1,6 +1,9 @@
 #include <set>
 #include <vulkan/vulkan.h>
+
+#include "Core/DepthResource.h"
 #include "vulkanbase/VulkanBase.h"
+#include "Core/DepthResource.h"
 
 
 bool checkValidationLayerSupport()
@@ -77,30 +80,29 @@ void VulkanBase::drawFrame()
 	CommandBufferManager::ResetCommandBuffer(commandBuffer);
 	CommandBufferManager::BeginCommandBufferRecording(commandBuffer, false, false);
 
-	// With dynamic rendering there are no subpass dependencies, so we need to take care of proper layout transitions by using barriers
-	// This set of barriers prepares the color and depth images for output
+
 	tools::InsertImageMemoryBarrier(
 		commandBuffer.Handle,
 		swapChainImages[imageIndex],
-		0,
-		VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 		VK_IMAGE_LAYOUT_UNDEFINED,
 		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 		VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 });
+
+
+	tools::InsertImageMemoryBarrier(
+		commandBuffer.Handle,
+		DepthResource::DepthResource::GetImage(),
+		VK_IMAGE_LAYOUT_UNDEFINED,
+		VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+		VkImageSubresourceRange{ VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 1 });
 
 	drawFrame(imageIndex);
 
-
-	tools::InsertImageMemoryBarrier(commandBuffer.Handle,
+	tools::InsertImageMemoryBarrier(
+		commandBuffer.Handle,
 		swapChainImages[imageIndex],
-		VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-		0,
 		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 		VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-		VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
 		VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 });
 
 
@@ -126,7 +128,7 @@ void VulkanBase::drawFrame()
 		throw std::runtime_error("failed to submit draw command buffer!");
 	}
 
-	CommandBufferManager::SubmitCommandBuffer(commandBuffer);
+	CommandBufferManager::SubmitCommandBuffer(commandBuffer);   
 
 
 	VkPresentInfoKHR presentInfo{};

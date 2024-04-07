@@ -3,10 +3,13 @@
 #include <cassert>
 #include <stdexcept>
 #include <vector>
+#include <glm/mat4x4.hpp>
+#include <glm/vec4.hpp>
 #include <vulkan/vulkan.h>
 
 #include "RenderPass.h"
 
+class VulkanContext;
 class Shader;
 class GraphicsPipeline final
 {
@@ -20,12 +23,11 @@ public:
 	GraphicsPipeline(GraphicsPipeline&&) = delete;
 	GraphicsPipeline& operator=(GraphicsPipeline&&) = delete;
 
-	void CreatePipeline(const VkDevice& device, const VkFormat& swapChainImageFormat, const std::vector<VkPipelineShaderStageCreateInfo>& shaders, VkDescriptorSetLayout descriptorSetLayout);
+	void CreatePipeline(const VulkanContext* vulkanContext, const std::vector<VkPipelineShaderStageCreateInfo>& shaders, VkDescriptorSetLayout descriptorSetLayout);
 
-	void BindPipeline(const VkCommandBuffer& commandBuffer) const
-	{
-		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
-	}
+	void BindPushConstant(const VkCommandBuffer commandBuffer, const glm::mat4x4& matrix) const;
+
+	void BindPipeline(const VkCommandBuffer& commandBuffer) const;
 
 	void Cleanup(const VkDevice& device) const
 	{
@@ -76,7 +78,7 @@ public:
 	GraphicsPipelineBuilder(GraphicsPipelineBuilder&&) = delete;
 	GraphicsPipelineBuilder& operator=(GraphicsPipelineBuilder&&) = delete;
 
-	static void CreatePipeline(GraphicsPipeline& graphicsPipeline, const VkDevice& device, const VkFormat& swapChainImageFormat, VkDescriptorSetLayout descriptorSetLayout);
+	static void CreatePipeline(GraphicsPipeline& graphicsPipeline, const VulkanContext* vulkanContext, VkDescriptorSetLayout descriptorSetLayout);
 
 
 private:

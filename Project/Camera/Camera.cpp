@@ -1,15 +1,14 @@
 #include "Camera.h"
-
 #include <algorithm>
+#include <chrono>
+#include <iostream>
+#include <ostream>
 #include <glm/gtc/matrix_transform.hpp>
-
-Camera::Camera(const glm::vec3& origin, float fov):
-	m_Fov(fov* (TO_RADIANS * 0.5f)),
-	m_Origin(origin)
-{}
 
 void Camera::Update(const float elapsedTime)
 {
+    
+
     // Keyboard Input
     //const uint8_t* pKeyboardState = SDL_GetKeyboardState(nullptr);
 
@@ -20,10 +19,10 @@ void Camera::Update(const float elapsedTime)
     // Speed and limit constants
     constexpr float keyboardMovementSpeed{ 10.0f };
     constexpr float mouseMovementSpeed{ 2.0f };
-    constexpr float angularSpeed{ 50.0f * TO_RADIANS };
+    constexpr float angularSpeed{ 50.0f * MathConstants::TO_RADIANS };
 
     // The total movement of this frame
-    glm::vec3 direction{};
+    //glm::vec3 direction{};
 
     // Calculate new position with keyboard inputs
     //direction += (pKeyboardState[SDL_SCANCODE_W] || pKeyboardState[SDL_SCANCODE_Z]) * m_Forward * keyboardMovementSpeed * deltaTime;
@@ -53,38 +52,40 @@ void Camera::Update(const float elapsedTime)
         //}
     }
 
-    m_Pitch = std::clamp(m_Pitch, -89.f * TO_RADIANS, 89.f * TO_RADIANS);
+    m_Pitch = std::clamp(m_Pitch, -89.f * MathConstants::TO_RADIANS, 89.f * MathConstants::TO_RADIANS);
 
 
     //Movement calculations
     constexpr float shiftSpeed{ 4.0f };
     //direction *= 1.0f + pKeyboardState[SDL_SCANCODE_LSHIFT] * (shiftSpeed - 1.0f);
 
-    m_Origin += direction;
+    m_Origin += m_Direction * elapsedTime;
+    m_Direction = glm::vec3(0.f, 0.f, 0.f);
 }
 
 glm::mat4 Camera::GetViewMatrix()
 {
     //Calculate the new forward vector with the new pitch and yaw
-    glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), m_Pitch, glm::vec3(1.0f, 0.0f, 0.0f)); // Rotation about X axis
-    rotationMatrix = glm::rotate(rotationMatrix, m_Yaw, glm::vec3(0.0f, 1.0f, 0.0f)); // Rotation about Y axis
+    //glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), m_Pitch, glm::vec3(1.0f, 0.0f, 0.0f)); // Rotation about X axis
+    //rotationMatrix = glm::rotate(rotationMatrix, m_Yaw, glm::vec3(0.0f, 1.0f, 0.0f)); // Rotation about Y axis
+
+   //m_Forward = normalize(glm::vec3(rotationMatrix * glm::vec4(MathConstants::FORWARD,0.f))); // Transforming UnitZ by rotationMatrix
+   //m_Right = normalize(glm::cross(MathConstants::FORWARD, m_Forward)); // Taking cross product of UnitY and forward
 
 
-    m_Forward = normalize(glm::vec3(rotationMatrix * glm::vec4(0.0f, 0.0f, 1.0f, 0.0f))); // Transforming UnitZ by rotationMatrix
-    m_Right = normalize(glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), m_Forward)); // Taking cross product of UnitY and forward
+    const glm::mat4 viewMatrix = glm::lookAt(m_Origin, glm::vec3{0,0,0}, glm::vec3(0.0f, 0.0f, 1.0f));
 
-
-    const glm::mat4 lookAtMatrix = glm::lookAtLH(m_Origin, m_Forward, m_Right);
-
-
-    //Return the inverse of the inverseViewMatrix
-    return glm::inverse(lookAtMatrix);
+    return viewMatrix;
 }
 
-glm::mat4 Camera::GetProjectionMatrix() const
+glm::mat4 Camera::GetProjectionMatrix(float aspectRatio)
 {
-    //depth = [0, 1] (Direct3D Depth)
-    return glm::perspectiveFovLH(m_Fov, m_Width, m_Height, m_NearPlane, m_FarPlane);
+    glm::mat4x4 projectionMatrix = glm::perspective(m_Fov, aspectRatio, m_NearPlane, m_FarPlane);
+
+    // Flip the Y axis
+	projectionMatrix[1][1] *= -1;
+
+    return projectionMatrix;
 }
 
 glm::mat4 Camera::GetViewInverseMatrix()
@@ -92,7 +93,7 @@ glm::mat4 Camera::GetViewInverseMatrix()
 	return glm::inverse(GetViewMatrix());
 }
 
-glm::mat4 Camera::GetViewProjectionMatrix()
+glm::mat4 Camera::GetViewProjectionMatrix(float aspectRatio)
 {
-	return GetViewMatrix() * GetProjectionMatrix();
+    return GetProjectionMatrix(aspectRatio) * GetViewMatrix();
 }

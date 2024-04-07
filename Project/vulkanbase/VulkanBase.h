@@ -1,8 +1,5 @@
 #pragma once
 
-
-
-
 #define VK_USE_PLATFORM_WIN32_KHR
 #include "VulkanUtil.h"
 #include <vulkan/vulkan.h>
@@ -10,7 +7,6 @@
 #include <vector>
 #include <cstdint>
 #include <optional>
-
 
 #include "Mesh/Vertex.h"
 
@@ -25,6 +21,7 @@
 #include "VulkanTypes.h"
 #include "Scene/Scene.h"
 #include "../Core/ImGuiWrapper.h"
+#include "Core/DepthResource.h"
 #include "Core/Logger.h"
 
 struct ImGui_ImplVulkan_InitInfo;
@@ -74,8 +71,9 @@ private:
 
 		// week 04 
 		createSwapChain();
+		DepthResource::DepthResource::Init(m_pContext);
 		createImageViews();
-
+		
 
 		// Since we use an extension, we need to expliclity load the function pointers for extension related Vulkan commands
 		vkCmdBeginRenderingKHR = reinterpret_cast<PFN_vkCmdBeginRenderingKHR>(vkGetDeviceProcAddr(m_pContext->device, "vkCmdBeginRenderingKHR"));
@@ -88,8 +86,6 @@ private:
 		// week 06
 		createSyncObjects();
 	}
-
-
 
 	void mainLoop()
 	{
@@ -115,6 +111,7 @@ private:
 		vkDestroyFence(device, inFlightFence, nullptr);
 
 
+		DepthResource::DepthResource::Cleanup(m_pContext);
 
 		for (const auto imageView : swapChainImageViews) 
 		{
@@ -130,41 +127,52 @@ private:
 		m_pContext->CleanUp();
 	}
 
-
 	VulkanContext* m_pContext{};
 	std::unique_ptr<Scene> m_pScene;
-
-	//TODO : Move to a separate class (Service?)
 	ShaderFileWatcher shaderFileWatcher{};
-
-
-
-	
 	CommandBuffer commandBuffer{};
+	PFN_vkCmdBeginRenderingKHR vkCmdBeginRenderingKHR{ VK_NULL_HANDLE };
+	PFN_vkCmdEndRenderingKHR vkCmdEndRenderingKHR{ VK_NULL_HANDLE };
+	std::vector<VkImage> swapChainImages;
+	std::vector<VkImageView> swapChainImageViews;
+	VkQueue presentQueue;
+	VkDebugUtilsMessengerEXT debugMessenger;
+	VkSemaphore imageAvailableSemaphore;
+	VkSemaphore renderFinishedSemaphore;
+	VkFence inFlightFence;
 
 
 	void drawFrame(uint32_t imageIndex) const
 	{
 		VkRenderingAttachmentInfoKHR colorAttachmentInfo{};
 		colorAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
+		colorAttachmentInfo.pNext = VK_NULL_HANDLE;
 		colorAttachmentInfo.imageView = swapChainImageViews[imageIndex];
 		colorAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		colorAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		colorAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 		colorAttachmentInfo.clearValue = {{0.0f, 0.0f, 0.0f, 1.0f}};
 
+
+		VkRenderingAttachmentInfoKHR depthAttachmentInfo{};
+		depthAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
+		depthAttachmentInfo.pNext = VK_NULL_HANDLE;
+		depthAttachmentInfo.imageView = DepthResource::DepthResource::GetImageView();
+		depthAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		depthAttachmentInfo.resolveMode = VK_RESOLVE_MODE_NONE;
+		depthAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		depthAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		depthAttachmentInfo.clearValue = {{1.0f, 0.0f}};
+
+
 		VkRenderingInfoKHR renderInfo{};
 		renderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
-		renderInfo.renderArea = { 0, 0, m_pContext->swapChainExtent.width, m_pContext->swapChainExtent.height };
+		renderInfo.renderArea = { 0, 0, m_pContext->swapChainExtent};
 		renderInfo.layerCount = 1;
 		renderInfo.colorAttachmentCount = 1;
 		renderInfo.pColorAttachments = &colorAttachmentInfo;
-
-
-
-		//Bind the Pipeline
-		//vkCmdBindPipeline(commandBuffer.Handle, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pScene->GetMeshes().at(0)->GetPipeline());
-		
+		renderInfo.pDepthAttachment = &depthAttachmentInfo;
+		renderInfo.pStencilAttachment = VK_NULL_HANDLE;
 
 
 		//Set the viewport
@@ -184,32 +192,13 @@ private:
 		scissor.extent = m_pContext->swapChainExtent;
 		vkCmdSetScissor(commandBuffer.Handle, 0, 1, &scissor);
 
-		
-
 
 		vkCmdBeginRenderingKHR(commandBuffer.Handle, &renderInfo);
-
-
-		//Render The actual scene
 		m_pScene->Render(commandBuffer.Handle);
 		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer.Handle);
-
-
 		vkCmdEndRenderingKHR(commandBuffer.Handle);
 	}
 
-
-
-	PFN_vkCmdBeginRenderingKHR vkCmdBeginRenderingKHR{ VK_NULL_HANDLE };
-	PFN_vkCmdEndRenderingKHR vkCmdEndRenderingKHR{ VK_NULL_HANDLE };
-
-	// Week 04
-	// Swap chain and image view support
-	std::vector<VkImage> swapChainImages;
-
-
-
-	std::vector<VkImageView> swapChainImageViews;
 
 	SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
 	VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
@@ -217,29 +206,14 @@ private:
 	VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 	void createSwapChain();
 	void createImageViews();
-
-	// Week 05 
-	// Logical and physical device
-	VkQueue presentQueue;
-	
 	void pickPhysicalDevice();
-
 	bool isDeviceSuitable(VkPhysicalDevice device);
 	void createLogicalDevice();
-
-	// Week 06
-	// Main initialization
-	VkDebugUtilsMessengerEXT debugMessenger;
-	VkSemaphore imageAvailableSemaphore;
-	VkSemaphore renderFinishedSemaphore;
-	VkFence inFlightFence;
-
 	void setupDebugMessenger();
 	bool checkDeviceExtensionSupport(VkPhysicalDevice device);
 	void createInstance();
 	std::vector<const char*> getRequiredExtensions();
 	void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
-
 	void createSyncObjects();
 	void drawFrame();
 

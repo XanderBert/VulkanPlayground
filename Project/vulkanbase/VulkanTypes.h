@@ -8,6 +8,7 @@
 #include <GLFW/glfw3native.h>
 #include <iostream>
 #include <vector>
+#include "Input/Input.h"
 
 
 class Window
@@ -44,6 +45,9 @@ private:
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 		m_pWindow = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
+
+
+		Input::SetupInput(m_pWindow);
 	}
 };
 

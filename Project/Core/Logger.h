@@ -26,6 +26,13 @@ if (!(condition)) \
    	}\
 }\
 
+
+
+
+#define LogInfo(message) VulkanLogger::LogMessage(VulkanLogger::LogLevel::INFO, message)
+#define LogWarning(message) VulkanLogger::LogMessage(VulkanLogger::LogLevel::WARNING, message)
+#define LogError(message) VulkanLogger::LogMessage(VulkanLogger::LogLevel::LOGERROR, message)
+
 namespace VulkanLogger
 {
     enum class LogLevel : uint8_t

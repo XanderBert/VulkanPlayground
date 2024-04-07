@@ -39,4 +39,16 @@ add_library(
     ${LUA_DIR}/lzio.c
 )
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${LUA_DIR})
+set (TINY_OBJ_DIR tinyObj)
+add_library(
+	tinyObj STATIC
+	${TINY_OBJ_DIR}/tiny_obj_loader.h
+)
+
+set_target_properties( tinyObj PROPERTIES LINKER_LANGUAGE CXX)
+target_include_directories(${PROJECT_NAME}
+PRIVATE ${LUA_DIR}
+PRIVATE ${TINY_OBJ_DIR}
+)
+
+

@@ -21,5 +21,5 @@ private:
 
 	//TODO: the lifetime of these variables are too long
 	inline static VkVertexInputBindingDescription m_VertexInputBindingDescription = Vertex::GetBindingDescription();
-	inline static std::array<VkVertexInputAttributeDescription, 2> m_VertexInputAttributeDescription = Vertex::GetAttributeDescriptions();
+	inline static std::array<VkVertexInputAttributeDescription, 3> m_VertexInputAttributeDescription = Vertex::GetAttributeDescriptions();
 };

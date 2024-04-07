@@ -53,10 +53,8 @@ struct SpirvHelper
 		auto shaderBinary = CompileShader(sourceName, kind, source, optimize);
 
 		//Store the shader binary to a file
-		std::ofstream file(source + ".spv", std::ios::binary);
-		file.write((char*)shaderBinary.data(), shaderBinary.size() * sizeof(uint32_t));
-		file.close();
-
-
+		//std::ofstream file(source + ".spv", std::ios::binary);
+		//file.write((char*)shaderBinary.data(), shaderBinary.size() * sizeof(uint32_t));
+		//file.close();
 	}
 };

@@ -1,3 +1,11 @@
+#Copy obj files to the binary directory
+set(MODEL_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../Assets")
+set(MODEL_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/Assets")
+file(GLOB_RECURSE MODELS "${MODEL_SOURCE_DIR}/*")
+file(COPY ${MODELS} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+
+
 # Source files
 set(SHADER_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/shaders")
 set(SHADER_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/shaders")
@@ -68,7 +76,12 @@ set(SOURCES
     "Camera/Camera.h" 
     "Camera/Camera.cpp"
     "Core/Descriptor.h"
-    "Core/Descriptor.cpp" "Mesh/Material.cpp")
+    "Core/Descriptor.cpp" 
+    "Mesh/Material.cpp" 
+    "Input/Input.h" 
+    "Mesh/ModelLoader.h" 
+    "Core/DepthResource.h")
+
 
 
 set(EXTERNALS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../includes)
@@ -110,6 +123,7 @@ target_include_directories(
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} 
     PRIVATE ${EXTERNALS_DIR}
     PRIVATE ${LUA_DIR}
+    PRIVATE ${TINY_OBJ_DIR}
     PRIVATE ${IMGUI_DIR}
 )
 
