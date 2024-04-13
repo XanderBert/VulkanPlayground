@@ -16,7 +16,7 @@
 #include "Core/GraphicsPipeline.h"
 #include "Core/QueueFamilyIndices.h"
 
-
+#include "shaders/Shader.h"
 #include "../Patterns/ServiceLocator.h"
 #include "VulkanTypes.h"
 #include "Scene/Scene.h"
@@ -24,6 +24,8 @@
 #include "Core/DepthResource.h"
 #include "Core/Logger.h"
 #include <Input/Input.h>
+
+
 
 struct ImGui_ImplVulkan_InitInfo;
 const std::vector validationLayers = { "VK_LAYER_KHRONOS_validation" };
@@ -52,7 +54,7 @@ public:
 		ServiceConfigurator::Configure();
 		initVulkan();
 		ImGuiWrapper::Initialize(m_pContext->graphicsQueue, swapChainImages.size(), &m_pContext->swapChainImageFormat, swapChainImages);
-		m_pScene = std::make_unique<Scene>();
+		m_pScene = std::make_unique<Scene>(m_pContext);
 		Input::SetupInput(m_pContext->window.Ptr());
 		mainLoop();
 		cleanup();
@@ -84,6 +86,8 @@ private:
 	
 		CommandPool::CreateCommandPool(m_pContext);
 		CommandBufferManager::CreateCommandBuffer(m_pContext, commandBuffer);
+
+		Descriptor::DescriptorManager::Init(m_pContext);
 
 		// week 06
 		createSyncObjects();
@@ -125,6 +129,8 @@ private:
 			tools::DestroyDebugUtilsMessengerEXT(m_pContext->instance, debugMessenger, nullptr);
 		}
 
+		Descriptor::DescriptorManager::Cleanup();
+		ShaderManager::Cleanup(m_pContext->device);
 		m_pScene->CleanUp();
 		m_pContext->CleanUp();
 	}

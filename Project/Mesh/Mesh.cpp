@@ -5,45 +5,27 @@
 #include "Vertex.h"
 #include "Camera/Camera.h"
 #include "Patterns/ServiceLocator.h"
+#include "Timer/GameTimer.h"
 
 
-Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices)
+Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, std::unique_ptr<Material> material)
 {
 	m_pContext = ServiceLocator::GetService<VulkanContext>();
 	CreateVertexBuffer(vertices);
 	CreateIndexBuffer(indices);
 
-	m_pMaterial = std::make_unique<Material>(m_pContext);
-	m_pMaterial->AddShader("shader.vert", ShaderType::VertexShader);
-	m_pMaterial->AddShader("shader.frag", ShaderType::FragmentShader);
-
-	m_VariableHandles.push_back(m_pMaterial->AddShaderVariable(Camera::GetViewProjectionMatrix(float(m_pContext->swapChainExtent.width) / float(m_pContext->swapChainExtent.height))));
-
-
+	m_pMaterial = std::move(material);
 	m_pMaterial->CreatePipeline();
 }
 
 void Mesh::Bind(VkCommandBuffer commandBuffer)
 {
-	static auto startTime = std::chrono::high_resolution_clock::now();
-	const auto currentTime = std::chrono::high_resolution_clock::now();
-	const float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-
-	m_ModelMatrix = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-
-
-;
-	float aspectRatio = (float)m_pContext->swapChainExtent.width / (float)m_pContext->swapChainExtent.height;
-	glm::mat4 viewProjection = Camera::GetViewProjectionMatrix(aspectRatio);
-	m_pMaterial->UpdateShaderVariable(m_VariableHandles[0], viewProjection);
-
-
+	m_ModelMatrix = glm::rotate(glm::mat4(1.0f), GameTimer::GetElapsedTime() * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	m_pMaterial->Bind(commandBuffer, m_ModelMatrix);
 
 
 	const VkBuffer vertexBuffers[] = { m_VertexBuffer };
 	constexpr VkDeviceSize offsets[] = { 0 }; 
-
 
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 	vkCmdBindIndexBuffer(commandBuffer, m_IndexBuffer, 0, VK_INDEX_TYPE_UINT32);

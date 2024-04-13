@@ -12,7 +12,7 @@ struct Vertex;
 class Scene final
 {
 public:
-	Scene();
+	Scene(VulkanContext* vulkanContext);
 	~Scene() = default;
 	Scene(const Scene&) = delete;
 	Scene& operator=(const Scene&) = delete;
@@ -21,7 +21,7 @@ public:
 
 
 	void Render(VkCommandBuffer commandBuffer) const;
-	void AddMesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
+
 
 	void CleanUp() const;
 
@@ -39,4 +39,6 @@ public:
 
 private:
 	std::vector<std::unique_ptr<Mesh>> m_Meshes{};
+
+
 };

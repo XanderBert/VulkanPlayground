@@ -31,9 +31,9 @@ public:
 
 
     static glm::mat4 GetViewMatrix();
-    static glm::mat4 GetProjectionMatrix(float aspectRatio);
+    static glm::mat4 GetProjectionMatrix();
     static glm::mat4 GetViewInverseMatrix();
-    static glm::mat4 GetViewProjectionMatrix(float aspectRatio);
+    static glm::mat4 GetViewProjectionMatrix();
 
     static glm::vec3& GetPosition() { return m_Origin; }
 

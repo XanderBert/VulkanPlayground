@@ -208,7 +208,7 @@ namespace Descriptor
 		builder.m_Cache = layoutCache;
 		builder.m_Allocator = allocator;
 
-		return std::move(builder);
+		return builder;
 	}
 
 	DescriptorBuilder& DescriptorBuilder::BindBuffer(uint32_t binding, const VkDescriptorBufferInfo* bufferInfo, VkDescriptorType type, VkShaderStageFlags stageFlags)
@@ -280,7 +280,7 @@ namespace Descriptor
 		//Allocate the descriptor set
 		if (!m_Allocator->Allocate(&set, layout))
 		{
-			LogMessage(VulkanLogger::LogLevel::LOGERROR,"Failed to allocate descriptor set");
+			LogError("Failed to allocate the descriptor set");
 			return false;
 		}
 

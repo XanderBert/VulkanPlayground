@@ -3,11 +3,12 @@
 #include "DepthResource.h"
 #include "../shaders/Shader.h"
 #include "Descriptor.h"
+#include "Mesh/Material.h"
 
-void GraphicsPipeline::CreatePipeline(const VulkanContext* vulkanContext, const std::vector<VkPipelineShaderStageCreateInfo>& shaders, VkDescriptorSetLayout descriptorSetLayout)
+void GraphicsPipeline::CreatePipeline(const VulkanContext* vulkanContext,Material* material)
 {
-	SetShaders(shaders);
-	GraphicsPipelineBuilder::CreatePipeline(*this, vulkanContext, descriptorSetLayout);
+	SetShaders(material->GetShaders());
+	GraphicsPipelineBuilder::CreatePipeline(*this, vulkanContext);
 }
 
 void GraphicsPipeline::BindPushConstant(const VkCommandBuffer commandBuffer, const glm::mat4x4& matrix) const
@@ -20,10 +21,11 @@ void GraphicsPipeline::BindPipeline(const VkCommandBuffer& commandBuffer) const
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
 }
 
-void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline, const VulkanContext* vulkanContext, VkDescriptorSetLayout descriptorSetLayout)
+void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline, const VulkanContext* vulkanContext)
 {
 	//Check if the graphics pipeline has shaders
 	LogAssert(graphicsPipeline.HasShaders(), "The Graphicspipeline doesn't have shaders", true)
+	LogAssert(vulkanContext, "VulkanContext is nullptr", true)
 
 	//destroy previous pipeline layout and graphics pipeline
 	graphicsPipeline.Cleanup(vulkanContext->device);
@@ -36,7 +38,8 @@ void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline,
 	pipelineRenderingCreateInfo.pColorAttachmentFormats = &vulkanContext->swapChainImageFormat;
 	pipelineRenderingCreateInfo.depthAttachmentFormat = DepthResource::DepthResource::GetFormat();
 
-	CreatePipelineLayout(vulkanContext->device, graphicsPipeline.m_PipelineLayout, descriptorSetLayout);
+
+	CreatePipelineLayout(vulkanContext->device, graphicsPipeline.m_PipelineLayout, graphicsPipeline);
 
 	VkPipelineColorBlendAttachmentState colorBlendAttachment{};
 	colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
@@ -51,23 +54,33 @@ void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline,
 	VkGraphicsPipelineCreateInfo pipelineInfo{ VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO };
 	pipelineInfo.pNext = &pipelineRenderingCreateInfo;
 	pipelineInfo.renderPass = VK_NULL_HANDLE;
-	pipelineInfo.pInputAssemblyState = &Shader::CreateInputAssemblyStateInfo();
+	pipelineInfo.pInputAssemblyState = &ShaderManager::GetInputAssemblyStateInfo();
 	pipelineInfo.pRasterizationState = &CreateRasterizer();
 	pipelineInfo.pColorBlendState = &CreateColorBlending(colorBlendAttachment);
 	pipelineInfo.pMultisampleState = &CreateMultisampling();
 	pipelineInfo.pViewportState = &CreateViewportState();
 	pipelineInfo.pDepthStencilState = &DepthResource::DepthResource::GetDepthPipelineInfo(VK_TRUE, VK_TRUE);
 	pipelineInfo.pDynamicState = &CreateDynamicState(dynamicStates);
-	pipelineInfo.pVertexInputState = &Shader::CreateVertexInputStateInfo();
-	pipelineInfo.stageCount = graphicsPipeline.m_ActiveShaders.size();
-	pipelineInfo.pStages = graphicsPipeline.m_ActiveShaders.data();
+	pipelineInfo.pVertexInputState = &ShaderManager::GetVertexInputStateInfo();
+	
+
+	std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
+
+	for (const auto& shader : graphicsPipeline.m_ActiveShaders)
+	{
+		shaderStages.push_back(shader->GetStageInfo());
+	}
+
+	pipelineInfo.stageCount = shaderStages.size();
+	pipelineInfo.pStages = shaderStages.data();
 	pipelineInfo.layout = graphicsPipeline.m_PipelineLayout;
 
 	VulkanCheck(vkCreateGraphicsPipelines(vulkanContext->device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline.m_GraphicsPipeline), "Failed to create graphics pipeline!")
 }
 
-void GraphicsPipelineBuilder::CreatePipelineLayout(const VkDevice& device, VkPipelineLayout& pipelineLayout, VkDescriptorSetLayout descriptorSetLayout)
+void GraphicsPipelineBuilder::CreatePipelineLayout(const VkDevice& device, VkPipelineLayout& pipelineLayout, const GraphicsPipeline& graphicsPipeline)
 {
+	//Push Constant in the Vertex Shader
 	VkPushConstantRange pushConstant{};
 	pushConstant.offset = 0;
 	pushConstant.size = sizeof(glm::mat4x4);
@@ -77,7 +90,18 @@ void GraphicsPipelineBuilder::CreatePipelineLayout(const VkDevice& device, VkPip
 
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineLayoutInfo.setLayoutCount = 1;
-	pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
+
+
+	//std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
+
+	//for (const auto& shader : graphicsPipeline.m_ActiveShaders)
+	//{
+	//	descriptorSetLayouts.push_back(shader->GetDescriptorSetLayout());
+	//}
+
+	//descriptorSetLayouts.push_back(Descriptor::DescriptorManager::m_GlobalDescriptor.GetLayout());
+
+	pipelineLayoutInfo.pSetLayouts = &Descriptor::DescriptorManager::m_GlobalDescriptor.GetLayout();
 	pipelineLayoutInfo.pPushConstantRanges = &pushConstant;
 	pipelineLayoutInfo.pushConstantRangeCount = 1;
 

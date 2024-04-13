@@ -8,13 +8,10 @@ class Material;
 class VulkanContext;
 struct Vertex;
 
- 
-
-
 class Mesh final
 {
 public:
-	Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
+	Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, std::unique_ptr<Material> material);
 	~Mesh() = default;
 
 	Mesh(const Mesh&) = delete;
@@ -32,7 +29,6 @@ private:
 
 	VulkanContext* m_pContext;
 
-
 	//TODO: Store the vertex and index buffer in 1 VkBuffer to reduce cache misses
 	//Use offsets in commands like vkCmdBindVertexBuffers
 	VkBuffer m_VertexBuffer;
@@ -47,7 +43,5 @@ private:
 	std::unique_ptr<Material> m_pMaterial;
 	std::vector<uint16_t> m_VariableHandles;
 
-
-	//Identity Matrix:
 	glm::mat4 m_ModelMatrix{};
 };

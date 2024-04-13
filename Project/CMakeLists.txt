@@ -33,10 +33,12 @@ foreach(GLSL ${GLSL_SOURCE_FILES})
 endforeach(GLSL)
 
 
+
 add_custom_target(
     Shaders 
     DEPENDS ${SPIRV_BINARY_FILES}
 )
+
 
 set(SOURCES
     "main.cpp"
@@ -81,6 +83,7 @@ set(SOURCES
     "Input/Input.h" 
     "Mesh/ModelLoader.h" 
     "Core/DepthResource.h")
+
 
 
 

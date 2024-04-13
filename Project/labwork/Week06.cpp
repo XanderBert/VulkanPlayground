@@ -76,6 +76,7 @@ void VulkanBase::drawFrame()
 	uint32_t imageIndex;
 	vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
 
+	if (imageIndex > swapChainImages.size()) return;
 
 	CommandBufferManager::ResetCommandBuffer(commandBuffer);
 	CommandBufferManager::BeginCommandBufferRecording(commandBuffer, false, false);

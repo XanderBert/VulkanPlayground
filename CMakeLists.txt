@@ -32,3 +32,4 @@ add_subdirectory(includes)
 #    COMMAND ${CMAKE_COMMAND} -E copy_if_different
 #        "${CMAKE_SOURCE_DIR}/path_to_json/VK_LAYER_KHRONOS_validation.json"
 #        $<TARGET_FILE_DIR:${PROJECT_NAME}>)
+

@@ -6,7 +6,9 @@
 #include <glm/ext/matrix_transform.hpp>
 
 #include "Buffer.h"
+#include "Camera/Camera.h"
 #include "Core/Logger.h"
+#include "shaders/Shader.h"
 
 namespace Descriptor 
 {
@@ -124,7 +126,6 @@ namespace Descriptor
 		DescriptorBuilder& BindImage(uint32_t binding, const VkDescriptorImageInfo* imageInfo, VkDescriptorType type, VkShaderStageFlags stageFlags);
 
 		bool Build(VkDescriptorSet& set, VkDescriptorSetLayout& layout);
-		//bool Build(VkDescriptorSet& set);
 	private:
 
 		std::vector<VkWriteDescriptorSet> m_Writes;
@@ -136,4 +137,73 @@ namespace Descriptor
 	};
 
 	VkDescriptorPool CreatePool(VkDevice device, const DescriptorAllocator::PoolSizes& poolSizes, int maxSets, VkDescriptorPoolCreateFlags flags = 0);
+
+
+	struct GlobalDescriptor
+	{
+		inline void Init(VulkanContext* vulkanContext)
+		{
+			m_GlobalBuffer.AddMatrix(Camera::GetViewProjectionMatrix());
+			m_GlobalBuffer.BindBuffer(vulkanContext, 0, VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT, m_GlobalDescriptorSet, m_GlobalDescriptorSetLayout);
+		}
+
+		inline void Bind(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout)
+		{
+			m_GlobalBuffer.UpdateMatrix(0, Camera::GetViewProjectionMatrix());
+			m_GlobalBuffer.Bind(commandBuffer, pipelineLayout, m_GlobalDescriptorSet);
+		}
+
+		VkDescriptorSetLayout& GetLayout() { return m_GlobalDescriptorSetLayout; }
+
+		inline void Cleanup(VkDevice device)
+		{
+			m_GlobalBuffer.Cleanup(device);
+		}
+
+	private:
+		VkDescriptorSetLayout m_GlobalDescriptorSetLayout{};
+		VkDescriptorSet m_GlobalDescriptorSet{};
+		DynamicBuffer m_GlobalBuffer{};
+	};
+
+	//Manages the above classes
+	class DescriptorManager final
+	{
+	public:
+		DescriptorManager() = default;
+		~DescriptorManager() = default;
+
+		DescriptorManager(const DescriptorManager&) = delete;
+		DescriptorManager& operator=(const DescriptorManager&) = delete;
+		DescriptorManager(DescriptorManager&&) = delete;
+		DescriptorManager& operator=(DescriptorManager&&) = delete;
+
+		static void Init(VulkanContext* vulkanContext)
+		{
+			m_pDescriptorAllocator->Init(vulkanContext->device);
+			m_pDescriptorCache->Init(vulkanContext->device);
+			m_DescriptorBuilder = DescriptorBuilder::Begin(m_pDescriptorCache.get(), m_pDescriptorAllocator.get());
+
+			m_GlobalDescriptor.Init(vulkanContext);
+		}
+
+		static void Cleanup()
+		{
+			m_GlobalDescriptor.Cleanup(m_pDescriptorAllocator->m_Device);
+			m_pDescriptorAllocator->Cleanup();
+			m_pDescriptorCache->Cleanup();
+		}
+
+		static DescriptorAllocator* GetAllocator() { return m_pDescriptorAllocator.get(); }
+		static DescriptorLayoutCache* GetCache() { return m_pDescriptorCache.get(); }
+		static DescriptorBuilder& GetBuilder() { return m_DescriptorBuilder; }
+
+
+		inline static GlobalDescriptor m_GlobalDescriptor;
+
+	private:
+		static inline std::unique_ptr<DescriptorAllocator> m_pDescriptorAllocator = std::make_unique<DescriptorAllocator>();
+		static inline std::unique_ptr<DescriptorLayoutCache> m_pDescriptorCache = std::make_unique<DescriptorLayoutCache>();
+		static inline DescriptorBuilder m_DescriptorBuilder;
+	};
 }

@@ -9,6 +9,7 @@
 
 #include "RenderPass.h"
 
+class Material;
 class VulkanContext;
 class Shader;
 class GraphicsPipeline final
@@ -23,7 +24,7 @@ public:
 	GraphicsPipeline(GraphicsPipeline&&) = delete;
 	GraphicsPipeline& operator=(GraphicsPipeline&&) = delete;
 
-	void CreatePipeline(const VulkanContext* vulkanContext, const std::vector<VkPipelineShaderStageCreateInfo>& shaders, VkDescriptorSetLayout descriptorSetLayout);
+	void CreatePipeline(const VulkanContext* vulkanContext, Material* material);
 
 	void BindPushConstant(const VkCommandBuffer commandBuffer, const glm::mat4x4& matrix) const;
 
@@ -49,7 +50,7 @@ private:
 	friend class GraphicsPipelineBuilder;
 
 
-	void SetShaders(const std::vector<VkPipelineShaderStageCreateInfo>& shaders)
+	void SetShaders(const std::vector<Shader*>& shaders)
 	{
 		m_ActiveShaders = shaders;
 	}
@@ -60,7 +61,7 @@ private:
 	}
 
 
-	std::vector<VkPipelineShaderStageCreateInfo> m_ActiveShaders{};
+	std::vector<Shader*> m_ActiveShaders{};
 	VkPipelineLayout m_PipelineLayout{};
 	VkPipeline m_GraphicsPipeline{};
 };
@@ -78,7 +79,7 @@ public:
 	GraphicsPipelineBuilder(GraphicsPipelineBuilder&&) = delete;
 	GraphicsPipelineBuilder& operator=(GraphicsPipelineBuilder&&) = delete;
 
-	static void CreatePipeline(GraphicsPipeline& graphicsPipeline, const VulkanContext* vulkanContext, VkDescriptorSetLayout descriptorSetLayout);
+	static void CreatePipeline(GraphicsPipeline& graphicsPipeline, const VulkanContext* vulkanContext);
 
 
 private:
@@ -144,5 +145,5 @@ private:
 		return dynamicState;
 	}
 
-	static void CreatePipelineLayout(const VkDevice& device, VkPipelineLayout& pipelineLayout, VkDescriptorSetLayout descriptorSetLayout);
+	static void CreatePipelineLayout(const VkDevice& device, VkPipelineLayout& pipelineLayout, const GraphicsPipeline& graphicsPipeline);
 };

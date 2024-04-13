@@ -2,6 +2,8 @@
 #include <iostream>
 #include <string>
 #include <debugapi.h>
+#include <signal.h>
+
 #include "includes/imgui/imgui.h"
 
 
@@ -172,6 +174,10 @@ namespace VulkanLogger
 
         Log.AddLog("%s %s\n", prefix.c_str(), message.c_str());
         std::cout << colorCode << prefix << " " << message << "\033[0m" << std::endl;
+
+
+		//Break on error
+		if (level == LogLevel::LOGERROR) __debugbreak();
     }
 }
 

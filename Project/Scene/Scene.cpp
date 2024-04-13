@@ -8,35 +8,57 @@
 #include <Timer/GameTimer.h>
 
 #include "Input/Input.h"
+#include "shaders/Shader.h"
 
 
-Scene::Scene()
+Scene::Scene(VulkanContext* vulkanContext)
 {
 	std::vector<Vertex> vertices;
 	std::vector<uint32_t> indices;
 
 	ObjLoader::LoadObj("viking.obj", vertices, indices);
 
-	//const std::vector<Vertex> vertices = {
-	//{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-	//{{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-	//{{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-	//{{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
+	const std::vector<Vertex> vertices2 = 
+{
+	{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+	{{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+	{{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+	{{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
 
-	//{{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-	//{{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-	//{{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-	//{{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
-	//};
+	{{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+	{{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+	{{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+	{{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
+	};
 
-	//const std::vector<uint32_t> indices = {
-	//	0, 1, 2, 2, 3, 0,
-	//	4, 5, 6, 6, 7, 4
-	//};
+	const std::vector<uint32_t> indices2 = {
+		0, 1, 2, 2, 3, 0,
+		4, 5, 6, 6, 7, 4
+	};
 
+	//Create Material02
+	std::unique_ptr<Material> material2 = std::make_unique<Material>(vulkanContext);
 
+	material2->AddShader("shader.vert", ShaderType::VertexShader);
 
-	AddMesh(vertices, indices);
+	//Create and add a new fragment shader
+	material2->AddShader("shader2.frag", ShaderType::FragmentShader);
+
+	//Create a mesh with material 02
+	m_Meshes.push_back(std::make_unique<Mesh>(vertices2, indices2, std::move(material2)));
+
+	//Create Material01
+	std::unique_ptr<Material> material = std::make_unique<Material>(vulkanContext);
+
+	//Add an existing vertex shader (it won't create a new vertex shader and the already created one gets used)
+	material->AddShader("shader.vert", ShaderType::VertexShader);
+
+	//Create and add A fragment shader
+	material->AddShader("shader.frag", ShaderType::FragmentShader);
+
+	//Create a mesh with material 01
+	m_Meshes.push_back(std::make_unique<Mesh>(vertices, indices, std::move(material)));
+
 
 	Input::BindFunction({ GLFW_KEY_W, Input::KeyType::Hold }, Camera::MoveForward);
 	Input::BindFunction({ GLFW_KEY_S, Input::KeyType::Hold }, Camera::MoveBackward);
@@ -56,19 +78,25 @@ Scene::Scene()
 void Scene::Render(VkCommandBuffer commandBuffer) const
 {
 	GameTimer::UpdateDelta();
-	//ShaderFactory::Render();
-
+	
+	static bool showShaderFactory = false;
+	static bool showLogger = true;
 
 	const ImGuiIO& io = ImGui::GetIO(); (void)io;
 	ImGui::Begin("Info");
 	ImGui::Text("Application average %.3f ms", 1000.0f / io.Framerate);
-	ImGui::Text("%.1f FPS", io.Framerate);
 	ImGui::Text("DeltaTime: %.5f", GameTimer::GetDeltaTime());
+	ImGui::Text("%.1f FPS", io.Framerate);
 	ImGui::DragFloat3("Camera Position", glm::value_ptr(Camera::GetPosition()), 0.1f);
+
+	ImGui::Checkbox("Show Shader Factory", &showShaderFactory);
+	ImGui::Checkbox("Show Log", &showLogger);
+
 	ImGui::End();
 
+	if(showShaderFactory) ShaderFactory::Render();
+	if(showLogger) 	VulkanLogger::Log.Render("Vulkan Log: ");
 
-	VulkanLogger::Log.Render("Vulkan Log: ");
 
 	ImGui::Render();
 
@@ -77,11 +105,6 @@ void Scene::Render(VkCommandBuffer commandBuffer) const
 		mesh->Bind(commandBuffer);
 		mesh->Render(commandBuffer);
 	}
-}
-
-void Scene::AddMesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices)
-{
-	m_Meshes.push_back(std::make_unique<Mesh>(vertices, indices));
 }
 
 void Scene::CleanUp() const
