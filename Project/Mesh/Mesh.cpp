@@ -1,6 +1,7 @@
 #include "Mesh.h"
 #include <chrono>
 
+#include "ModelLoader.h"
 #include "../vulkanbase/VulkanTypes.h"
 #include "Vertex.h"
 #include "Camera/Camera.h"
@@ -15,6 +16,24 @@ Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& ind
 	CreateVertexBuffer(vertices);
 	CreateIndexBuffer(indices);
 }
+
+Mesh::Mesh(const std::string& modelPath, std::shared_ptr<Material> material)
+	:m_pMaterial(material)
+{
+	std::vector<Vertex> vertices;
+	//vertices.reserve(1000);
+
+	std::vector<uint32_t> indices;
+	//indices.reserve(500);
+
+	ObjLoader::LoadObj(modelPath, vertices, indices);
+
+	m_pContext = ServiceLocator::GetService<VulkanContext>();
+
+	CreateVertexBuffer(vertices);
+	CreateIndexBuffer(indices);
+}
+
 
 void Mesh::Bind(VkCommandBuffer commandBuffer)
 {

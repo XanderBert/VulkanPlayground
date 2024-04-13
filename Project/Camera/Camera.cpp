@@ -6,6 +6,7 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+
 glm::mat4 Camera::GetViewMatrix()
 {
     return glm::lookAt(m_Origin, m_Origin + m_Forward, m_Up);

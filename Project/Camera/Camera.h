@@ -29,7 +29,6 @@ public:
     Camera(Camera&&) = delete;
     Camera& operator=(Camera&&) = delete;
 
-
     static glm::mat4 GetViewMatrix();
     static glm::mat4 GetProjectionMatrix();
     static glm::mat4 GetViewInverseMatrix();

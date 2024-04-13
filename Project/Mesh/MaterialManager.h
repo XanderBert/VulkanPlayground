@@ -3,41 +3,48 @@
 #include <vector>
 #include "Material.h"
 
-namespace MaterialManager
+class MaterialManager final
 {
-	inline std::vector<std::shared_ptr<Material>> materials;
+public:
+	MaterialManager() = default;
+	~MaterialManager() = default;
+	MaterialManager(const MaterialManager&) = delete;
+	MaterialManager& operator=(const MaterialManager&) = delete;
+	MaterialManager(MaterialManager&&) = delete;
+	MaterialManager& operator=(MaterialManager&&) = delete;
 
-	inline std::shared_ptr<Material> CreateMaterial(VulkanContext* vulkanContext) 
+	static std::shared_ptr<Material> CreateMaterial(VulkanContext* vulkanContext)
 	{
-		materials.push_back(std::make_shared<Material>(vulkanContext));
-		return materials.back();
+		m_ActiveMaterials.push_back(std::make_shared<Material>(vulkanContext));
+		return m_ActiveMaterials.back();
 	}
 
-	inline std::shared_ptr<Material> CreateMaterial(VulkanContext* vulkanContext, const std::string& vertexShaderName, const std::string& fragmentShaderName)
+	static std::shared_ptr<Material> CreateMaterial(VulkanContext* vulkanContext, const std::string& vertexShaderName, const std::string& fragmentShaderName)
 	{
-		materials.push_back(std::make_shared<Material>(vulkanContext));
+		m_ActiveMaterials.push_back(std::make_shared<Material>(vulkanContext));
 
-		materials.back()->AddShader(vertexShaderName, ShaderType::VertexShader);
-		materials.back()->AddShader(fragmentShaderName, ShaderType::FragmentShader);
+		m_ActiveMaterials.back()->AddShader(vertexShaderName, ShaderType::VertexShader);
+		m_ActiveMaterials.back()->AddShader(fragmentShaderName, ShaderType::FragmentShader);
 
-		return materials.back();
+		return m_ActiveMaterials.back();
 	}
 
-
-	inline void CreatePipeline() 
+	static void CreatePipeline()
 	{
-		//Create Pipeline
-		for(auto& material : materials) 
+		for (const auto& material : m_ActiveMaterials)
 		{
 			material->CreatePipeline();
 		}
 	}
 
-	inline void Cleanup() 
+	static void Cleanup()
 	{
-		for(auto& material : materials)
+		for (const auto& material : m_ActiveMaterials)
 		{
-			material->CleanUp();	
+			material->CleanUp();
 		}
 	}
-}
+
+private:
+	inline static std::vector<std::shared_ptr<Material>> m_ActiveMaterials;
+};

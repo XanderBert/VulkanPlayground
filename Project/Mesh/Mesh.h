@@ -12,6 +12,7 @@ class Mesh final
 {
 public:
 	Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, std::shared_ptr<Material> material);
+	Mesh(const std::string& modelPath, std::shared_ptr<Material> material);
 	~Mesh() = default;
 
 	Mesh(const Mesh&) = delete;

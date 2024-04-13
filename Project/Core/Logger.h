@@ -1,7 +1,6 @@
 #pragma once
 #include <iostream>
 #include <string>
-#include <debugapi.h>
 #include <signal.h>
 
 #include "includes/imgui/imgui.h"

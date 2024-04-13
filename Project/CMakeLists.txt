@@ -82,7 +82,7 @@ set(SOURCES
     "Mesh/Material.cpp" 
     "Input/Input.h" 
     "Mesh/ModelLoader.h" 
-    "Core/DepthResource.h" "Mesh/MaterialManager.h")
+    "Core/DepthResource.h" "Mesh/MaterialManager.h" "Mesh/ModelLoader.cpp")
 
 
 

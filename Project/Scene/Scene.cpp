@@ -14,11 +14,6 @@
 
 Scene::Scene(VulkanContext* vulkanContext)
 {
-	std::vector<Vertex> vertices;
-	std::vector<uint32_t> indices;
-
-	ObjLoader::LoadObj("viking.obj", vertices, indices);
-
 	const std::vector<Vertex> vertices2 = 
 {
 	{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
@@ -38,10 +33,10 @@ Scene::Scene(VulkanContext* vulkanContext)
 	};
 
 
-	std::shared_ptr<Material> material01 = MaterialManager::CreateMaterial(vulkanContext, "shader.vert", "shader2.frag");
+	std::shared_ptr<Material> material01 = MaterialManager::CreateMaterial(vulkanContext, "shader.vert", "shader.frag");
 
 	m_Meshes.push_back(std::make_unique<Mesh>(vertices2, indices2, material01));
-	m_Meshes.push_back(std::make_unique<Mesh>(vertices, indices, material01));
+	m_Meshes.push_back(std::make_unique<Mesh>("viking.obj", material01));
 
 
 

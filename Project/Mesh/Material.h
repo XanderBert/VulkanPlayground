@@ -38,8 +38,6 @@ public:
 	Material(Material&&) = delete;
 	Material& operator=(Material&&) = delete;
 
-	void CleanUp() const;
-
 	void Bind(VkCommandBuffer commandBuffer, const glm::mat4x4& pushConstantMatrix);
 	Shader* AddShader(const std::string& shaderPath, ShaderType shaderType);
 
@@ -47,20 +45,18 @@ public:
 	{
 		return m_Shaders;
 	}
-
-
-	void CreatePipeline();
-
 	VkDescriptorSet& GetDescriptorSet()
 	{
 		return m_DescriptorSet;
 	}
 
-
 private:
+	friend class MaterialManager;
+	void CreatePipeline();
+	void CleanUp() const;
+
 	std::unique_ptr<GraphicsPipeline> m_pGraphicsPipeline;
 	std::vector<Shader*> m_Shaders;
-
 
 	VkDescriptorSet m_DescriptorSet{};
 	VulkanContext* m_pContext;
