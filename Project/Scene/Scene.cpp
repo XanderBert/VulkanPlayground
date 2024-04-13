@@ -9,6 +9,7 @@
 
 #include "Input/Input.h"
 #include "shaders/Shader.h"
+#include <Mesh/MaterialManager.h>
 
 
 Scene::Scene(VulkanContext* vulkanContext)
@@ -36,28 +37,27 @@ Scene::Scene(VulkanContext* vulkanContext)
 		4, 5, 6, 6, 7, 4
 	};
 
-	//Create Material02
-	std::unique_ptr<Material> material2 = std::make_unique<Material>(vulkanContext);
 
-	material2->AddShader("shader.vert", ShaderType::VertexShader);
+	std::shared_ptr<Material> material01 = MaterialManager::CreateMaterial(vulkanContext, "shader.vert", "shader2.frag");
 
-	//Create and add a new fragment shader
-	material2->AddShader("shader2.frag", ShaderType::FragmentShader);
+	m_Meshes.push_back(std::make_unique<Mesh>(vertices2, indices2, material01));
+	m_Meshes.push_back(std::make_unique<Mesh>(vertices, indices, material01));
 
-	//Create a mesh with material 02
-	m_Meshes.push_back(std::make_unique<Mesh>(vertices2, indices2, std::move(material2)));
+
+
+
 
 	//Create Material01
-	std::unique_ptr<Material> material = std::make_unique<Material>(vulkanContext);
+	//std::unique_ptr<Material> material = std::make_unique<Material>(vulkanContext);
 
 	//Add an existing vertex shader (it won't create a new vertex shader and the already created one gets used)
-	material->AddShader("shader.vert", ShaderType::VertexShader);
+	//material->AddShader("shader.vert", ShaderType::VertexShader);
 
 	//Create and add A fragment shader
-	material->AddShader("shader.frag", ShaderType::FragmentShader);
+	//material->AddShader("shader.frag", ShaderType::FragmentShader);
 
 	//Create a mesh with material 01
-	m_Meshes.push_back(std::make_unique<Mesh>(vertices, indices, std::move(material)));
+	//m_Meshes.push_back(std::make_unique<Mesh>(vertices, indices, std::move(material)));
 
 
 	Input::BindFunction({ GLFW_KEY_W, Input::KeyType::Hold }, Camera::MoveForward);

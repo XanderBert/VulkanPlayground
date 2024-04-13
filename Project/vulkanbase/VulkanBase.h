@@ -24,6 +24,7 @@
 #include "Core/DepthResource.h"
 #include "Core/Logger.h"
 #include <Input/Input.h>
+#include "Mesh/MaterialManager.h"
 
 
 
@@ -56,6 +57,7 @@ public:
 		ImGuiWrapper::Initialize(m_pContext->graphicsQueue, swapChainImages.size(), &m_pContext->swapChainImageFormat, swapChainImages);
 		m_pScene = std::make_unique<Scene>(m_pContext);
 		Input::SetupInput(m_pContext->window.Ptr());
+		MaterialManager::CreatePipeline();
 		mainLoop();
 		cleanup();
 	}
@@ -131,6 +133,7 @@ private:
 
 		Descriptor::DescriptorManager::Cleanup();
 		ShaderManager::Cleanup(m_pContext->device);
+		MaterialManager::Cleanup();
 		m_pScene->CleanUp();
 		m_pContext->CleanUp();
 	}

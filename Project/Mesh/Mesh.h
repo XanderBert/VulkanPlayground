@@ -11,7 +11,7 @@ struct Vertex;
 class Mesh final
 {
 public:
-	Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, std::unique_ptr<Material> material);
+	Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, std::shared_ptr<Material> material);
 	~Mesh() = default;
 
 	Mesh(const Mesh&) = delete;
@@ -40,7 +40,8 @@ private:
 	uint16_t m_VertexCount;
 	uint16_t m_IndexCount;
 
-	std::unique_ptr<Material> m_pMaterial;
+	std::shared_ptr<Material> m_pMaterial;
+
 	std::vector<uint16_t> m_VariableHandles;
 
 	glm::mat4 m_ModelMatrix{};

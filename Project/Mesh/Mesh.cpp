@@ -8,14 +8,12 @@
 #include "Timer/GameTimer.h"
 
 
-Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, std::unique_ptr<Material> material)
+Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, std::shared_ptr<Material> material)
+	:m_pMaterial(material)
 {
 	m_pContext = ServiceLocator::GetService<VulkanContext>();
 	CreateVertexBuffer(vertices);
 	CreateIndexBuffer(indices);
-
-	m_pMaterial = std::move(material);
-	m_pMaterial->CreatePipeline();
 }
 
 void Mesh::Bind(VkCommandBuffer commandBuffer)
@@ -39,8 +37,6 @@ void Mesh::Render(VkCommandBuffer commandBuffer) const
 
 void Mesh::CleanUp() const
 {
-	m_pMaterial->CleanUp();
-
 	vkDestroyBuffer(m_pContext->device, m_VertexBuffer, nullptr);
 	vkFreeMemory(m_pContext->device, m_VertexBufferMemory, nullptr);
 
