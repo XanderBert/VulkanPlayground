@@ -39,42 +39,20 @@ public:
 
 	void Cleanup(VkDevice device) const;
 
-	uint16_t AddMatrix(const glm::mat4& matrix);
-	void UpdateMatrix(uint16_t handle, glm::mat4& matrix);
+	uint16_t AddVariable(const glm::vec4& value);
+	uint16_t AddVariable(const glm::mat4& matrix);
+	void UpdateVariable(uint16_t handle, const glm::mat4& matrix);
+	void UpdateVariable(uint16_t handle, const glm::vec4& value);
 
 private:
-	class DynamicBufferObject final
-	{
-	public:
+	const float* GetData() const;
+	size_t GetSize() const;
 
-		uint16_t AddFloat3(glm::vec3 value)
-		{
-			data.push_back(value.x);
-			data.push_back(value.y);
-			data.push_back(value.z);
-			data.push_back(0.0f); // Pad to vec4
-
-			return data.size() - 4;
-		}
-
-		// Add a glm::mat4 value
-		uint16_t AddMatrix(const glm::mat4& matrix);
-
-		void UpdateMatrix(uint16_t handle, glm::mat4& matrix);
-
-		// Get pointer to raw data
-		const float* GetData() const;
-
-		// Get size of data in bytes
-		size_t GetSize() const;
-
-	private:
-		std::vector<float> data; // Store all values as vec4 for memory alignment
-	};
-
-
-	DynamicBufferObject m_pDynamicBufferObject{};
+	uint16_t Insert(const float* dataPtr, uint8_t size);
+	void Update(uint16_t handle, const float* dataPtr, uint8_t size);
+	std::vector<float> m_Data;
 	
+
 	VkBuffer m_UniformBuffer;
 	VkDeviceMemory m_UniformBuffersMemory;
 	void* m_UniformBuffersMapped;
@@ -91,7 +69,7 @@ public:
 	Shader(Shader&&) = delete;
 	Shader& operator=(Shader&&) = delete;
 
-	uint16_t AddMatrix(const glm::mat4& matrix, VulkanContext* vulkanContext = nullptr, int binding = 0);
+	//uint16_t AddMatrix(const glm::mat4& matrix, VulkanContext* vulkanContext = nullptr, int binding = 0);
 	void Bind(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, Material* material) const;
 
 	VkPipelineShaderStageCreateInfo GetStageInfo() const;

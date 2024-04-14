@@ -1,31 +1,24 @@
 #version 450
 
-layout(location = 0) in vec4 inPosition;
-layout(location = 1) in vec4 inWorldPosition;
-layout(location = 2) in vec4 inCameraPosition;
-layout(location = 3) in vec3 inNormal;
-
+layout (location = 0) in vec2 inUV;
+layout (location = 1) in vec3 inNormal;
+layout (location = 2) in vec3 inCameraPos;
 
 
 layout(location = 0) out vec4 outColor;
 
-vec3 GetDiffuse(vec3 normal, vec3 lightDirection)
-{
-	float diffuseStrength = clamp((dot(normal, normalize(-lightDirection))),0.0, 1.0);
-	
-	//Calculate the half lambert
-	vec3 lambert = vec3(pow(diffuseStrength * 0.5 + 0.5, 8.0));
-
-	//Calculate the diffuse color
-    return lambert;
-}
-
 void main() 
 {
-    vec3 lightDirection = vec3(normalize(vec4(0.577, -0.577, 0.577, 1.0) * inWorldPosition));
+	vec4 color = vec4(1, 0.8, 0.2, 1);
+	const float ambient = 0.1;
 
-	vec3 lamber = GetDiffuse(inNormal, lightDirection);
-	vec4 color = vec4(lamber * inNormal, 1.0);
-
-    outColor = color;
+	vec3 N = normalize(inNormal);
+	vec3 L = normalize(vec3(0.2, 0.2, 1.0));
+	vec3 V = normalize(inCameraPos);
+	vec3 R = reflect(-L, N);
+	vec3 diffuse = max(dot(N, L), ambient).rrr;
+	float specular = pow(max(dot(R, V), 0.0), 64.0);
+	outColor = vec4(diffuse * color.rgb + specular, color.a);
+	
+	outColor = pow(outColor,vec4(2));
 }

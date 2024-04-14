@@ -143,13 +143,19 @@ namespace Descriptor
 	{
 		inline void Init(VulkanContext* vulkanContext)
 		{
-			m_GlobalBuffer.AddMatrix(Camera::GetViewProjectionMatrix());
+			m_GlobalBuffer.AddVariable(Camera::GetViewProjectionMatrix());
+			//projectionHandle = m_GlobalBuffer.AddVariable(Camera::GetProjectionMatrix());
+			//viewProjectionHandle = m_GlobalBuffer.AddVariable(Camera::GetViewProjectionMatrix());
+			cameraHandle = m_GlobalBuffer.AddVariable(glm::vec4(Camera::GetPosition(), 1.0f));
 			m_GlobalBuffer.BindBuffer(vulkanContext, 0, VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT, m_GlobalDescriptorSet, m_GlobalDescriptorSetLayout);
 		}
 
 		inline void Bind(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout)
 		{
-			m_GlobalBuffer.UpdateMatrix(0, Camera::GetViewProjectionMatrix());
+			m_GlobalBuffer.UpdateVariable(0, Camera::Camera::GetViewProjectionMatrix());
+			//m_GlobalBuffer.UpdateVariable(projectionHandle, Camera::Camera::GetProjectionMatrix());
+			//m_GlobalBuffer.UpdateVariable(viewProjectionHandle, Camera::Camera::GetViewProjectionMatrix());
+			m_GlobalBuffer.UpdateVariable(cameraHandle, glm::vec4(Camera::GetPosition(), 1.0f));
 			m_GlobalBuffer.Bind(commandBuffer, pipelineLayout, m_GlobalDescriptorSet);
 		}
 
@@ -164,6 +170,10 @@ namespace Descriptor
 		VkDescriptorSetLayout m_GlobalDescriptorSetLayout{};
 		VkDescriptorSet m_GlobalDescriptorSet{};
 		DynamicBuffer m_GlobalBuffer{};
+
+		uint16_t projectionHandle = 0;
+		uint16_t viewProjectionHandle = 0;
+		uint16_t cameraHandle = 0;
 	};
 
 	//Manages the above classes

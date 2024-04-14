@@ -3,27 +3,24 @@
 #include "vulkanbase/VulkanTypes.h"
 #include <vector>
 
-
-
 //---------------------------------------------------------------
 //-------------------------DynamicBuffer-------------------------
 //---------------------------------------------------------------
 void DynamicBuffer::BindBuffer(VulkanContext* vulkanContext, int binding, VkShaderStageFlags shaderType, VkDescriptorSet& descriptorSet, VkDescriptorSetLayout& shaderDescriptorSetLayout)
 {
 	//Setup the uniform buffer
-	const VkDeviceSize bufferSize = m_pDynamicBufferObject.GetSize();
+	const VkDeviceSize bufferSize = GetSize();
 	Core::Buffer::CreateBuffer(vulkanContext, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_UniformBuffer, m_UniformBuffersMemory);
 	vkMapMemory(vulkanContext->device, m_UniformBuffersMemory, 0, bufferSize, 0, &m_UniformBuffersMapped);
 
 	VkDescriptorBufferInfo bufferInfo{};
 	bufferInfo.buffer = m_UniformBuffer;
 	bufferInfo.offset = 0;
-	bufferInfo.range = m_pDynamicBufferObject.GetSize();
+	bufferInfo.range = GetSize();
 
 
 	Descriptor::DescriptorManager::GetBuilder().BindBuffer(binding, &bufferInfo, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, shaderType).Build(descriptorSet, shaderDescriptorSetLayout );
 }
-
 
 void DynamicBuffer::Bind(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkDescriptorSet descriptorSet) const
 {
@@ -31,7 +28,7 @@ void DynamicBuffer::Bind(VkCommandBuffer commandBuffer, VkPipelineLayout pipelin
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
 
 	//Copy the dynamic buffer to the mapped buffer
-	memcpy(m_UniformBuffersMapped, m_pDynamicBufferObject.GetData(), m_pDynamicBufferObject.GetSize());
+	memcpy(m_UniformBuffersMapped, GetData(), GetSize());
 }
 
 void DynamicBuffer::Cleanup(VkDevice device) const
@@ -40,52 +37,59 @@ void DynamicBuffer::Cleanup(VkDevice device) const
 	vkFreeMemory(device, m_UniformBuffersMemory, nullptr);
 }
 
-uint16_t DynamicBuffer::AddMatrix(const glm::mat4& matrix)
+uint16_t DynamicBuffer::AddVariable(const glm::vec4& value)
 {
-	return m_pDynamicBufferObject.AddMatrix(matrix);
+	constexpr uint8_t size = sizeof(glm::vec4) / sizeof(float);
+	return Insert(glm::value_ptr(value), size);
 }
 
-void DynamicBuffer::UpdateMatrix(uint16_t handle, glm::mat4& matrix)
+uint16_t DynamicBuffer::AddVariable(const glm::mat4& value)
 {
-	m_pDynamicBufferObject.UpdateMatrix(handle, matrix);
+	constexpr uint8_t size = sizeof(glm::mat4) / sizeof(float);
+	return Insert(glm::value_ptr(value), size);
 }
 
+void DynamicBuffer::UpdateVariable(uint16_t handle, const glm::vec4& value)
+{
+	constexpr uint8_t size = sizeof(glm::vec4) / sizeof(float);
+	Update(handle, glm::value_ptr(value), size);
+}
+
+void DynamicBuffer::UpdateVariable(uint16_t handle, const glm::mat4& value)
+{
+	constexpr uint8_t size = sizeof(glm::mat4) / sizeof(float);
+	Update(handle, glm::value_ptr(value), size);
+}
 
 //---------------------------------------------------------------------
 //-------------------------DynamicBufferObject-------------------------
 //---------------------------------------------------------------------
-
-uint16_t DynamicBuffer::DynamicBufferObject::AddMatrix(const glm::mat4& matrix)
+const float* DynamicBuffer::GetData() const
 {
-	constexpr size_t size = sizeof(glm::mat4) / sizeof(float);
-
-	const float* ptr = glm::value_ptr(matrix);
-
-	data.insert(data.end(), ptr, ptr + size);
-
-	return data.size() - size;
+	return m_Data.data();
 }
 
-void DynamicBuffer::DynamicBufferObject::UpdateMatrix(uint16_t handle, glm::mat4& matrix)
+size_t DynamicBuffer::GetSize() const
 {
-	constexpr size_t size = sizeof(glm::mat4) / sizeof(float);
-
-	LogAssert(handle + size <= data.size(), "Matrix Handle out of bounds", true)
-
-	std::copy_n(value_ptr(matrix), size, data.begin() + handle);
+	return m_Data.size() * sizeof(float);
 }
 
-const float* DynamicBuffer::DynamicBufferObject::GetData() const
+uint16_t DynamicBuffer::Insert(const float* dataPtr, uint8_t size)
 {
-	return data.data();
+	//Check if the size is a multiple of vec4
+	LogAssert(size % 4 == 0, "Size is not a multiple of 4", true)
+
+	m_Data.insert(m_Data.end(), dataPtr, dataPtr + size);
+
+	return m_Data.size() - size;
 }
 
-size_t DynamicBuffer::DynamicBufferObject::GetSize() const
+void DynamicBuffer::Update(uint16_t handle, const float* dataPtr, uint8_t size)
 {
-	return data.size() * sizeof(float);
+	LogAssert(handle + size <= m_Data.size(), "Handle out of bounds", true)
+
+	std::copy_n(dataPtr, size, m_Data.begin() + handle);
 }
-
-
 
 
 //--------------------------------------------------------
@@ -130,23 +134,6 @@ Shader::Shader(const VkPipelineShaderStageCreateInfo& shaderInfo, Material* mate
 
 }
 
-uint16_t Shader::AddMatrix(const glm::mat4& matrix, VulkanContext* vulkanContext, int binding)
-{
-	//if (!m_HasUniformBuffer)
-	//{
-	//	LogAssert(vulkanContext, "When adding your first variable you need to pass the Context", true)
-	//	if (!vulkanContext) return 0;
-
-
-	//	const uint16_t handle = m_DynamicBuffer.AddMatrix(matrix);
-
-	//	AddUniformBuffer(vulkanContext, binding);
-
-	//	return handle;
-	//}
-	m_HasUniformBuffer = true;
-	return m_DynamicBuffer.AddMatrix(matrix);
-}
 
 void Shader::Bind(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, Material* material) const
 {
