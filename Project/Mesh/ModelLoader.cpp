@@ -1,6 +1,8 @@
 #include "ModelLoader.h"
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
+#include <unordered_map>
+
 #include "Vertex.h"
 #include "Core/Logger.h"
 
@@ -26,6 +28,10 @@ namespace ObjLoader
 			
 		LogWarning(warnings);
 
+
+
+
+		std::unordered_map<Vertex, uint32_t, VertexHasher> uniqueVertices{};
 		for (auto& shape : shapes)
 		{
 			tinyobj::mesh_t& mesh = shape.mesh;
@@ -53,9 +59,15 @@ namespace ObjLoader
 				};
 
 
-				const Vertex vert = { position, normal, texCoord };
-				vertices.push_back(vert);
-				indices.push_back(indices.size());
+				const Vertex vertex = { position, normal, texCoord };
+
+				if (uniqueVertices.count(vertex) == 0) 
+				{
+					uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
+					vertices.push_back(vertex);
+				}
+
+				indices.push_back(uniqueVertices[vertex]);
 			}
 		}
 	}

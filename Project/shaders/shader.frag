@@ -2,23 +2,32 @@
 
 layout (location = 0) in vec2 inUV;
 layout (location = 1) in vec3 inNormal;
-layout (location = 2) in vec3 inCameraPos;
-
+layout (location = 2) in vec3 inViewDirection;
+layout (location = 3) in vec4 inWorldPos;
 
 layout(location = 0) out vec4 outColor;
 
 void main() 
 {
-	vec4 color = vec4(0.8, 0.8, 0.8, 1);
+	const vec4 color = vec4(0.8, 0.8, 0.8, 1);
 	const float ambient = 0.1;
+	const vec3 lightDirection = vec3(-0.2, -0.2, -1.0);
 
-	vec3 N = normalize(inNormal);
-	vec3 L = normalize(vec3(0.2, 0.2, 1.0));
-	vec3 V = normalize(inCameraPos);
-	vec3 R = reflect(-L, N);
-	vec3 diffuse = max(dot(N, L), ambient).rrr;
-	float specular = pow(max(dot(R, V), 0.0), 64.0);
-	outColor = vec4(diffuse * color.rgb + specular, color.a);
+
+	//Diffuse
+	float diffuseStrength = clamp(dot(inNormal, normalize(-lightDirection)), 1,0);
+	//float lambert = pow(diffuseStrength * 0.5 + 0.5, 2.0);
+	float lambert = diffuseStrength / 3.1415;
+    
+	
+	//Calculate the halfvector
+   	vec3 halfVector = normalize(inViewDirection + normalize(-lightDirection));
+	float specularValue = clamp(dot(inNormal, halfVector),1 , 0);
+	const float specularExp = 1;
+	float specularPower = pow(specularValue, specularExp);
+	
+	
+	outColor = color * lambert + ambient + specularPower ;
 	
 	//Saturate
 	outColor = pow(outColor,vec4(1.4));

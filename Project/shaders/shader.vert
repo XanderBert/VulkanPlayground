@@ -17,15 +17,17 @@ layout(location = 2) in vec2 inUV;
 
 layout(location = 0) out vec2 outUV;
 layout(location = 1) out vec3 outNormal;
-layout(location = 2) out vec3 outCameraPos;
+layout(location = 2) out vec3 outViewDirection;
+layout(location = 3) out vec4 outWorldPos;
+
 
 void main() 
-{
-    outNormal = inNormal;
+{	
+    outNormal = mat3(push.model)*  inNormal ;
 	outUV = inUV;
 
 	gl_Position = ubo.viewProjection * push.model * vec4(inPos, 1.0);
 	
-	vec4 worldPos = push.model * vec4(inPos, 1.0);
-	outCameraPos = ubo.viewPos.xyz - worldPos.xyz;
+	outWorldPos = push.model * vec4(inPos, 1.0);
+	outViewDirection = normalize(ubo.viewPos.xyz - outWorldPos.xyz);
 }

@@ -55,7 +55,7 @@ private:
     inline static  glm::vec3 m_Origin = { 0.f, -2.f, 0.0f };
 
     inline static float m_NearPlane = 0.1f;
-    inline static float m_FarPlane = 1000.f;
+    inline static float m_FarPlane = 10000.f;
 
     inline static glm::vec3 m_Forward = MathConstants::FORWARD;
     inline static glm::vec3 m_Right = MathConstants::RIGHT;

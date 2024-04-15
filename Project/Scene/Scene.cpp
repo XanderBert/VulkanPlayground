@@ -37,12 +37,12 @@ Scene::Scene(VulkanContext* vulkanContext)
 
 	std::shared_ptr<Material> material01 = MaterialManager::CreateMaterial(vulkanContext, "shader.vert", "shader.frag");
 
-	std::shared_ptr<Material> material02 = MaterialManager::CreateMaterial(vulkanContext);
-	material02->AddShader("shader.vert", ShaderType::VertexShader);
-	material02->AddShader("shader2.frag", ShaderType::FragmentShader);
+	//std::shared_ptr<Material> material02 = MaterialManager::CreateMaterial(vulkanContext);
+	//material02->AddShader("shader.vert", ShaderType::VertexShader);
+//	material02->AddShader("shader2.frag", ShaderType::FragmentShader);
 
-	m_Meshes.push_back(std::make_unique<Mesh>(vertices2, indices2, material02));
-	m_Meshes.push_back(std::make_unique<Mesh>("viking.obj", material01));
+//	m_Meshes.push_back(std::make_unique<Mesh>(vertices2, indices2, material02));
+	m_Meshes.push_back(std::make_unique<Mesh>("vehicle.obj", material01));
 
 
 	Input::BindFunction({ GLFW_KEY_W, Input::KeyType::Hold }, Camera::MoveForward);

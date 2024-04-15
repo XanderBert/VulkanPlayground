@@ -10,6 +10,11 @@ struct Vertex
     glm::vec3 normal;
 	glm::vec2 texCoord;
 
+	bool operator==(const Vertex& other) const
+	{
+		return pos == other.pos && normal == other.normal && texCoord == other.texCoord;
+	}
+
     static VkVertexInputBindingDescription GetBindingDescription()
     {
 		VkVertexInputBindingDescription bindingDescription{};
@@ -50,4 +55,17 @@ struct Vertex
 	}
 };
 
-
+struct VertexHasher
+{
+	size_t operator()(Vertex const& vertex) const
+	{
+		return ((std::hash<float>()(vertex.pos.x) ^
+				((std::hash<float>()(vertex.pos.y) ^
+				((std::hash<float>()(vertex.pos.z) ^
+			(std::hash<float>()(vertex.normal.x) << 1)) >> 1) ^
+			(std::hash<float>()(vertex.normal.y) << 1)) >> 1) ^
+			(std::hash<float>()(vertex.normal.z) << 1)) >> 1) ^
+			(std::hash<float>()(vertex.texCoord.x) << 1) ^
+			(std::hash<float>()(vertex.texCoord.y) << 1);
+	}
+};
