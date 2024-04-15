@@ -23,7 +23,7 @@ layout(location = 3) out vec4 outWorldPos;
 
 void main() 
 {	
-    outNormal = mat3(push.model)*  inNormal ;
+    outNormal = mat3(push.model) * inNormal ;
 	outUV = inUV;
 
 	gl_Position = ubo.viewProjection * push.model * vec4(inPos, 1.0);

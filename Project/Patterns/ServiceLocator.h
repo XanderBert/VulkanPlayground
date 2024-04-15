@@ -49,7 +49,15 @@ private:
 	static void MakeDeleter(void const* data)
 	{
 		T const* p = static_cast<T const*>(data);
-		std::cout << "service located at " << p << " is being deleted";
+
+#ifdef _DEBUG
+		std::stringstream ss;
+		ss << "Service Located at: ";
+		ss << p;
+		ss << " is being deleted";
+		LogInfo(ss.str());
+#endif
+
 		delete p;
 	}
 

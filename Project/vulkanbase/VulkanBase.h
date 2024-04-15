@@ -25,6 +25,7 @@
 #include "Core/Logger.h"
 #include <Input/Input.h>
 #include "Mesh/MaterialManager.h"
+#include "Core/SwapChain.h"
 
 
 
@@ -39,13 +40,6 @@ const std::vector<const char*> deviceExtensions =
 };
 
 
-struct SwapChainSupportDetails
-{
-	VkSurfaceCapabilitiesKHR capabilities;
-	std::vector<VkSurfaceFormatKHR> formats;
-	std::vector<VkPresentModeKHR> presentModes;
-};
-
 
 class VulkanBase
 {
@@ -54,7 +48,7 @@ public:
 	{
 		ServiceConfigurator::Configure();
 		initVulkan();
-		ImGuiWrapper::Initialize(m_pContext->graphicsQueue, swapChainImages.size(), &m_pContext->swapChainImageFormat, swapChainImages);
+		ImGuiWrapper::Initialize(m_pContext->graphicsQueue);
 		m_pScene = std::make_unique<Scene>(m_pContext);
 		Input::SetupInput(m_pContext->window.Ptr());
 		MaterialManager::CreatePipeline();
@@ -69,17 +63,18 @@ private:
 		m_pContext = ServiceLocator::GetService<VulkanContext>();
  		createInstance();
 		setupDebugMessenger();
-		m_pContext->CreateSurface();
 
 		// week 05
+		
+		//Create Surface
+		SwapChain::CreateSurface(m_pContext);
 		pickPhysicalDevice();
 		createLogicalDevice();
-
+		SwapChain::Init(m_pContext);
 		// week 04 
-		createSwapChain();
-		DepthResource::DepthResource::Init(m_pContext);
-		createImageViews();
 		
+		DepthResource::DepthResource::Init(m_pContext);
+
 
 		// Since we use an extension, we need to expliclity load the function pointers for extension related Vulkan commands
 		vkCmdBeginRenderingKHR = reinterpret_cast<PFN_vkCmdBeginRenderingKHR>(vkGetDeviceProcAddr(m_pContext->device, "vkCmdBeginRenderingKHR"));
@@ -119,13 +114,7 @@ private:
 		vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
 		vkDestroyFence(device, inFlightFence, nullptr);
 
-
 		DepthResource::DepthResource::Cleanup(m_pContext);
-
-		for (const auto imageView : swapChainImageViews) 
-		{
-			vkDestroyImageView(device, imageView, nullptr);
-		}
 
 		if (enableValidationLayers) 
 		{
@@ -136,6 +125,7 @@ private:
 		ShaderManager::Cleanup(m_pContext->device);
 		MaterialManager::Cleanup();
 		m_pScene->CleanUp();
+		SwapChain::Cleanup(m_pContext);
 		m_pContext->CleanUp();
 	}
 
@@ -145,8 +135,7 @@ private:
 	CommandBuffer commandBuffer{};
 	PFN_vkCmdBeginRenderingKHR vkCmdBeginRenderingKHR{ VK_NULL_HANDLE };
 	PFN_vkCmdEndRenderingKHR vkCmdEndRenderingKHR{ VK_NULL_HANDLE };
-	std::vector<VkImage> swapChainImages;
-	std::vector<VkImageView> swapChainImageViews;
+
 	VkQueue presentQueue;
 	VkDebugUtilsMessengerEXT debugMessenger;
 	VkSemaphore imageAvailableSemaphore;
@@ -159,7 +148,7 @@ private:
 		VkRenderingAttachmentInfoKHR colorAttachmentInfo{};
 		colorAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
 		colorAttachmentInfo.pNext = VK_NULL_HANDLE;
-		colorAttachmentInfo.imageView = swapChainImageViews[imageIndex];
+		colorAttachmentInfo.imageView = SwapChain::ImageViews()[imageIndex];
 		colorAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		colorAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		colorAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -177,9 +166,11 @@ private:
 		depthAttachmentInfo.clearValue = {{1.0f, 0.0f}};
 
 
+		VkExtent2D& swapChainExtent = SwapChain::Extends();
+
 		VkRenderingInfoKHR renderInfo{};
 		renderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
-		renderInfo.renderArea = { 0, 0, m_pContext->swapChainExtent};
+		renderInfo.renderArea = { 0, 0, swapChainExtent };
 		renderInfo.layerCount = 1;
 		renderInfo.colorAttachmentCount = 1;
 		renderInfo.pColorAttachments = &colorAttachmentInfo;
@@ -191,8 +182,8 @@ private:
 		VkViewport viewport{};
 		viewport.x = 0.0f;
 		viewport.y = 0.0f;
-		viewport.width = (float)m_pContext->swapChainExtent.width;
-		viewport.height = (float)m_pContext->swapChainExtent.height;
+		viewport.width = (float)swapChainExtent.width;
+		viewport.height = (float)swapChainExtent.height;
 		viewport.minDepth = 0.0f;
 		viewport.maxDepth = 1.0f;
 		vkCmdSetViewport(commandBuffer.Handle, 0, 1, &viewport);
@@ -201,7 +192,7 @@ private:
 		//Set the scissor
 		VkRect2D scissor{};
 		scissor.offset = { 0, 0 };
-		scissor.extent = m_pContext->swapChainExtent;
+		scissor.extent = swapChainExtent;
 		vkCmdSetScissor(commandBuffer.Handle, 0, 1, &scissor);
 
 
@@ -212,12 +203,7 @@ private:
 	}
 
 
-	SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
-	VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
-	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
-	VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
-	void createSwapChain();
-	void createImageViews();
+
 	void pickPhysicalDevice();
 	bool isDeviceSuitable(VkPhysicalDevice device);
 	void createLogicalDevice();

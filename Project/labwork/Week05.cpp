@@ -38,19 +38,17 @@ void VulkanBase::pickPhysicalDevice()
 
 bool VulkanBase::isDeviceSuitable(VkPhysicalDevice device)
 {
-	auto surface = m_pContext->surface;
-	QueueFamilyIndices indices = QueueFamilyIndices::FindQueueFamilies(device, surface);
-	bool extensionsSupported = checkDeviceExtensionSupport(device);
+	const QueueFamilyIndices indices = QueueFamilyIndices::FindQueueFamilies(device, SwapChain::GetSurface());
+	const bool extensionsSupported = checkDeviceExtensionSupport(device);
 	return indices.isComplete() && extensionsSupported;
 
 }
 
 void VulkanBase::createLogicalDevice()
 {
-	auto physicalDevice = m_pContext->physicalDevice;
-	auto surface = m_pContext->surface;
-
-	QueueFamilyIndices indices = QueueFamilyIndices::FindQueueFamilies(physicalDevice, surface);
+	VkPhysicalDevice physicalDevice = m_pContext->physicalDevice;
+	
+	QueueFamilyIndices indices = QueueFamilyIndices::FindQueueFamilies(physicalDevice, SwapChain::GetSurface());
 
 	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 	std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily.value(), indices.presentFamily.value() };

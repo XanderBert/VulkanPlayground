@@ -47,9 +47,9 @@ namespace ObjLoader
 
 				glm::vec3 normal =
 				{
-					attributes.vertices[3 * i.vertex_index],
-					attributes.vertices[3 * i.vertex_index + 1],
-					attributes.vertices[3 * i.vertex_index + 2]
+					attributes.vertices[3 * i.normal_index],
+					attributes.vertices[3 * i.normal_index + 1],
+					attributes.vertices[3 * i.normal_index + 2]
 				};
 
 				glm::vec2 texCoord =

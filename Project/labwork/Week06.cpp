@@ -68,15 +68,15 @@ void VulkanBase::createSyncObjects()
 
 void VulkanBase::drawFrame()
 {
-	const auto device = m_pContext->device;
-	const auto swapChain = m_pContext->swapchain;
+	const VkDevice device = m_pContext->device;
+
 	vkWaitForFences(device, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
 	vkResetFences(device, 1, &inFlightFence);
 
 	uint32_t imageIndex;
-	vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+	vkAcquireNextImageKHR(device, SwapChain(), UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
 
-	if (imageIndex > swapChainImages.size()) return;
+	if (imageIndex > SwapChain::ImageCount()) return;
 
 	CommandBufferManager::ResetCommandBuffer(commandBuffer);
 	CommandBufferManager::BeginCommandBufferRecording(commandBuffer, false, false);
@@ -84,7 +84,7 @@ void VulkanBase::drawFrame()
 
 	tools::InsertImageMemoryBarrier(
 		commandBuffer.Handle,
-		swapChainImages[imageIndex],
+		SwapChain::Image(imageIndex),
 		VK_IMAGE_LAYOUT_UNDEFINED,
 		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 		VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 });
@@ -101,7 +101,7 @@ void VulkanBase::drawFrame()
 
 	tools::InsertImageMemoryBarrier(
 		commandBuffer.Handle,
-		swapChainImages[imageIndex],
+		SwapChain::Image(imageIndex),
 		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 		VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
 		VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 });
@@ -134,17 +134,14 @@ void VulkanBase::drawFrame()
 
 	VkPresentInfoKHR presentInfo{};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-
 	presentInfo.waitSemaphoreCount = 1;
 	presentInfo.pWaitSemaphores = signalSemaphores;
-
-	VkSwapchainKHR swapChains[] = { swapChain };
+	const VkSwapchainKHR swapChains[] = { SwapChain() };
 	presentInfo.swapchainCount = 1;
 	presentInfo.pSwapchains = swapChains;
-
 	presentInfo.pImageIndices = &imageIndex;
 
-	vkQueuePresentKHR(presentQueue, &presentInfo);
+	VulkanCheck(vkQueuePresentKHR(presentQueue, &presentInfo), "Failed To Queue Present!");
 }
 
 

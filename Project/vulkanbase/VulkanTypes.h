@@ -8,7 +8,6 @@
 #include <GLFW/glfw3native.h>
 #include <iostream>
 #include <vector>
-
 #include "Core/Logger.h"
 
 
@@ -61,33 +60,19 @@ public:
 	VulkanContext(VulkanContext&&) = delete;
 	VulkanContext& operator=(VulkanContext&&) = delete;
 
-	//Week 06
-	inline void CreateSurface()
-	{
-		VulkanCheck(glfwCreateWindowSurface(instance, window.Ptr(), nullptr, &surface),"failed to create window surface!" )
-	}
-
 	//TODO Store a CommandPool Manager here? (typically there would be 1 command pool for each thread)-> the same can be done for the graphics queue
 	VkQueue graphicsQueue{};
 	VkCommandPool commandPool{};
     VkInstance instance{};
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
     VkDevice device = VK_NULL_HANDLE;
-    VkSurfaceKHR surface{};
-
-    VkSwapchainKHR swapchain{};
-	VkExtent2D swapChainExtent;
-	VkFormat swapChainImageFormat;
-
 	Window window{};
 
 
     inline void CleanUp() const
     {
 		vkDestroyCommandPool(device, commandPool, nullptr);
-		vkDestroySwapchainKHR(device, swapchain, nullptr);
 		vkDestroyDevice(device, nullptr);
-		vkDestroySurfaceKHR(instance, surface, nullptr);
 		vkDestroyInstance(instance, nullptr);
 	}
 };

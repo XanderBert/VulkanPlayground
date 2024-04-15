@@ -2,6 +2,7 @@
 #include <vulkan/vulkan.h>
 #include "vulkanbase/VulkanTypes.h"
 #include "Logger.h"
+#include "SwapChain.h"
 
 namespace DepthResource 
 {
@@ -119,7 +120,7 @@ namespace DepthResource
 			image_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 			image_create_info.imageType = VK_IMAGE_TYPE_2D;
 			image_create_info.format = depthFormat;
-			image_create_info.extent = { vulkanContext->swapChainExtent.width, vulkanContext->swapChainExtent.width, 1 };
+			image_create_info.extent = { SwapChain::Extends().width, SwapChain::Extends().height, 1 };
 			image_create_info.mipLevels = 1;
 			image_create_info.arrayLayers = 1;
 			image_create_info.samples = VK_SAMPLE_COUNT_1_BIT;

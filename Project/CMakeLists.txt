@@ -39,7 +39,7 @@ set(SOURCES
     "main.cpp"
     "vulkanbase/VulkanBase.h" 
     "vulkanbase/VulkanUtil.h"
-    "labwork/Week04.cpp" 
+     
     "labwork/Week05.cpp"
     "labwork/Week06.cpp"
     "shaders/Shader.h"
@@ -80,7 +80,7 @@ set(SOURCES
     "Mesh/ModelLoader.cpp"
     "shaders/SpirvHelper.h"
     "vulkanbase/VulkanUtil.cpp" 
-)
+ "Core/SwapChain.h")
 
 
 include(FetchContent)

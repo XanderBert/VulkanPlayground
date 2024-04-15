@@ -1,13 +1,14 @@
 #include "commandPool.h"
 #include "Logger.h"
 #include "QueueFamilyIndices.h"
+#include "SwapChain.h"
 
 
 namespace CommandPool
 {
 	void CreateCommandPool(VulkanContext* context)
 	{
-		const QueueFamilyIndices queueFamilyIndices = QueueFamilyIndices::FindQueueFamilies(context->physicalDevice, context->surface);
+		const QueueFamilyIndices queueFamilyIndices = QueueFamilyIndices::FindQueueFamilies(context->physicalDevice, SwapChain::GetSurface());
 
 
 		VkCommandPoolCreateInfo poolInfo{};
