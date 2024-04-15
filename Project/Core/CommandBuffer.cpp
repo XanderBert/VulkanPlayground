@@ -1,5 +1,7 @@
 #include "CommandBuffer.h"
 #include <stdexcept>
+
+#include "Logger.h"
 #include "vulkanbase/VulkanTypes.h"
 
 
@@ -20,10 +22,7 @@ void CommandBufferManager::CreateCommandBuffer(const VulkanContext* vulkanContex
 
 	commandBuffer.State = CommandBufferState::NotAllocated;
 
-	if (vkAllocateCommandBuffers(vulkanContext->device, &allocInfo, &commandBuffer.Handle) != VK_SUCCESS)
-	{
-		throw std::runtime_error("failed to allocate command buffers!");
-	}
+	VulkanCheck(vkAllocateCommandBuffers(vulkanContext->device, &allocInfo, &commandBuffer.Handle), "failed to allocate command buffers!")
 
 	commandBuffer.State = CommandBufferState::Ready;
 }
@@ -37,11 +36,7 @@ void CommandBufferManager::FreeCommandBuffer(const VkDevice& device, const VkCom
 
 void CommandBufferManager::BeginCommandBufferRecording(CommandBuffer& commandBuffer, bool isRenderpassContinue, bool isSimultaneous, bool isSingeUse)
 {
-	if (commandBuffer.State != CommandBufferState::Ready)
-	{
-		throw std::runtime_error("Command buffer not ready for recording");
-	}
-
+	LogAssert(commandBuffer.State == CommandBufferState::Ready, "Command buffer not allocated", true)
 
 	VkCommandBufferUsageFlags flags = 0;
 	flags |= isSingeUse ? VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT : 0;
@@ -57,36 +52,22 @@ void CommandBufferManager::BeginCommandBufferRecording(CommandBuffer& commandBuf
 		nullptr
 	};
 
-	if (vkBeginCommandBuffer(commandBuffer.Handle, &beginInfo) != VK_SUCCESS)
-	{
-		throw std::runtime_error("failed to begin recording command buffer!");
-	}
+	VulkanCheck(vkBeginCommandBuffer(commandBuffer.Handle, &beginInfo), "failed to begin recording command buffer!")
 
 	commandBuffer.State = CommandBufferState::Recording;
 }
 
 void CommandBufferManager::EndCommandBufferRecording(CommandBuffer& commandBuffer)
 {
-	if (commandBuffer.State != CommandBufferState::Recording)
-	{
-		throw std::runtime_error("Command buffer not ready for ending recording");
-	}
-
-	if (vkEndCommandBuffer(commandBuffer.Handle) != VK_SUCCESS)
-	{
-		throw std::runtime_error("failed to record command buffer!");
-	}
+	LogAssert(commandBuffer.State == CommandBufferState::Recording, "Command buffer not recording", true)
+	VulkanCheck(vkEndCommandBuffer(commandBuffer.Handle), "failed to record command buffer!")
 
 	commandBuffer.State = CommandBufferState::RecordingEnded;
 }
 
 void CommandBufferManager::SubmitCommandBuffer(CommandBuffer& commandBuffer)
 {
-	if (commandBuffer.State != CommandBufferState::RecordingEnded)
-	{
-		throw std::runtime_error("Command buffer not ready for submission");
-	}
-
+	LogAssert(commandBuffer.State == CommandBufferState::RecordingEnded, "Command buffer not ready for submission", true)
 	commandBuffer.State = CommandBufferState::Submitted;
 }
 
@@ -111,11 +92,10 @@ void CommandBufferManager::EndCommandBufferSingleUse(const VulkanContext* vulkan
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &commandBuffer.Handle;
 
-	if (vkQueueSubmit(vulkanContext->graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS)
-	{
-		throw std::runtime_error("failed to submit draw command buffer!");
-	}
 
+	VulkanCheck(vkQueueSubmit(vulkanContext->graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE), "Failed to submet Draw Command Buffer")
+
+	//TODO
 	//there is not enough overhead to justify using fences for single use command buffers (for now at least)
 	vkQueueWaitIdle(vulkanContext->graphicsQueue);
 

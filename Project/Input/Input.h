@@ -5,7 +5,6 @@
 #include "vulkanbase/VulkanTypes.h"
 #include "Core/Logger.h"
 
-#include "imgui/backends/imgui_impl_glfw.h"
 namespace Input
 {
 	inline GLFWwindow* windowPtr;
@@ -24,8 +23,8 @@ namespace Input
 		bool operator==(const InputProperties& other) const
 		{
 			if (key != other.key) return false;
-			if (keyType == KeyType::Press) return true;
-			if (keyType != other.keyType) return false;
+			//if (keyType == KeyType::Press) return true;
+			//if (keyType != other.keyType) return false;
 			return true;
 		}
 	};
@@ -90,7 +89,7 @@ namespace Input
 			ImGuiIO& io = ImGui::GetIO();
 			io.AddMousePosEvent(xpos, ypos);
 
-			if(io.WantCaptureMouse) return;
+			//if(io.WantCaptureMouse) return;
 
 			MouseMove(xpos, ypos);
 		});
@@ -100,7 +99,7 @@ namespace Input
 			ImGuiIO& io = ImGui::GetIO();
 			io.AddMouseButtonEvent(button, action);
 
-			if (io.WantCaptureMouse) return;
+			//if (io.WantCaptureMouse) return;
 
 			KeyEvent(button, action);
 		});

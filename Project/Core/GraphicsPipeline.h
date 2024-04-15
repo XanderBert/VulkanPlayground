@@ -1,13 +1,7 @@
 #pragma once
-#include <array>
-#include <cassert>
-#include <stdexcept>
 #include <vector>
 #include <glm/mat4x4.hpp>
-#include <glm/vec4.hpp>
 #include <vulkan/vulkan.h>
-
-#include "RenderPass.h"
 
 class Material;
 class VulkanContext;

@@ -1,4 +1,5 @@
 #include "commandPool.h"
+#include "Logger.h"
 #include "QueueFamilyIndices.h"
 
 
@@ -14,10 +15,6 @@ namespace CommandPool
 		poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 		poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
 
-
-		if (vkCreateCommandPool(context->device, &poolInfo, nullptr, &context->commandPool) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to create command pool!");
-		}
+		VulkanCheck(vkCreateCommandPool(context->device, &poolInfo, nullptr, &context->commandPool), "Failed To Create ComandPool")
 	}
 } // namespace CommandPool

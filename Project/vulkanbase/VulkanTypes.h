@@ -9,6 +9,8 @@
 #include <iostream>
 #include <vector>
 
+#include "Core/Logger.h"
+
 
 class Window
 {
@@ -62,10 +64,7 @@ public:
 	//Week 06
 	inline void CreateSurface()
 	{
-		if (glfwCreateWindowSurface(instance, window.Ptr(), nullptr, &surface) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to create window surface!");
-		}
+		VulkanCheck(glfwCreateWindowSurface(instance, window.Ptr(), nullptr, &surface),"failed to create window surface!" )
 	}
 
 	//TODO Store a CommandPool Manager here? (typically there would be 1 command pool for each thread)-> the same can be done for the graphics queue

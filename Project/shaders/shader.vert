@@ -21,7 +21,7 @@ layout(location = 2) out vec3 outCameraPos;
 
 void main() 
 {
-    outNormal = mat3(push.model) * inNormal;
+    outNormal = inNormal;
 	outUV = inUV;
 
 	gl_Position = ubo.viewProjection * push.model * vec4(inPos, 1.0);

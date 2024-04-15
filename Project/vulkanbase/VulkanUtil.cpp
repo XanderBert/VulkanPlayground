@@ -69,7 +69,8 @@ namespace tools
 			}
 		}
 
-		throw std::runtime_error("failed to find suitable memory type!");
+		LogError("failed to find suitable memory type!");
+		return 0;
 	}
 
 	VkAccessFlags GetAccessFlags(VkImageLayout layout)

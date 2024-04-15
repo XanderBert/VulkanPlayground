@@ -13,11 +13,18 @@ namespace ObjLoader
 		std::vector<tinyobj::shape_t> shapes;
 		std::vector<tinyobj::material_t> materials;
 		std::string errors;
+		std::string warnings;
 
-		const bool success = tinyobj::LoadObj(&attributes, &shapes, &materials, &errors, filePath.c_str());
+		const bool success = tinyobj::LoadObj(&attributes, &shapes, &materials, &warnings, &errors, filePath.c_str());
+
 
 		if (!success)
-			LogWarning("Failed to load: " + filePath);
+		{
+			LogError("Failed to load: " + filePath);
+			LogError(errors);
+		}
+			
+		LogWarning(warnings);
 
 		for (auto& shape : shapes)
 		{

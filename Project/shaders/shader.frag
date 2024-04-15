@@ -9,7 +9,7 @@ layout(location = 0) out vec4 outColor;
 
 void main() 
 {
-	vec4 color = vec4(1, 0.8, 0.2, 1);
+	vec4 color = vec4(0.8, 0.8, 0.8, 1);
 	const float ambient = 0.1;
 
 	vec3 N = normalize(inNormal);
@@ -20,5 +20,6 @@ void main()
 	float specular = pow(max(dot(R, V), 0.0), 64.0);
 	outColor = vec4(diffuse * color.rgb + specular, color.a);
 	
-	outColor = pow(outColor,vec4(2));
+	//Saturate
+	outColor = pow(outColor,vec4(1.4));
 }

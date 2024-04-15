@@ -103,6 +103,7 @@ private:
 			glfwPollEvents();			
 			ImGuiWrapper::NewFrame();
 			drawFrame();
+			ImGuiWrapper::EndFrame();
 		}
 
 		vkDeviceWaitIdle(m_pContext->device);
