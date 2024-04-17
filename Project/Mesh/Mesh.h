@@ -11,8 +11,8 @@ struct Vertex;
 class Mesh final
 {
 public:
-	Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, std::shared_ptr<Material> material);
-	Mesh(const std::string& modelPath, std::shared_ptr<Material> material);
+	Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, std::shared_ptr<Material> material, const std::string& meshName);
+	Mesh(const std::string& modelPath, std::shared_ptr<Material> material, const std::string& meshName = "");
 	~Mesh() = default;
 
 	Mesh(const Mesh&) = delete;
@@ -21,8 +21,11 @@ public:
 	Mesh& operator=(Mesh&&) = delete;
 
 	void Bind(VkCommandBuffer commandBuffer);
+	void OnImGui();
 	void Render(VkCommandBuffer commandBuffer);
 	void CleanUp() const;
+
+	std::string GetMeshName() const { return m_MeshName; }
 
 private:
 	void CreateVertexBuffer(const std::vector<Vertex>& vertices);
@@ -45,5 +48,6 @@ private:
 
 	std::vector<uint16_t> m_VariableHandles;
 
-	glm::mat4 m_ModelMatrix{};
+	glm::mat4 m_ModelMatrix{1};
+	std::string m_MeshName;
 };

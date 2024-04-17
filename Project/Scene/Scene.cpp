@@ -37,14 +37,15 @@ Scene::Scene(VulkanContext* vulkanContext)
 	};
 
 
-	std::shared_ptr<Material> material01 = MaterialManager::CreateMaterial(vulkanContext, "shader2D.vert", "shader.frag");
+	std::shared_ptr<Material> material01 = MaterialManager::CreateMaterial(vulkanContext, "shader2D.vert", "shader.frag", "MT_2D");
+	std::shared_ptr<Material> material02 = MaterialManager::CreateMaterial(vulkanContext, "shader.vert", "shader.frag", "MT_Depth");
 
 	//std::shared_ptr<Material> material02 = MaterialManager::CreateMaterial(vulkanContext);
 	//material02->AddShader("shader.vert", ShaderType::VertexShader);
-//	material02->AddShader("shader2.frag", ShaderType::FragmentShader);
+	//material02->AddShader("shader2.frag", ShaderType::FragmentShader);
 
-//	m_Meshes.push_back(std::make_unique<Mesh>(vertices2, indices2, material02));
-	m_Meshes.push_back(std::make_unique<Mesh>("viking.obj", material01));
+	m_Meshes.push_back(std::make_unique<Mesh>(vertices2, indices2, material01, "Simple Rectangle"));
+	m_Meshes.push_back(std::make_unique<Mesh>("viking.obj", material02));
 
 
 	Input::BindFunction({ GLFW_KEY_W, Input::KeyType::Hold }, Camera::MoveForward);
@@ -73,26 +74,29 @@ void Scene::Render(VkCommandBuffer commandBuffer) const
 
 	ImGui::Checkbox("Show Shader Factory", &showShaderFactory);
 	ImGui::Checkbox("Show Log", &showLogger);
-
-	if (ImGui::Button("Reload Frag", { 150,25 }))
-		ShaderManager::ReloadShader(ServiceLocator::GetService<VulkanContext>(), "shader.frag", ShaderType::FragmentShader);
-
 	ImGui::End();
 
 	if(showShaderFactory) ShaderFactory::Render();
 	if(showLogger) 	VulkanLogger::Log.Render("Vulkan Log: ");
 
-	ImGuizmo::DrawCubes(value_ptr(Camera::GetViewMatrix()), value_ptr(Camera::GetProjectionMatrix()), value_ptr(glm::mat4{}), 1);
 
-
-
-	ImGui::Render();
+	MaterialManager::OnImGui();
 
 	for (const auto& mesh : m_Meshes)
 	{
 		mesh->Bind(commandBuffer);
+
+		ImGui::Begin("Mesh");
+		if(ImGui::CollapsingHeader(mesh->GetMeshName().c_str()))
+		{
+			mesh->OnImGui();
+		}
+		ImGui::End();
+
 		mesh->Render(commandBuffer);
 	}
+
+	ImGui::Render();
 }
 
 void Scene::CleanUp() const

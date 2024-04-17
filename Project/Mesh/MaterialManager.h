@@ -13,15 +13,30 @@ public:
 	MaterialManager(MaterialManager&&) = delete;
 	MaterialManager& operator=(MaterialManager&&) = delete;
 
-	static std::shared_ptr<Material> CreateMaterial(VulkanContext* vulkanContext)
+	static void OnImGui()
 	{
-		m_ActiveMaterials.push_back(std::make_shared<Material>(vulkanContext));
+		ImGui::Begin("Materials");
+		ImGui::Text("Materials: %d", m_ActiveMaterials.size());
+		for (const auto& material : m_ActiveMaterials)
+		{
+			if(ImGui::CollapsingHeader(material->GetMaterialName().c_str()))
+			{
+				material->OnImGui();
+			}
+			
+		}
+		ImGui::End();
+	}
+
+	static std::shared_ptr<Material> CreateMaterial(VulkanContext* vulkanContext, const std::string& materialName)
+	{
+		m_ActiveMaterials.push_back(std::make_shared<Material>(vulkanContext, materialName));
 		return m_ActiveMaterials.back();
 	}
 
-	static std::shared_ptr<Material> CreateMaterial(VulkanContext* vulkanContext, const std::string& vertexShaderName, const std::string& fragmentShaderName)
+	static std::shared_ptr<Material> CreateMaterial(VulkanContext* vulkanContext, const std::string& vertexShaderName, const std::string& fragmentShaderName, const std::string& materialName)
 	{
-		m_ActiveMaterials.push_back(std::make_shared<Material>(vulkanContext));
+		m_ActiveMaterials.push_back(std::make_shared<Material>(vulkanContext, materialName));
 
 		m_ActiveMaterials.back()->AddShader(vertexShaderName, ShaderType::VertexShader);
 		m_ActiveMaterials.back()->AddShader(fragmentShaderName, ShaderType::FragmentShader);

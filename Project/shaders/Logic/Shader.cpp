@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "SpirvHelper.h"
+#include "Patterns/ServiceLocator.h"
 
 //---------------------------------------------------------------
 //-------------------------DynamicBuffer-------------------------
@@ -121,6 +122,21 @@ VkDescriptorSetLayout& Shader::GetDescriptorSetLayout()
 	return m_DescriptorSetLayout;
 }
 
+void Shader::OnImGui()
+{
+	const std::string label = "Reload: " + m_FileName;
+	if(ImGui::Button(label.c_str()))
+	{
+		ShaderManager::ReloadShader(ServiceLocator::GetService<VulkanContext>(), m_FileName, static_cast<ShaderType>(m_ShaderInfo.stage));
+	}
+
+}
+
+std::string Shader::GetFileName() const
+{
+	return m_FileName;
+}
+
 void Shader::Cleanup(VkDevice device) const
 {
 	if (m_HasUniformBuffer)
@@ -134,9 +150,10 @@ void Shader::CleanupModule(VkDevice device) const
 	vkDestroyShaderModule(device, m_ShaderInfo.module, nullptr);
 }
 
-Shader::Shader(const VkPipelineShaderStageCreateInfo& shaderInfo, Material* material)
+Shader::Shader(const VkPipelineShaderStageCreateInfo& shaderInfo, Material* material, const std::string& filename)
 	: m_ShaderInfo(shaderInfo)
 	, m_pMaterials({ material })
+	, m_FileName(filename)
 {
 
 }
@@ -195,13 +212,10 @@ VkShaderModule ShaderManager::ShaderBuilder::CreateShaderModule(const VkDevice& 
 
 void ShaderManager::ReloadShader(VulkanContext* vulkanContext, const std::string& fileName, ShaderType shaderType)
 {
+	LogInfo("Reloading shader: " + fileName);
+
 	const auto it = m_ShaderInfo.find(fileName);
 	LogAssert(it != m_ShaderInfo.end(), "Shader does not exist", true)
-
-
-	//ReCompile Shader
-	//SpirvHelper::CompileAndSaveShader(fileName, shaderc_fragment_shader, "shaders/" + fileName);
-
 
 	Shader* shader = it->second.get();
 	shader->CleanupModule(vulkanContext->device);
@@ -210,7 +224,6 @@ void ShaderManager::ReloadShader(VulkanContext* vulkanContext, const std::string
 	shader->m_ShaderInfo = shaderInfo;
 
 	//Update the shader for every material
-
 	for (Material* material : shader->m_pMaterials)
 	{
 		material->ReloadShaders(shader);
@@ -232,7 +245,7 @@ Shader* ShaderManager::CreateShader(VulkanContext* vulkanContext, const std::str
 	VkPipelineShaderStageCreateInfo shaderInfo = ShaderBuilder::CreateShaderInfo(vulkanContext->device, static_cast<VkShaderStageFlagBits>(shaderType), fileName);
 
 
-	std::unique_ptr<Shader> shaderPtr = std::make_unique<Shader>(shaderInfo, material);
+	std::unique_ptr<Shader> shaderPtr = std::make_unique<Shader>(shaderInfo, material, fileName);
 	Shader* shader = shaderPtr.get();
 
 	m_ShaderInfo.insert(std::make_pair(fileName, std::move(shaderPtr)));

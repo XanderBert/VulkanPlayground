@@ -11,6 +11,18 @@ void Material::CleanUp() const
 	m_pGraphicsPipeline->Cleanup(m_pContext->device);
 }
 
+void Material::OnImGui()
+{
+	ImGui::Text("Shader Count: %d", m_Shaders.size());
+	//m_GraphicsPipeline->OnImGui();
+
+	for (const auto& shader : m_Shaders)
+	{
+		shader->OnImGui();
+	}
+	
+}
+
 void Material::Bind(VkCommandBuffer commandBuffer, const glm::mat4x4& pushConstantMatrix)
 {
 	m_pGraphicsPipeline->BindPushConstant(commandBuffer, pushConstantMatrix);

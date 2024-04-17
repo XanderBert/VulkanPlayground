@@ -61,7 +61,7 @@ private:
 class Shader final
 {
 public:
-	Shader(const VkPipelineShaderStageCreateInfo& shaderInfo, Material* material);
+	Shader(const VkPipelineShaderStageCreateInfo& shaderInfo, Material* material, const std::string& filename);
 		
 	~Shader() = default;
 	Shader(const Shader&) = delete;
@@ -78,6 +78,9 @@ public:
 
 	VkDescriptorSetLayout& GetDescriptorSetLayout();
 
+	void OnImGui();
+
+	std::string GetFileName() const;
 private:
 	friend class ShaderManager;
 
@@ -95,6 +98,8 @@ private:
 	//Todo:: A Shader will need a descriptor set for every frame in flight
 	//you cannot update a set that has been used, so if you ever plan on changing them you need one per material per frame in flight
 	VkDescriptorSetLayout m_DescriptorSetLayout{};
+
+	std::string m_FileName;
 };
 
 class ShaderManager final

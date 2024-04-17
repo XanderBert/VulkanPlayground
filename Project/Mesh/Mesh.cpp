@@ -10,22 +10,22 @@
 #include "Timer/GameTimer.h"
 
 
-Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, std::shared_ptr<Material> material)
+Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, std::shared_ptr<Material> material, const std::string& meshName)
 	:m_pMaterial(material)
+	, m_MeshName(meshName)
 {
 	m_pContext = ServiceLocator::GetService<VulkanContext>();
 	CreateVertexBuffer(vertices);
 	CreateIndexBuffer(indices);
 }
 
-Mesh::Mesh(const std::string& modelPath, std::shared_ptr<Material> material)
+Mesh::Mesh(const std::string& modelPath, std::shared_ptr<Material> material, const std::string& meshName)
 	:m_pMaterial(material)
 {
-	std::vector<Vertex> vertices;
-	//vertices.reserve(1000);
+	m_MeshName = meshName.empty() ? m_MeshName = modelPath : m_MeshName = meshName;
 
+	std::vector<Vertex> vertices;
 	std::vector<uint32_t> indices;
-	//indices.reserve(500);
 
 	ObjLoader::LoadObj(modelPath, vertices, indices);
 
@@ -38,15 +38,8 @@ Mesh::Mesh(const std::string& modelPath, std::shared_ptr<Material> material)
 
 void Mesh::Bind(VkCommandBuffer commandBuffer)
 {
-	m_ModelMatrix = glm::rotate(glm::mat4(1.0f), GameTimer::GetElapsedTime() * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	m_ModelMatrix = glm::rotate(m_ModelMatrix, GameTimer::GetDeltaTime() * glm::radians(90.0f), MathConstants::UP);
 	m_pMaterial->Bind(commandBuffer, m_ModelMatrix);
-
-	//float matrixTranslation[4], matrixRotation[4], matrixScale[4];
-	//ImGuizmo::DecomposeMatrixToComponents(value_ptr(m_ModelMatrix), matrixTranslation, matrixRotation, matrixScale);
-	//ImGui::InputFloat3("Tr", matrixTranslation);
-	//ImGui::InputFloat3("Rt", matrixRotation);
-	//ImGui::InputFloat3("Sc", matrixScale);
-	//ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, value_ptr(m_ModelMatrix));
 
 	const VkBuffer vertexBuffers[] = { m_VertexBuffer };
 	constexpr VkDeviceSize offsets[] = { 0 }; 
@@ -55,11 +48,39 @@ void Mesh::Bind(VkCommandBuffer commandBuffer)
 	vkCmdBindIndexBuffer(commandBuffer, m_IndexBuffer, 0, VK_INDEX_TYPE_UINT32);
 }
 
+void Mesh::OnImGui()
+{
+
+	std::string label = "Info";
+	label += "##" + std::to_string(reinterpret_cast<uint64_t>(this));
+
+	ImGui::Indent();
+	if(ImGui::CollapsingHeader(label.c_str()))
+	{
+		
+		ImGui::Text("Mesh Name: %s", m_MeshName.c_str());
+		ImGui::Text("Vertex Count: %d", m_VertexCount);
+		ImGui::Text("Index Count: %d", m_IndexCount);
+		ImGui::Text("Material: %s", m_pMaterial->GetMaterialName().c_str());
+
+	}
+	ImGui::Unindent();
+	
+	
+
+	ImGui::Separator();
+	ImGui::Text("Model Matrix: ");
+	float matrixTranslation[3], matrixRotation[3], matrixScale[3];
+	ImGuizmo::DecomposeMatrixToComponents(value_ptr(m_ModelMatrix), matrixTranslation, matrixRotation, matrixScale);
+	ImGui::InputFloat3("Tr", matrixTranslation);
+	ImGui::InputFloat3("Rt", matrixRotation);
+	ImGui::InputFloat3("Sc", matrixScale);
+	ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, value_ptr(m_ModelMatrix));
+}
+
 
 void Mesh::Render(VkCommandBuffer commandBuffer)
 {
-
-
 	vkCmdDrawIndexed(commandBuffer, m_IndexCount, 1, 0, 0, 0);
 }
 
