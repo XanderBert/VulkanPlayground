@@ -26,7 +26,7 @@ struct SpirvHelper
         // preprocess
         const shaderc::PreprocessedSourceCompilationResult preprocessed = compiler.PreprocessGlsl(shaderString, kind, sourceName.c_str(), options);
 
-		LogAssert(preprocessed.GetCompilationStatus() == shaderc_compilation_status_success, preprocessed.GetErrorMessage(), true)
+		LogAssert(preprocessed.GetCompilationStatus() == shaderc_compilation_status_success, preprocessed.GetErrorMessage(), false)
 
         shaderString = { preprocessed.cbegin(), preprocessed.cend() };
 
@@ -34,7 +34,8 @@ struct SpirvHelper
         const shaderc::SpvCompilationResult module = compiler.CompileGlslToSpv(shaderString, kind, sourceName.c_str(), options);
 
         //Check for compilation errors
-		LogAssert(module.GetCompilationStatus() == shaderc_compilation_status_success, module.GetErrorMessage(), true)
+		LogAssert(module.GetCompilationStatus() == shaderc_compilation_status_success, module.GetErrorMessage(), false)
+
 
         //Return the compiled binary
         return { module.cbegin(), module.cend() };

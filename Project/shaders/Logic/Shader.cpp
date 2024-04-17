@@ -122,9 +122,11 @@ VkDescriptorSetLayout& Shader::GetDescriptorSetLayout()
 	return m_DescriptorSetLayout;
 }
 
-void Shader::OnImGui()
+void Shader::OnImGui(const std::string& materialName)
 {
-	const std::string label = "Reload: " + m_FileName;
+	std::string label = "Reload: " + m_FileName;
+	label += "##" + materialName;
+
 	if(ImGui::Button(label.c_str()))
 	{
 		ShaderManager::ReloadShader(ServiceLocator::GetService<VulkanContext>(), m_FileName, static_cast<ShaderType>(m_ShaderInfo.stage));

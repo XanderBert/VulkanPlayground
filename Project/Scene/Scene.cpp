@@ -37,15 +37,25 @@ Scene::Scene(VulkanContext* vulkanContext)
 	};
 
 
-	std::shared_ptr<Material> material01 = MaterialManager::CreateMaterial(vulkanContext, "shader2D.vert", "shader.frag", "MT_2D");
+	std::shared_ptr<Material> material01 = MaterialManager::CreateMaterial(vulkanContext, "shader2D.vert", "shader2.frag", "MT_2D");
 	std::shared_ptr<Material> material02 = MaterialManager::CreateMaterial(vulkanContext, "shader.vert", "shader.frag", "MT_Depth");
 
-	//std::shared_ptr<Material> material02 = MaterialManager::CreateMaterial(vulkanContext);
-	//material02->AddShader("shader.vert", ShaderType::VertexShader);
-	//material02->AddShader("shader2.frag", ShaderType::FragmentShader);
 
 	m_Meshes.push_back(std::make_unique<Mesh>(vertices2, indices2, material01, "Simple Rectangle"));
+	m_Meshes.back()->SetPosition(glm::vec3(-0.5f, 0.5f, 0.0f));
+	m_Meshes.back()->SetScale(glm::vec3(0.6f));
+
+	m_Meshes.push_back(std::make_unique<Mesh>("ball.obj", material01));
+	m_Meshes.back()->SetPosition(glm::vec3(-0.8f, -0.8f, 0.0f));
+	m_Meshes.back()->SetScale(glm::vec3(0.1f, 0.2f, 0.1f));
+
+
 	m_Meshes.push_back(std::make_unique<Mesh>("viking.obj", material02));
+	m_Meshes.push_back(std::make_unique<Mesh>("vehicle.obj", material02));
+	m_Meshes.back()->SetPosition(glm::vec3{ -1.0f, 2.6f,0.f });
+	m_Meshes.back()->SetRotation(glm::vec3{ 90.f, 0.f, 0.f });
+	m_Meshes.back()->SetScale(glm::vec3(0.1f));
+
 
 
 	Input::BindFunction({ GLFW_KEY_W, Input::KeyType::Hold }, Camera::MoveForward);
@@ -61,26 +71,18 @@ void Scene::Render(VkCommandBuffer commandBuffer) const
 {
 	GameTimer::UpdateDelta();
 
-	
-	static bool showShaderFactory = false;
-	static bool showLogger = true;
 
 	const ImGuiIO& io = ImGui::GetIO(); (void)io;
 	ImGui::Begin("Info");
 	ImGui::Text("Application average %.3f ms", 1000.0f / io.Framerate);
 	ImGui::Text("DeltaTime: %.5f", GameTimer::GetDeltaTime());
 	ImGui::Text("%.1f FPS", io.Framerate);
-	ImGui::DragFloat3("Camera Position", glm::value_ptr(Camera::GetPosition()), 0.1f);
-
-	ImGui::Checkbox("Show Shader Factory", &showShaderFactory);
-	ImGui::Checkbox("Show Log", &showLogger);
 	ImGui::End();
 
-	if(showShaderFactory) ShaderFactory::Render();
-	if(showLogger) 	VulkanLogger::Log.Render("Vulkan Log: ");
-
-
+	ShaderFactory::Render();
+	VulkanLogger::Log.Render("Vulkan Log: ");
 	MaterialManager::OnImGui();
+	Camera::OnImGui();
 
 	for (const auto& mesh : m_Meshes)
 	{

@@ -69,8 +69,14 @@ namespace VulkanLogger
             Buf.appendfv(fmt, args);
             va_end(args);
             for (int new_size = Buf.size(); old_size < new_size; old_size++)
-                if (Buf[old_size] == '\n')
-                    LineOffsets.push_back(old_size + 1);
+            {
+				if (Buf[old_size] == '\n')
+				{
+					LineOffsets.push_back(old_size + 1);
+				}
+					
+            }
+              
         }
 
         void Render(const char* title, bool* p_open = NULL)

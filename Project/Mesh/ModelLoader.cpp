@@ -45,18 +45,28 @@ namespace ObjLoader
 					attributes.vertices[3 * i.vertex_index + 2]
 				};
 
-				glm::vec3 normal =
+				glm::vec3 normal{};
+				if(i.normal_index != -1)
 				{
-					attributes.vertices[3 * i.normal_index],
-					attributes.vertices[3 * i.normal_index + 1],
-					attributes.vertices[3 * i.normal_index + 2]
-				};
+					normal =
+					{
+						attributes.vertices[3 * i.normal_index],
+						attributes.vertices[3 * i.normal_index + 1],
+						attributes.vertices[3 * i.normal_index + 2]
+					};
+				}
 
-				glm::vec2 texCoord =
+
+				glm::vec2 texCoord{};
+				if(i.texcoord_index != -1)
 				{
-					attributes.texcoords[2 * i.texcoord_index + 0],
-					1.0f - attributes.texcoords[2 * i.texcoord_index + 1]
-				};
+					texCoord =
+					{
+						attributes.texcoords[2 * i.texcoord_index + 0],
+						1.0f - attributes.texcoords[2 * i.texcoord_index + 1]
+					};
+				}
+	
 
 
 				const Vertex vertex = { position, normal, texCoord };

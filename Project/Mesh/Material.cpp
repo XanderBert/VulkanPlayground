@@ -18,9 +18,8 @@ void Material::OnImGui()
 
 	for (const auto& shader : m_Shaders)
 	{
-		shader->OnImGui();
+		shader->OnImGui(m_MaterialName);
 	}
-	
 }
 
 void Material::Bind(VkCommandBuffer commandBuffer, const glm::mat4x4& pushConstantMatrix)

@@ -24,8 +24,9 @@ void main()
 {	
     outNormal = inNormal;
 	outUV = inUV;
-
-	gl_Position = vec4(inPos.xy, 0.0,  1.0);
+	
+	vec4 pos = push.model * vec4(inPos, 1.0);
+	gl_Position = vec4(pos.yx, 0.0, 1.0);
 	
 	vec4 worldPos = push.model * vec4(inPos, 1.0);
 	outViewDirection = ubo.viewPos.xyz - worldPos.xyz;

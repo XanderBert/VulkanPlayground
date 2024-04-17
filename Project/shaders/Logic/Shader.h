@@ -78,7 +78,7 @@ public:
 
 	VkDescriptorSetLayout& GetDescriptorSetLayout();
 
-	void OnImGui();
+	void OnImGui(const std::string& materialName);
 
 	std::string GetFileName() const;
 private:

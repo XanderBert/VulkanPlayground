@@ -3,18 +3,27 @@ set(MODEL_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../Assets")
 file(GLOB_RECURSE MODELS "${MODEL_SOURCE_DIR}/*")
 file(COPY ${MODELS} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
+#Copy the imgui.ini file to the binary directory
+set(IMGUI_INI_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/imgui.ini")
+file(GLOB_RECURSE IMGUI_INI "${IMGUI_INI_SOURCE_DIR}")
+file(COPY ${IMGUI_INI} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
 # Shaders
 set(SHADER_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/shaders")
 set(SHADER_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/shaders")
 set(BASE_SHADERS_DIR ${SHADER_SOURCE_DIR})
 set(BASE_SHADER_BIN_DIR ${CMAKE_CURRENT_BINARY_DIR}/shaders)
-file(GLOB_RECURSE BASE_SHADERS "${BASE_SHADERS_DIR}/*")
+file(GLOB BASE_SHADERS
+"${BASE_SHADERS_DIR}/*frag"
+"${BASE_SHADERS_DIR}/*vert")
+
 file(COPY ${BASE_SHADERS} DESTINATION ${BASE_SHADER_BIN_DIR})
 
 file(GLOB_RECURSE GLSL_SOURCE_FILES
     "${SHADER_SOURCE_DIR}/*.frag"
     "${SHADER_SOURCE_DIR}/*.vert"
 )
+
 
 
 #Compile Shaders
@@ -39,7 +48,6 @@ set(SOURCES
     "main.cpp"
     "vulkanbase/VulkanBase.h" 
     "vulkanbase/VulkanUtil.h"
-     
     "labwork/Week05.cpp"
     "labwork/Week06.cpp"
     "shaders/Logic/Shader.h"
@@ -78,9 +86,10 @@ set(SOURCES
     "Core/DepthResource.h" 
     "Mesh/MaterialManager.h" 
     "Mesh/ModelLoader.cpp"
-    "shaders/SpirvHelper.h"
+    "shaders/Logic/SpirvHelper.h"
     "vulkanbase/VulkanUtil.cpp" 
- "Core/SwapChain.h" "Core/ImGuiWrapper.cpp")
+    "Core/SwapChain.h" 
+    "Core/ImGuiWrapper.cpp" )
 
 
 include(FetchContent)

@@ -27,6 +27,13 @@ public:
 
 	std::string GetMeshName() const { return m_MeshName; }
 
+
+	//TODO: Move to a component system
+	//TRS
+	void SetPosition(const glm::vec3& position);
+	void SetScale(const glm::vec3& scale);
+	void SetRotation(const glm::vec3& rotation);
+
 private:
 	void CreateVertexBuffer(const std::vector<Vertex>& vertices);
 	void CreateIndexBuffer(const std::vector<uint32_t>& indices);
@@ -50,4 +57,11 @@ private:
 
 	glm::mat4 m_ModelMatrix{1};
 	std::string m_MeshName;
+
+
+	bool m_Rotate = false;
+	float m_RotationSpeed = 180.0f;
+
+	bool m_Visible = true;
+	bool m_VisibleBuffer = true;
 };

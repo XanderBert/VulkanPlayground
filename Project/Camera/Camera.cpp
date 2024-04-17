@@ -5,6 +5,7 @@
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 
 glm::mat4 Camera::GetViewMatrix()
@@ -103,4 +104,23 @@ void Camera::SetFOV(float fov)
 float Camera::GetFOV()
 {
 	return m_Fov / MathConstants::TO_HALFRADIANS;
+}
+
+void Camera::OnImGui()
+{
+	ImGui::Begin("Camera Settings");
+	ImGui::Text("Camera");
+
+	if(ImGui::DragFloat("FOV", &m_Fov, 0.1f))
+	{
+		m_Fov = std::clamp(m_Fov / MathConstants::TO_HALFRADIANS, 40.f, 220.f) * MathConstants::TO_HALFRADIANS;
+	}
+
+	ImGui::DragFloat3("Position", glm::value_ptr(m_Origin), 0.1f);
+	ImGui::DragFloat("Movement Speed", &m_KeyboardMovementSpeed, 0.1f);
+	ImGui::DragFloat("Angular Speed", &m_AngularMovementSpeed, 0.1f);
+	ImGui::DragFloat("Near Plane", &m_NearPlane, 0.5f);
+	ImGui::DragFloat("Far Plane", &m_FarPlane, 0.5f);
+
+	ImGui::End();
 }

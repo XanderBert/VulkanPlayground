@@ -38,7 +38,11 @@ Mesh::Mesh(const std::string& modelPath, std::shared_ptr<Material> material, con
 
 void Mesh::Bind(VkCommandBuffer commandBuffer)
 {
-	m_ModelMatrix = glm::rotate(m_ModelMatrix, GameTimer::GetDeltaTime() * glm::radians(90.0f), MathConstants::UP);
+	if(m_Rotate)
+	m_ModelMatrix = glm::rotate(m_ModelMatrix, GameTimer::GetDeltaTime() * glm::radians(m_RotationSpeed), MathConstants::UP);
+
+	m_Visible = m_VisibleBuffer;
+	if (!m_Visible) return;
 	m_pMaterial->Bind(commandBuffer, m_ModelMatrix);
 
 	const VkBuffer vertexBuffers[] = { m_VertexBuffer };
@@ -50,14 +54,12 @@ void Mesh::Bind(VkCommandBuffer commandBuffer)
 
 void Mesh::OnImGui()
 {
-
-	std::string label = "Info";
-	label += "##" + std::to_string(reinterpret_cast<uint64_t>(this));
+	const std::string labelAddition = "##" + std::to_string(reinterpret_cast<uint64_t>(this));
 
 	ImGui::Indent();
-	if(ImGui::CollapsingHeader(label.c_str()))
+	const std::string Infolabel = "Info" + labelAddition;
+	if(ImGui::CollapsingHeader(Infolabel.c_str()))
 	{
-		
 		ImGui::Text("Mesh Name: %s", m_MeshName.c_str());
 		ImGui::Text("Vertex Count: %d", m_VertexCount);
 		ImGui::Text("Index Count: %d", m_IndexCount);
@@ -65,22 +67,35 @@ void Mesh::OnImGui()
 
 	}
 	ImGui::Unindent();
-	
+	ImGui::Separator();
+	const std::string visibilityLabel = "Visible" + labelAddition;
+	ImGui::Checkbox(visibilityLabel.c_str(), &m_VisibleBuffer);
+
+	const std::string rotateLabel = "Rotate" + labelAddition;
+	ImGui::Checkbox(rotateLabel.c_str(), &m_Rotate);
+
+	const std::string rotationSpeedLabel = "Rotation Speed" + labelAddition;
+	ImGui::DragFloat(rotationSpeedLabel.c_str(), &m_RotationSpeed);
 	
 
 	ImGui::Separator();
 	ImGui::Text("Model Matrix: ");
 	float matrixTranslation[3], matrixRotation[3], matrixScale[3];
+	const std::string translationLabel = "Translation" + labelAddition;
+	const std::string rotationLabel = "Rotation" + labelAddition;
+	const std::string scaleLabel = "Scale" + labelAddition;
+
 	ImGuizmo::DecomposeMatrixToComponents(value_ptr(m_ModelMatrix), matrixTranslation, matrixRotation, matrixScale);
-	ImGui::InputFloat3("Tr", matrixTranslation);
-	ImGui::InputFloat3("Rt", matrixRotation);
-	ImGui::InputFloat3("Sc", matrixScale);
+	ImGui::DragFloat3(translationLabel.c_str(), matrixTranslation, 0.1f);
+	ImGui::DragFloat3(rotationLabel.c_str(), matrixRotation, 0.1f);
+	ImGui::DragFloat3(scaleLabel.c_str(), matrixScale, 0.1f);
 	ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, value_ptr(m_ModelMatrix));
 }
 
 
 void Mesh::Render(VkCommandBuffer commandBuffer)
 {
+	if (!m_Visible) return;
 	vkCmdDrawIndexed(commandBuffer, m_IndexCount, 1, 0, 0, 0);
 }
 
@@ -91,6 +106,24 @@ void Mesh::CleanUp() const
 
 	vkDestroyBuffer(m_pContext->device, m_IndexBuffer, nullptr);
 	vkFreeMemory(m_pContext->device, m_IndexBufferMemory, nullptr);
+}
+
+void Mesh::SetPosition(const glm::vec3& position)
+{
+	m_ModelMatrix = glm::translate(glm::mat4(1.0f), position);
+}
+
+void Mesh::SetScale(const glm::vec3& scale)
+{
+	m_ModelMatrix = glm::scale(m_ModelMatrix, scale);
+}
+
+
+void Mesh::SetRotation(const glm::vec3& rotation)
+{
+	m_ModelMatrix = glm::rotate(m_ModelMatrix, glm::radians(rotation.x), MathConstants::RIGHT);
+	m_ModelMatrix = glm::rotate(m_ModelMatrix, glm::radians(rotation.y), MathConstants::UP);
+	m_ModelMatrix = glm::rotate(m_ModelMatrix, glm::radians(rotation.z), MathConstants::FORWARD);
 }
 
 void Mesh::CreateVertexBuffer(const std::vector<Vertex>& vertices)

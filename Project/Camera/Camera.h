@@ -46,6 +46,8 @@ public:
 
     static void SetFOV(float fov);
     static float GetFOV();
+
+	static void OnImGui();
 private:
     inline static glm::vec2 m_DragStartPos = { 0.f, 0.f };
 
@@ -55,12 +57,12 @@ private:
     inline static  glm::vec3 m_Origin = { 0.f, -2.f, 0.0f };
 
     inline static float m_NearPlane = 0.1f;
-    inline static float m_FarPlane = 10000.f;
+    inline static float m_FarPlane = 1000.f;
 
     inline static glm::vec3 m_Forward = MathConstants::FORWARD;
     inline static glm::vec3 m_Right = MathConstants::RIGHT;
     inline static glm::vec3 m_Up = MathConstants::UP;
 
     inline static float m_KeyboardMovementSpeed = 50.f;
-    inline static float m_AngularMovementSpeed = 15.0f;
+    inline static float m_AngularMovementSpeed = 3.0f;
 };
