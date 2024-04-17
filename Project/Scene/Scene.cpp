@@ -71,11 +71,12 @@ Scene::Scene(VulkanContext* vulkanContext)
 void Scene::Render(VkCommandBuffer commandBuffer) const
 {
 	GameTimer::UpdateDelta();
-
+	ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
 
 	const ImGuiIO& io = ImGui::GetIO(); (void)io;
 	const float ms = 1000.0f / io.Framerate;
 	ImGui::Begin("Info");
+
 	ImGui::Text("Application average %.3f ms", ms);
 	ImGui::Text("DeltaTime: %.5f", GameTimer::GetDeltaTime());
 	ImGui::Text("%.1f FPS", io.Framerate);
