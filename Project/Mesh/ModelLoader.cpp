@@ -24,12 +24,8 @@ namespace ObjLoader
 		{
 			LogError("Failed to load: " + filePath);
 			LogError(errors);
+			LogWarning(warnings);
 		}
-			
-		LogWarning(warnings);
-
-
-
 
 		std::unordered_map<Vertex, uint32_t, VertexHasher> uniqueVertices{};
 		for (auto& shape : shapes)

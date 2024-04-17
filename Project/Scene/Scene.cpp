@@ -13,6 +13,7 @@
 #include <Mesh/MaterialManager.h>
 
 #include "ImGuizmo.h"
+#include "implot.h"
 #include "Patterns/ServiceLocator.h"
 
 
@@ -73,10 +74,25 @@ void Scene::Render(VkCommandBuffer commandBuffer) const
 
 
 	const ImGuiIO& io = ImGui::GetIO(); (void)io;
+	const float ms = 1000.0f / io.Framerate;
 	ImGui::Begin("Info");
-	ImGui::Text("Application average %.3f ms", 1000.0f / io.Framerate);
+	ImGui::Text("Application average %.3f ms", ms);
 	ImGui::Text("DeltaTime: %.5f", GameTimer::GetDeltaTime());
 	ImGui::Text("%.1f FPS", io.Framerate);
+
+	static std::vector<float> frameTimes;
+	if (ImPlot::BeginPlot("Frame Times", ImVec2(-1, 0), ImPlotFlags_NoInputs | ImPlotFlags_NoTitle))
+	{
+		//Update FrameTimes
+		frameTimes.push_back(ms);
+		if (frameTimes.size() > 1500) frameTimes.erase(frameTimes.begin());
+
+		ImPlot::SetupAxes("time", "ms", ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_NoTickLabels, ImPlotAxisFlags_AutoFit);
+		ImPlot::PlotLine("Frame Times", frameTimes.data(), frameTimes.size(), 0.001, 0, ImPlotLineFlags_Shaded);
+		ImPlot::EndPlot();
+	}
+
+
 	ImGui::End();
 
 	ShaderFactory::Render();

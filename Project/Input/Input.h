@@ -89,7 +89,7 @@ namespace Input
 			ImGuiIO& io = ImGui::GetIO();
 			io.AddMousePosEvent(xpos, ypos);
 
-			//if(io.WantCaptureMouse) return;
+			if(io.WantCaptureMouse) return;
 
 			MouseMove(xpos, ypos);
 		});
@@ -99,7 +99,7 @@ namespace Input
 			ImGuiIO& io = ImGui::GetIO();
 			io.AddMouseButtonEvent(button, action);
 
-			//if (io.WantCaptureMouse) return;
+			if (io.WantCaptureMouse) return;
 
 			KeyEvent(button, action);
 		});

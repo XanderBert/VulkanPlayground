@@ -9,6 +9,8 @@ namespace GameTimer
 	inline TimePoint startTime = std::chrono::high_resolution_clock::now();
 	inline TimePoint deltaStartTime = std::chrono::high_resolution_clock::now();
 
+
+
 	inline float GetElapsedTime()
 	{
 		const auto currentTime = std::chrono::high_resolution_clock::now();

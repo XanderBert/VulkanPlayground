@@ -11,6 +11,7 @@
 #include "Patterns/ServiceLocator.h"
 #include "SwapChain.h"
 #include "DepthResource.h"
+#include "implot.h"
 
 void ImGuiWrapper::Initialize(VkQueue graphicsQueue)
 {
@@ -36,6 +37,8 @@ void ImGuiWrapper::Initialize(VkQueue graphicsQueue)
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
+	ImPlot::CreateContext();
+
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 	//io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
@@ -71,6 +74,7 @@ void ImGuiWrapper::Cleanup()
 {
 	ImGui_ImplVulkan_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
+	ImPlot::DestroyContext();
 	ImGui::DestroyContext();
 
 	vkDestroyDescriptorPool(ServiceLocator::GetService<VulkanContext>()->device, descriptorPool, nullptr);

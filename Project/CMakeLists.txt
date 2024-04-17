@@ -164,6 +164,19 @@ set (IMGUIZMO_SOURCE_FILES
     ${imguizmo_SOURCE_DIR}/ImZoomSlider.h
 )
 
+FetchContent_Declare(
+    ImPlot
+    GIT_REPOSITORY  https://github.com/epezent/implot.git
+)
+FetchContent_MakeAvailable(ImPlot)
+set (IMPLOT_SOURCE_FILES
+    ${implot_SOURCE_DIR}/implot.cpp
+    ${implot_SOURCE_DIR}/implot.h
+    ${implot_SOURCE_DIR}/implot_items.cpp
+    ${implot_SOURCE_DIR}/implot_internal.h
+)
+
+
 
 set(EXTERNALS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../includes)
 
@@ -175,6 +188,7 @@ add_executable(
     ${GLSL_SOURCE_FILES}  
     ${IMGUI_SOURCE_FILES} 
     ${IMGUIZMO_SOURCE_FILES} 
+    ${IMPLOT_SOURCE_FILES} 
     ${LUA_SCRIPTS} 
 )
 
@@ -192,6 +206,7 @@ target_include_directories(
     PRIVATE ${TINY_OBJ_DIR}
     PRIVATE ${IMGUI_DIR}
     PRIVATE ${imguizmo_SOURCE_DIR}
+    PRIVATE ${implot_SOURCE_DIR}
 )
 
 string(REPLACE ".lib" "d.lib" SHADERC_DEBUG ${Vulkan_shaderc_combined_LIBRARY})
