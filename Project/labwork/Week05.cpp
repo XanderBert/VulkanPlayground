@@ -7,19 +7,14 @@ void VulkanBase::pickPhysicalDevice()
 	uint32_t deviceCount = 0;
 
 	vkEnumeratePhysicalDevices(m_pContext->instance, &deviceCount, nullptr);
+	LogAssert(deviceCount > 0, "failed to find GPUs with Vulkan support!", true);
 
-	if (deviceCount == 0) 
-	{
-		throw std::runtime_error("failed to find GPUs with Vulkan support!");
-	}
 
 	std::vector<VkPhysicalDevice> devices{ deviceCount };
 	vkEnumeratePhysicalDevices(m_pContext->instance, &deviceCount, devices.data());
 
-	if (deviceCount == 0) 
-	{
-		throw std::runtime_error("failed to find GPUs with Vulkan support!");
-	}
+	LogAssert(deviceCount > 0, "failed to find GPUs with Vulkan support!", true);
+
 
 	for (const auto& device : devices) 
 	{
@@ -30,10 +25,7 @@ void VulkanBase::pickPhysicalDevice()
 		}
 	}
 
-	if (m_pContext->physicalDevice == VK_NULL_HANDLE) 
-	{
-		throw std::runtime_error("failed to find a suitable GPU!");
-	}
+	LogAssert(m_pContext->physicalDevice != VK_NULL_HANDLE, "failed to find a suitable GPU!", true);
 }
 
 bool VulkanBase::isDeviceSuitable(VkPhysicalDevice device)
@@ -90,17 +82,12 @@ void VulkanBase::createLogicalDevice()
 		createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
 		createInfo.ppEnabledLayerNames = validationLayers.data();
 	}
-	else 
-	{
-		createInfo.enabledLayerCount = 0;
-	}
 
-	if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &m_pContext->device) != VK_SUCCESS) 
-	{
-		throw std::runtime_error("failed to create logical device!");
-	}
+	createInfo.enabledLayerCount = 0;
+	
 
-
+	
+	VulkanCheck(vkCreateDevice(physicalDevice, &createInfo, nullptr, &m_pContext->device), "failed to create logical device!");
 
 	vkGetDeviceQueue(m_pContext->device, indices.graphicsFamily.value(), 0, &m_pContext->graphicsQueue);
 	vkGetDeviceQueue(m_pContext->device, indices.presentFamily.value(), 0, &presentQueue);

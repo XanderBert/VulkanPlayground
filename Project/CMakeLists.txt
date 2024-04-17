@@ -42,13 +42,13 @@ set(SOURCES
      
     "labwork/Week05.cpp"
     "labwork/Week06.cpp"
-    "shaders/Shader.h"
-    "shaders/Shader.cpp" 
+    "shaders/Logic/Shader.h"
+    "shaders/Logic/Shader.cpp" 
     "Patterns/Singleton.h"
     "LuaScripts/LuaScriptRunner.h"
-    "shaders/ShaderFactory.h"
-    "shaders/SpirvHelper.h"
-    "shaders/ShaderFileWatcher.h" 
+    "shaders/Logic/ShaderFactory.h"
+    "shaders/Logic/SpirvHelper.h"
+    "shaders/Logic/ShaderFileWatcher.h" 
     "Mesh/Vertex.h" 
     "Mesh/Mesh.h" 
     "Mesh/Mesh.cpp" 
@@ -80,7 +80,7 @@ set(SOURCES
     "Mesh/ModelLoader.cpp"
     "shaders/SpirvHelper.h"
     "vulkanbase/VulkanUtil.cpp" 
- "Core/SwapChain.h")
+ "Core/SwapChain.h" "Core/ImGuiWrapper.cpp")
 
 
 include(FetchContent)
@@ -136,8 +136,24 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glm)
 
-
-
+FetchContent_Declare(
+    ImGuizmo
+    GIT_REPOSITORY  https://github.com/CedricGuillemet/ImGuizmo.git
+)
+FetchContent_MakeAvailable(ImGuizmo)
+set (IMGUIZMO_SOURCE_FILES
+    ${imguizmo_SOURCE_DIR}/GraphEditor.cpp 
+    ${imguizmo_SOURCE_DIR}/GraphEditor.h
+    ${imguizmo_SOURCE_DIR}/ImCurveEdit.cpp
+    ${imguizmo_SOURCE_DIR}/ImCurveEdit.h
+    ${imguizmo_SOURCE_DIR}/ImGradient.cpp
+    ${imguizmo_SOURCE_DIR}/ImGradient.h
+    ${imguizmo_SOURCE_DIR}/ImGuizmo.cpp 
+    ${imguizmo_SOURCE_DIR}/ImGuizmo.h
+    ${imguizmo_SOURCE_DIR}/ImSequencer.cpp
+    ${imguizmo_SOURCE_DIR}/ImSequencer.h
+    ${imguizmo_SOURCE_DIR}/ImZoomSlider.h
+)
 
 
 set(EXTERNALS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../includes)
@@ -149,6 +165,7 @@ add_executable(
     ${SOURCES} 
     ${GLSL_SOURCE_FILES}  
     ${IMGUI_SOURCE_FILES} 
+    ${IMGUIZMO_SOURCE_FILES} 
     ${LUA_SCRIPTS} 
 )
 
@@ -165,6 +182,7 @@ target_include_directories(
     PRIVATE ${LUA_DIR}
     PRIVATE ${TINY_OBJ_DIR}
     PRIVATE ${IMGUI_DIR}
+    PRIVATE ${imguizmo_SOURCE_DIR}
 )
 
 string(REPLACE ".lib" "d.lib" SHADERC_DEBUG ${Vulkan_shaderc_combined_LIBRARY})

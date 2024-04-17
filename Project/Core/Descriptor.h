@@ -8,7 +8,7 @@
 #include "Buffer.h"
 #include "Camera/Camera.h"
 #include "Core/Logger.h"
-#include "shaders/Shader.h"
+#include "shaders/Logic/Shader.h"
 
 namespace Descriptor 
 {

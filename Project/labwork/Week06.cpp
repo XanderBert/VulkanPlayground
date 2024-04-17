@@ -20,13 +20,15 @@ bool checkValidationLayerSupport()
 
 		for (const auto& layerProperties : availableLayers)
 		{
-			if (strcmp(layerName, layerProperties.layerName) == 0) {
+			if (strcmp(layerName, layerProperties.layerName) == 0) 
+			{
 				layerFound = true;
 				break;
 			}
 		}
 
-		if (!layerFound) {
+		if (!layerFound) 
+		{
 			return false;
 		}
 	}
@@ -37,15 +39,12 @@ bool checkValidationLayerSupport()
 
 void VulkanBase::setupDebugMessenger()
 {
-	if (!enableValidationLayers) return;
+	if constexpr (!enableValidationLayers) return;
 
 	VkDebugUtilsMessengerCreateInfoEXT createInfo;
 	populateDebugMessengerCreateInfo(createInfo);
 
-	if (tools::CreateDebugUtilsMessengerEXT(m_pContext->instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS)
-	{
-		throw std::runtime_error("failed to set up debug messenger!");
-	}
+	VulkanCheck(tools::CreateDebugUtilsMessengerEXT(m_pContext->instance, &createInfo, nullptr, &debugMessenger), "Failed To Create Debug Messenger!");
 }
 
 void VulkanBase::createSyncObjects()
@@ -57,13 +56,9 @@ void VulkanBase::createSyncObjects()
 	fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 	fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-	if (vkCreateSemaphore(m_pContext->device, &semaphoreInfo, nullptr, &imageAvailableSemaphore) != VK_SUCCESS ||
-		vkCreateSemaphore(m_pContext->device, &semaphoreInfo, nullptr, &renderFinishedSemaphore) != VK_SUCCESS ||
-		vkCreateFence(m_pContext->device, &fenceInfo, nullptr, &inFlightFence) != VK_SUCCESS)
-	{
-		throw std::runtime_error("failed to create synchronization objects for a frame!");
-	}
-
+	VulkanCheck(vkCreateSemaphore(m_pContext->device, &semaphoreInfo, nullptr, &imageAvailableSemaphore), "Failed To Create image Semaphore")
+	VulkanCheck(vkCreateSemaphore(m_pContext->device, &semaphoreInfo, nullptr, &renderFinishedSemaphore), "Failed To Create render Semaphore")
+	VulkanCheck(vkCreateFence(m_pContext->device, &fenceInfo, nullptr, &inFlightFence), "Failed To Create Fence")
 }
 
 void VulkanBase::drawFrame()
@@ -124,13 +119,9 @@ void VulkanBase::drawFrame()
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signalSemaphores;
 
-	if (vkQueueSubmit(m_pContext->graphicsQueue, 1, &submitInfo, inFlightFence) != VK_SUCCESS) 
-	{
-		throw std::runtime_error("failed to submit draw command buffer!");
-	}
 
+	VulkanCheck(vkQueueSubmit(m_pContext->graphicsQueue, 1, &submitInfo, inFlightFence), "Failed To Submit Queue!");
 	CommandBufferManager::SubmitCommandBuffer(commandBuffer);   
-
 
 	VkPresentInfoKHR presentInfo{};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -143,9 +134,6 @@ void VulkanBase::drawFrame()
 
 	VulkanCheck(vkQueuePresentKHR(presentQueue, &presentInfo), "Failed To Queue Present!");
 }
-
-
-
 
 
 bool VulkanBase::checkDeviceExtensionSupport(VkPhysicalDevice device)
@@ -169,10 +157,7 @@ bool VulkanBase::checkDeviceExtensionSupport(VkPhysicalDevice device)
 
 void VulkanBase::createInstance()
 {
-	if (enableValidationLayers && !checkValidationLayerSupport())
-	{
-		throw std::runtime_error("validation layers requested, but not available!");
-	}
+	LogAssert(!enableValidationLayers || checkValidationLayerSupport(), "Validation Layers Requested, But Not Available!", true);
 
 	VkApplicationInfo appInfo{};
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -186,7 +171,7 @@ void VulkanBase::createInstance()
 	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	createInfo.pApplicationInfo = &appInfo;
 
-	auto extensions = getRequiredExtensions();
+	const auto extensions = getRequiredExtensions();
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 	createInfo.ppEnabledExtensionNames = extensions.data();
 
@@ -199,17 +184,11 @@ void VulkanBase::createInstance()
 		populateDebugMessengerCreateInfo(debugCreateInfo);
 		createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
 	}
-	else
-	{
-		createInfo.enabledLayerCount = 0;
 
-		createInfo.pNext = nullptr;
-	}
+	createInfo.enabledLayerCount = 0;
+	createInfo.pNext = nullptr;
 
-	if (vkCreateInstance(&createInfo, nullptr, &m_pContext->instance) != VK_SUCCESS) 
-	{
-		throw std::runtime_error("failed to create instance!");
-	}
+	VulkanCheck(vkCreateInstance(&createInfo, nullptr, &m_pContext->instance), "Failed To Create Instance!")
 }
 
 std::vector<const char*> VulkanBase::getRequiredExtensions()
@@ -220,10 +199,7 @@ std::vector<const char*> VulkanBase::getRequiredExtensions()
 
 	std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
 
-	if (enableValidationLayers)
-	{
-		extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-	}
+	if (enableValidationLayers) extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
 	return extensions;
 }

@@ -1,7 +1,7 @@
 #include "GraphicsPipeline.h"
 
 #include "DepthResource.h"
-#include "shaders/Shader.h"
+#include "shaders/Logic/Shader.h"
 #include "Descriptor.h"
 #include "Mesh/Material.h"
 

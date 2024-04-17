@@ -3,6 +3,8 @@
 #include "vulkanbase/VulkanTypes.h"
 #include <vector>
 
+#include "SpirvHelper.h"
+
 //---------------------------------------------------------------
 //-------------------------DynamicBuffer-------------------------
 //---------------------------------------------------------------
@@ -124,6 +126,11 @@ void Shader::Cleanup(VkDevice device) const
 	if (m_HasUniformBuffer)
 		m_DynamicBuffer.Cleanup(device);
 
+	CleanupModule(device);
+}
+
+void Shader::CleanupModule(VkDevice device) const
+{
 	vkDestroyShaderModule(device, m_ShaderInfo.module, nullptr);
 }
 
@@ -184,6 +191,30 @@ VkShaderModule ShaderManager::ShaderBuilder::CreateShaderModule(const VkDevice& 
 	VulkanCheck(vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule), "failed to create shader module!")
 
 	return shaderModule;
+}
+
+void ShaderManager::ReloadShader(VulkanContext* vulkanContext, const std::string& fileName, ShaderType shaderType)
+{
+	const auto it = m_ShaderInfo.find(fileName);
+	LogAssert(it != m_ShaderInfo.end(), "Shader does not exist", true)
+
+
+	//ReCompile Shader
+	//SpirvHelper::CompileAndSaveShader(fileName, shaderc_fragment_shader, "shaders/" + fileName);
+
+
+	Shader* shader = it->second.get();
+	shader->CleanupModule(vulkanContext->device);
+
+	const VkPipelineShaderStageCreateInfo shaderInfo = ShaderBuilder::CreateShaderInfo(vulkanContext->device, static_cast<VkShaderStageFlagBits>(shaderType), fileName);
+	shader->m_ShaderInfo = shaderInfo;
+
+	//Update the shader for every material
+
+	for (Material* material : shader->m_pMaterials)
+	{
+		material->ReloadShaders(shader);
+	}
 }
 
 Shader* ShaderManager::CreateShader(VulkanContext* vulkanContext, const std::string& fileName, ShaderType shaderType, Material* material)

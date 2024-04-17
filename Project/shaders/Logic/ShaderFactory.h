@@ -1,5 +1,5 @@
 #pragma once
-#include "imgui.h"
+#include "Core/ImGuiWrapper.h"
 #include "Luascripts/LuaScriptRunner.h"
 #include "Patterns/ServiceLocator.h"
 

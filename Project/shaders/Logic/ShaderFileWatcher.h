@@ -15,23 +15,18 @@ public:
 		//Wait for a bit to make sure the file is done being written (as sometimes it is not done yet)
 		efsw::System::sleep(100);
 
-
 		//Check if the file was created/modified
-		if(action == efsw::Actions::Modified)
+		if(action == efsw::Actions::Modified || action == efsw::Actions::Moved)
 		{
 			const shaderc_shader_kind kind = GetShaderKind(filename);
 
 			//Check if its a shader file
 			if (kind == shaderc_glsl_infer_from_source) return;
 
-			std::cout << "Shader: " << filename << "has been Modified\n";
+			LogInfo("Shader: " + filename + " has event Modified");
 
 			//Compile and Save the shader
 			SpirvHelper::CompileAndSaveShader(filename, kind, "shaders/" + filename);
-			
-
-			//TODO:: Make some kind of event system to notify the GraphicsPipeline to recreate the pipeline
-			//GraphicsPipeline::RecreateGraphicsPipeline();
 		}
 	}
 

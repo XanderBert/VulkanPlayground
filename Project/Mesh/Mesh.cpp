@@ -1,6 +1,7 @@
 #include "Mesh.h"
 #include <chrono>
 
+#include "ImGuizmo.h"
 #include "ModelLoader.h"
 #include "../vulkanbase/VulkanTypes.h"
 #include "Vertex.h"
@@ -40,6 +41,12 @@ void Mesh::Bind(VkCommandBuffer commandBuffer)
 	m_ModelMatrix = glm::rotate(glm::mat4(1.0f), GameTimer::GetElapsedTime() * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	m_pMaterial->Bind(commandBuffer, m_ModelMatrix);
 
+	//float matrixTranslation[4], matrixRotation[4], matrixScale[4];
+	//ImGuizmo::DecomposeMatrixToComponents(value_ptr(m_ModelMatrix), matrixTranslation, matrixRotation, matrixScale);
+	//ImGui::InputFloat3("Tr", matrixTranslation);
+	//ImGui::InputFloat3("Rt", matrixRotation);
+	//ImGui::InputFloat3("Sc", matrixScale);
+	//ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, value_ptr(m_ModelMatrix));
 
 	const VkBuffer vertexBuffers[] = { m_VertexBuffer };
 	constexpr VkDeviceSize offsets[] = { 0 }; 
@@ -49,8 +56,10 @@ void Mesh::Bind(VkCommandBuffer commandBuffer)
 }
 
 
-void Mesh::Render(VkCommandBuffer commandBuffer) const
+void Mesh::Render(VkCommandBuffer commandBuffer)
 {
+
+
 	vkCmdDrawIndexed(commandBuffer, m_IndexCount, 1, 0, 0, 0);
 }
 

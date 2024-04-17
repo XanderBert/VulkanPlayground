@@ -3,27 +3,27 @@
 #define VK_USE_PLATFORM_WIN32_KHR
 #include "VulkanUtil.h"
 #include <vulkan/vulkan.h>
-#include <iostream>
 #include <vector>
 #include <cstdint>
-#include <optional>
 
 #include "Mesh/Vertex.h"
 
-#include "../shaders/ShaderFileWatcher.h"
+#include "shaders/Logic/ShaderFileWatcher.h"
 #include "Core/CommandBuffer.h"
 #include "Core/CommandPool.h"
 #include "Core/GraphicsPipeline.h"
 #include "Core/QueueFamilyIndices.h"
 
-#include "shaders/Shader.h"
-#include "../Patterns/ServiceLocator.h"
+#include "shaders/Logic/Shader.h"
+#include "Patterns/ServiceLocator.h"
 #include "VulkanTypes.h"
 #include "Scene/Scene.h"
-#include "../Core/ImGuiWrapper.h"
+#include "Core/ImGuiWrapper.h"
 #include "Core/DepthResource.h"
 #include "Core/Logger.h"
-#include <Input/Input.h>
+#include "Input/Input.h"
+
+#include "imgui_impl_vulkan.h"
 #include "Mesh/MaterialManager.h"
 #include "Core/SwapChain.h"
 
@@ -152,7 +152,7 @@ private:
 		colorAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		colorAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		colorAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		colorAttachmentInfo.clearValue = {{0.0f, 0.0f, 0.0f, 1.0f}};
+		colorAttachmentInfo.clearValue = {{0.83f, 0.75f, 0.83f, 1.0f}};
 
 
 		VkRenderingAttachmentInfoKHR depthAttachmentInfo{};

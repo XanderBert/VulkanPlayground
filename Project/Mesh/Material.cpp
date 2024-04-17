@@ -3,7 +3,7 @@
 #include "vulkanbase/VulkanTypes.h"
 #include "Core/Descriptor.h"
 #include "Core/Buffer.h"
-#include <shaders/Shader.h>
+#include <shaders/Logic/Shader.h>
 
 
 void Material::CleanUp() const
@@ -28,6 +28,12 @@ Shader* Material::AddShader(const std::string& shaderPath, ShaderType shaderType
 {
 	m_Shaders.push_back(ShaderManager::CreateShader(m_pContext, shaderPath, shaderType, this));
 	return m_Shaders.back();
+}
+
+void Material::ReloadShaders(Shader* shader)
+{
+	//m_pGraphicsPipeline->Cleanup(m_pContext->device);
+	m_pGraphicsPipeline->CreatePipeline(m_pContext, this);
 }
 
 void Material::CreatePipeline()

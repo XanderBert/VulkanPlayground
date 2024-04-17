@@ -21,7 +21,7 @@ public:
 	Mesh& operator=(Mesh&&) = delete;
 
 	void Bind(VkCommandBuffer commandBuffer);
-	void Render(VkCommandBuffer commandBuffer) const;
+	void Render(VkCommandBuffer commandBuffer);
 	void CleanUp() const;
 
 private:

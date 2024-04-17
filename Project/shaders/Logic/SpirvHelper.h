@@ -1,10 +1,10 @@
 #pragma once
+#include <fstream>
 #include <vulkanbase/vulkanUtil.h>
 #include "shaderc/shaderc.h"
 #include "shaderc/shaderc.hpp"
 #include "Core/Logger.h"
 
-//https://zandrofargnoli.co.uk/posts/2021/03/real-time-shader-programming/
 struct SpirvHelper
 {
     static std::vector<uint32_t> CompileShader(const std::string& sourceName, shaderc_shader_kind kind, const std::string& source, bool optimize = false) 
@@ -12,8 +12,8 @@ struct SpirvHelper
 		//Read the file
 		std::string shaderString = tools::readFileStr(source);
 
-        std::cout << "Compiling shader: " << sourceName << std::endl;
-        std::cout << "Shader source: " << shaderString << std::endl;
+		LogInfo("Compiling shader: " + sourceName);
+		LogInfo("Shader source: "+ shaderString);
 
 
 		//Create a compiler and its options
@@ -45,8 +45,8 @@ struct SpirvHelper
 		auto shaderBinary = CompileShader(sourceName, kind, source, optimize);
 
 		//Store the shader binary to a file
-		//std::ofstream file(source + ".spv", std::ios::binary);
-		//file.write((char*)shaderBinary.data(), shaderBinary.size() * sizeof(uint32_t));
-		//file.close();
+		std::ofstream file(source + ".spv", std::ios::binary);
+		file.write((char*)shaderBinary.data(), shaderBinary.size() * sizeof(uint32_t));
+		file.close();
 	}
 };

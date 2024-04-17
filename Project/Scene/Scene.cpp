@@ -4,14 +4,16 @@
 #include "Mesh/ModelLoader.h"
 #include "Mesh/Vertex.h"
 
-#include "shaders/ShaderFactory.h"
-#include <imgui.h>
+#include "shaders/Logic/ShaderFactory.h"
+#include "Core/ImGuiWrapper.h"
 #include "Core/Logger.h"
 
 #include <Timer/GameTimer.h>
 #include "Input/Input.h"
-#include "shaders/Shader.h"
 #include <Mesh/MaterialManager.h>
+
+#include "ImGuizmo.h"
+#include "Patterns/ServiceLocator.h"
 
 
 Scene::Scene(VulkanContext* vulkanContext)
@@ -35,7 +37,7 @@ Scene::Scene(VulkanContext* vulkanContext)
 	};
 
 
-	std::shared_ptr<Material> material01 = MaterialManager::CreateMaterial(vulkanContext, "shader.vert", "shader.frag");
+	std::shared_ptr<Material> material01 = MaterialManager::CreateMaterial(vulkanContext, "shader2D.vert", "shader.frag");
 
 	//std::shared_ptr<Material> material02 = MaterialManager::CreateMaterial(vulkanContext);
 	//material02->AddShader("shader.vert", ShaderType::VertexShader);
@@ -57,6 +59,7 @@ Scene::Scene(VulkanContext* vulkanContext)
 void Scene::Render(VkCommandBuffer commandBuffer) const
 {
 	GameTimer::UpdateDelta();
+
 	
 	static bool showShaderFactory = false;
 	static bool showLogger = true;
@@ -71,10 +74,16 @@ void Scene::Render(VkCommandBuffer commandBuffer) const
 	ImGui::Checkbox("Show Shader Factory", &showShaderFactory);
 	ImGui::Checkbox("Show Log", &showLogger);
 
+	if (ImGui::Button("Reload Frag", { 150,25 }))
+		ShaderManager::ReloadShader(ServiceLocator::GetService<VulkanContext>(), "shader.frag", ShaderType::FragmentShader);
+
 	ImGui::End();
 
 	if(showShaderFactory) ShaderFactory::Render();
 	if(showLogger) 	VulkanLogger::Log.Render("Vulkan Log: ");
+
+	ImGuizmo::DrawCubes(value_ptr(Camera::GetViewMatrix()), value_ptr(Camera::GetProjectionMatrix()), value_ptr(glm::mat4{}), 1);
+
 
 
 	ImGui::Render();

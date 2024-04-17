@@ -83,7 +83,7 @@ private:
 
 	void AddMaterial(Material* material);
 	void Cleanup(VkDevice device) const;
-
+	void CleanupModule(VkDevice device) const;
 
 	VkPipelineShaderStageCreateInfo m_ShaderInfo{};
 	std::vector<Material*>  m_pMaterials;
@@ -106,6 +106,8 @@ public:
 	ShaderManager& operator=(const ShaderManager&) = delete;
 	ShaderManager(ShaderManager&&) = delete;
 	ShaderManager& operator=(ShaderManager&&) = delete;
+
+	static void ReloadShader(VulkanContext* vulkanContext, const std::string& fileName, ShaderType shaderType);
 
 	static Shader* CreateShader(VulkanContext* vulkanContext, const std::string& fileName, ShaderType shaderType, Material* material);
 
