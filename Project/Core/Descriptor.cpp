@@ -1,10 +1,8 @@
 #include "Descriptor.h"
-
 #include <algorithm>
 
 namespace Descriptor
 {
-
 	VkDescriptorPool CreatePool(VkDevice device, const DescriptorAllocator::PoolSizes& poolSizes, int maxSets, VkDescriptorPoolCreateFlags flags)
 	{
 		//Create pool sizes
@@ -30,6 +28,58 @@ namespace Descriptor
 
 		return descriptorPool;
 	}
+
+
+	//_____                     _       _               __  __                                   
+	//|  __ \                   (_)     | |             |  \/  |                                  
+	//| |  | | ___ ___  ___ _ __ _ _ __ | |_ ___  _ __  | \  / | __ _ _ __   __ _  __ _  ___ _ __ 
+	//| |  | |/ _ / __|/ __| '__| | '_ \| __/ _ \| '__| | |\/| |/ _` | '_ \ / _` |/ _` |/ _ | '__|
+	//| |__| |  __\__ | (__| |  | | |_) | || (_) | |    | |  | | (_| | | | | (_| | (_| |  __| |   
+	//|_____/ \___|___/\___|_|  |_| .__/ \__\___/|_|    |_|  |_|\__,_|_| |_|\__,_|\__, |\___|_|   
+	//							  | |                                              __/ |          
+	//							  |_|                                             |___/           
+
+	void DescriptorManager::Init(VulkanContext* vulkanContext)
+	{
+		m_pDescriptorAllocator->Init(vulkanContext->device);
+		m_pDescriptorCache->Init(vulkanContext->device);
+		m_DescriptorBuilder = DescriptorBuilder::Begin(m_pDescriptorCache.get(), m_pDescriptorAllocator.get());
+
+		m_GlobalDescriptor.Init(vulkanContext);
+	}
+
+	void DescriptorManager::Cleanup()
+	{
+		m_GlobalDescriptor.Cleanup(m_pDescriptorAllocator->m_Device);
+		m_pDescriptorAllocator->Cleanup();
+		m_pDescriptorCache->Cleanup();
+	}
+
+	DescriptorAllocator* DescriptorManager::GetAllocator()
+	{
+		return m_pDescriptorAllocator.get();
+	}
+
+	DescriptorLayoutCache* DescriptorManager::GetCache()
+	{
+		return m_pDescriptorCache.get();
+	}
+
+	DescriptorBuilder& DescriptorManager::GetBuilder()
+	{
+		return m_DescriptorBuilder;
+	}
+
+	// _____                     _       _                        _ _                 _             
+	//|  __ \                   (_)     | |                 /\   | | |               | |            
+	//| |  | | ___ ___  ___ _ __ _ _ __ | |_ ___  _ __     /  \  | | | ___   ___ __ _| |_ ___  _ __ 
+	//| |  | |/ _ / __|/ __| '__| | '_ \| __/ _ \| '__|   / /\ \ | | |/ _ \ / __/ _` | __/ _ \| '__|
+	//| |__| |  __\__ | (__| |  | | |_) | || (_) | |     / ____ \| | | (_) | (_| (_| | || (_) | |   
+	//|_____/ \___|___/\___|_|  |_| .__/ \__\___/|_|    /_/    \_|_|_|\___/ \___\__,_|\__\___/|_|   
+    //                          | |                                                               
+    //                          |_|                                                               
+	//
+
 
 	void DescriptorAllocator::Init(VkDevice device)
 	{
@@ -103,6 +153,17 @@ namespace Descriptor
 		m_FreePools.pop_back();
 		return pool;
 	}
+
+	// _____                     _       _               _                             _      _____           _          
+	//|  __ \                   (_)     | |             | |                           | |    / ____|         | |         
+	//| |  | | ___ ___  ___ _ __ _ _ __ | |_ ___  _ __  | |     __ _ _   _  ___  _   _| |_  | |     __ _  ___| |__   ___ 
+	//| |  | |/ _ / __|/ __| '__| | '_ \| __/ _ \| '__| | |    / _` | | | |/ _ \| | | | __| | |    / _` |/ __| '_ \ / _ \
+	//| |__| |  __\__ | (__| |  | | |_) | || (_) | |    | |___| (_| | |_| | (_) | |_| | |_  | |___| (_| | (__| | | |  __/
+	//|_____/ \___|___/\___|_|  |_| .__/ \__\___/|_|    |______\__,_|\__, |\___/ \__,_|\__|  \_____\__,_|\___|_| |_|\___|
+	//                            | |                                 __/ |                                              
+	//                            |_|                                |___/                                               
+	//
+
 
 	void DescriptorLayoutCache::Init(VkDevice device)
 	{
@@ -201,6 +262,21 @@ namespace Descriptor
 
 		return hash;
 	}
+
+	std::size_t DescriptorLayoutCache::DescriptorLayoutHash::operator()(const DescriptorLayoutInfo& layoutInfo) const
+	{
+		return layoutInfo.hash();
+	}
+
+	//	_____                     _       _               ____        _ _     _           
+	// |  __ \                   (_)     | |             |  _ \      (_| |   | |          
+	// | |  | | ___ ___  ___ _ __ _ _ __ | |_ ___  _ __  | |_) |_   _ _| | __| | ___ _ __ 
+	// | |  | |/ _ / __|/ __| '__| | '_ \| __/ _ \| '__| |  _ <| | | | | |/ _` |/ _ | '__|
+	// | |__| |  __\__ | (__| |  | | |_) | || (_) | |    | |_) | |_| | | | (_| |  __| |   
+	// |_____/ \___|___/\___|_|  |_| .__/ \__\___/|_|    |____/ \__,_|_|_|\__,_|\___|_|   
+	//                             | |                                                    
+	//                             |_|                                                    
+
 	DescriptorBuilder DescriptorBuilder::Begin(DescriptorLayoutCache* layoutCache, DescriptorAllocator* allocator)
 	{
 		DescriptorBuilder builder;

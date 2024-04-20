@@ -1,14 +1,9 @@
 #pragma once
 #include <vulkan/vulkan.h>
-#include <glm/mat4x4.hpp>
 #include <unordered_map>
-#include <glm/ext/matrix_clip_space.hpp>
-#include <glm/ext/matrix_transform.hpp>
-
 #include "Buffer.h"
-#include "Camera/Camera.h"
-#include "Core/Logger.h"
-#include "shaders/Logic/Shader.h"
+#include "GlobalDescriptor.h"
+
 
 namespace Descriptor 
 {
@@ -67,7 +62,6 @@ namespace Descriptor
 		std::vector<VkDescriptorPool> m_FreePools;
 	};
 
-
 	//Caches for DescriptorSetLayouts to avoid creating duplicated layouts
 	class DescriptorLayoutCache final
 	{
@@ -101,13 +95,12 @@ namespace Descriptor
 		//Custom hash function for the DescriptorLayoutInfo
 		struct DescriptorLayoutHash
 		{
-			std::size_t operator()(const DescriptorLayoutInfo& layoutInfo) const { return layoutInfo.hash(); }
+			std::size_t operator()(const DescriptorLayoutInfo& layoutInfo) const;
 		};
 
 		std::unordered_map<DescriptorLayoutInfo, VkDescriptorSetLayout, DescriptorLayoutHash> m_LayoutCache;
 		VkDevice m_Device;
 	};
-
 
 	//allocate and write a descriptor set and its layout automatically.
 	class DescriptorBuilder final
@@ -115,9 +108,6 @@ namespace Descriptor
 	public:
 		DescriptorBuilder() = default;
 		~DescriptorBuilder() = default;
-
-		//DescriptorBuilder& operator=(const DescriptorBuilder&) = delete;
-		//DescriptorBuilder& operator=(DescriptorBuilder&&) = delete;
 
 
 		static DescriptorBuilder Begin(DescriptorLayoutCache* layoutCache, DescriptorAllocator* allocator);
@@ -139,42 +129,6 @@ namespace Descriptor
 	VkDescriptorPool CreatePool(VkDevice device, const DescriptorAllocator::PoolSizes& poolSizes, int maxSets, VkDescriptorPoolCreateFlags flags = 0);
 
 
-	struct GlobalDescriptor
-	{
-		inline void Init(VulkanContext* vulkanContext)
-		{
-			m_GlobalBuffer.AddVariable(Camera::GetViewProjectionMatrix());
-			//projectionHandle = m_GlobalBuffer.AddVariable(Camera::GetProjectionMatrix());
-			//viewProjectionHandle = m_GlobalBuffer.AddVariable(Camera::GetViewProjectionMatrix());
-			cameraHandle = m_GlobalBuffer.AddVariable(glm::vec4(Camera::GetPosition(), 1.0f));
-			m_GlobalBuffer.BindBuffer(vulkanContext, 0, VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT, m_GlobalDescriptorSet, m_GlobalDescriptorSetLayout);
-		}
-
-		inline void Bind(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout)
-		{
-			m_GlobalBuffer.UpdateVariable(0, Camera::Camera::GetViewProjectionMatrix());
-			//m_GlobalBuffer.UpdateVariable(projectionHandle, Camera::Camera::GetProjectionMatrix());
-			//m_GlobalBuffer.UpdateVariable(viewProjectionHandle, Camera::Camera::GetViewProjectionMatrix());
-			m_GlobalBuffer.UpdateVariable(cameraHandle, glm::vec4(Camera::GetPosition(), 1.0f));
-			m_GlobalBuffer.Bind(commandBuffer, pipelineLayout, m_GlobalDescriptorSet);
-		}
-
-		VkDescriptorSetLayout& GetLayout() { return m_GlobalDescriptorSetLayout; }
-
-		inline void Cleanup(VkDevice device)
-		{
-			m_GlobalBuffer.Cleanup(device);
-		}
-
-	private:
-		VkDescriptorSetLayout m_GlobalDescriptorSetLayout{};
-		VkDescriptorSet m_GlobalDescriptorSet{};
-		DynamicBuffer m_GlobalBuffer{};
-
-		uint16_t projectionHandle = 0;
-		uint16_t viewProjectionHandle = 0;
-		uint16_t cameraHandle = 0;
-	};
 
 	//Manages the above classes
 	class DescriptorManager final
@@ -188,25 +142,13 @@ namespace Descriptor
 		DescriptorManager(DescriptorManager&&) = delete;
 		DescriptorManager& operator=(DescriptorManager&&) = delete;
 
-		static void Init(VulkanContext* vulkanContext)
-		{
-			m_pDescriptorAllocator->Init(vulkanContext->device);
-			m_pDescriptorCache->Init(vulkanContext->device);
-			m_DescriptorBuilder = DescriptorBuilder::Begin(m_pDescriptorCache.get(), m_pDescriptorAllocator.get());
+		static void Init(VulkanContext* vulkanContext);
 
-			m_GlobalDescriptor.Init(vulkanContext);
-		}
+		static void Cleanup();
 
-		static void Cleanup()
-		{
-			m_GlobalDescriptor.Cleanup(m_pDescriptorAllocator->m_Device);
-			m_pDescriptorAllocator->Cleanup();
-			m_pDescriptorCache->Cleanup();
-		}
-
-		static DescriptorAllocator* GetAllocator() { return m_pDescriptorAllocator.get(); }
-		static DescriptorLayoutCache* GetCache() { return m_pDescriptorCache.get(); }
-		static DescriptorBuilder& GetBuilder() { return m_DescriptorBuilder; }
+		static DescriptorAllocator* GetAllocator();
+		static DescriptorLayoutCache* GetCache();
+		static DescriptorBuilder& GetBuilder();
 
 
 		inline static GlobalDescriptor m_GlobalDescriptor;

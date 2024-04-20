@@ -1,7 +1,6 @@
 #pragma once
 #include "lua.hpp"
 #include "sol/sol.hpp"
-#include "../Patterns/Singleton.h"
 
 class LuaScriptRunner final
 {

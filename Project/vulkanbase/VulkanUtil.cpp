@@ -171,32 +171,26 @@ namespace tools
 		InsertImageMemoryBarrier(commandBuffer, image, src_access_mask, dst_access_mask , oldLayout, newLayout, src_stage_mask, dst_stage_mask, subresourceRange);
 	}
 
-
-	void CreateImageView(VkDevice device, VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, VkImageView& imageView)
+	void OpenFile(const std::string& path)
 	{
-		VkImageViewCreateInfo viewInfo{};
-		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		viewInfo.image = image;
-		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		viewInfo.format = format;
+		LogInfo("Opening File: " + path);
 
-		viewInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-		viewInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-		viewInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-		viewInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
 
-		viewInfo.subresourceRange.aspectMask = aspectFlags;
-		viewInfo.subresourceRange.baseMipLevel = 0;
-		viewInfo.subresourceRange.levelCount = 1;
-		viewInfo.subresourceRange.baseArrayLayer = 0;
-		viewInfo.subresourceRange.layerCount = 1;
+#ifdef _WIN32
 
-		VulkanCheck(vkCreateImageView(device, &viewInfo, nullptr, &imageView), "Failed to create texture image view!")
+		STARTUPINFOA si = { sizeof(si) };
+		PROCESS_INFORMATION pi;
+		std::string command = "cmd /c start " + path;
+
+		LogAssert(CreateProcessA(NULL, const_cast<char*>(command.c_str()), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi), "Failed to open file: " + path, true);
+
+
+		CloseHandle(pi.hProcess);
+		CloseHandle(pi.hThread);
+
+#elif defined __linux__
+		std::string command = "xdg-open " + filePath;
+		system(command.c_str());
+#endif
 	}
-
-	bool HasStencilComponent(VkFormat format)
-	{
-		return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
-	}
-
 }

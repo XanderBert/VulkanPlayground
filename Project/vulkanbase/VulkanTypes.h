@@ -31,6 +31,28 @@ public:
 	Window(Window&&) = delete;
 	Window& operator=(Window&&) = delete;
 
+	void GetSize(int& width, int& height) const
+	{
+		glfwGetFramebufferSize(m_pWindow, &width, &height);
+	}
+
+	bool ShouldClose() const
+	{
+		return glfwWindowShouldClose(m_pWindow);
+	}
+
+	void PollEvents() const
+	{
+		glfwPollEvents();
+	}
+
+	bool IsMinimized() const
+	{
+		int width, height;
+		glfwGetFramebufferSize(m_pWindow, &width, &height);
+		return width == 0 || height == 0;
+	}
+
 	GLFWwindow* Ptr() const { return m_pWindow; }
 
 private:
@@ -43,7 +65,7 @@ private:
 	{
 		glfwInit();
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 		m_pWindow = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
 		glfwMakeContextCurrent(m_pWindow);
 	}

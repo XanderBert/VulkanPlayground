@@ -3,7 +3,7 @@
 
 #include "ImGuizmo.h"
 #include "ModelLoader.h"
-#include "../vulkanbase/VulkanTypes.h"
+#include "vulkanbase/VulkanTypes.h"
 #include "Vertex.h"
 #include "Camera/Camera.h"
 #include "Patterns/ServiceLocator.h"

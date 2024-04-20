@@ -5,6 +5,9 @@
 #include "QueueFamilyIndices.h"
 #include <algorithm>
 
+#include "DepthResource.h"
+#include "Image/ImageLoader.h"
+
 class SwapChain final
 {
 public:
@@ -16,9 +19,7 @@ public:
 	SwapChain& operator=(const SwapChain&) = delete;
 	SwapChain& operator=(SwapChain&&) = delete;
 
-
-	//overload () operator to return m_SwapChain
-	operator VkSwapchainKHR() const { return m_SwapChain; }
+	inline static VkSwapchainKHR GetSwapChain() { return m_SwapChain; }
 
 	//This would be ideal bout it would mean the swapchain would need to be in a singleton class or a ServiceLocator
 	//It seems to be possible with the 2b c++ extension?
@@ -28,9 +29,6 @@ public:
 
 	inline static void Init(VulkanContext* vulkanContext) 
 	{
-
-
-
 		const VkPhysicalDevice physicalDevice = vulkanContext->physicalDevice;
 		const VkDevice device = vulkanContext->device;
 
@@ -88,9 +86,6 @@ public:
 		m_Format = surfaceFormat.format;
 		m_Extends = extent;
 
-
-
-
 		CreateImageViews(device);
 	}
 	inline static void CreateSurface(VulkanContext* vulkanContext)
@@ -98,23 +93,49 @@ public:
 		VulkanCheck(glfwCreateWindowSurface(vulkanContext->instance, vulkanContext->window.Ptr(), nullptr, &m_SwapChainSurface), "Failed To Create Window Surface")
 	}
 
-	inline static void Cleanup(VulkanContext* vulkanContext)
+
+	inline static void DestroySwapChain(VulkanContext* vulkanContext)
 	{
 		for (const auto imageView : m_SwapChainImageViews)
 		{
 			vkDestroyImageView(vulkanContext->device, imageView, nullptr);
 		}
-
-
 		vkDestroySwapchainKHR(vulkanContext->device, m_SwapChain, nullptr);
+	}
+
+	inline static void Cleanup(VulkanContext* vulkanContext)
+	{
+		DestroySwapChain(vulkanContext);
 		vkDestroySurfaceKHR(vulkanContext->instance, m_SwapChainSurface, nullptr);
 	}
-	
+
+	inline static void SetNeedsRecreation() { m_NeedsRecreation = true; }
 	inline static VkSurfaceKHR& GetSurface() { return m_SwapChainSurface; }
 	inline static std::vector<VkImageView>& ImageViews() { return m_SwapChainImageViews; }
 	inline static VkExtent2D& Extends() { return m_Extends; }
 	inline static VkFormat& Format() { return m_Format; }
 	inline static uint8_t ImageCount() { return m_SwapChainImages.size(); }
+
+
+
+	inline static void RecreateIfNeeded(VulkanContext* vulkanContext)
+	{
+		if (!m_NeedsRecreation) return;
+
+		LogInfo("Destroying SwapChain");
+		DestroySwapChain(vulkanContext);
+
+		LogInfo("Recreating SwapChain");
+		Init(vulkanContext);
+
+		vkDeviceWaitIdle(vulkanContext->device);
+
+		LogInfo("Recreating DepthResource");
+		DepthResource::Recreate(vulkanContext);
+
+		
+		m_NeedsRecreation = false;
+	}
 
 private:
 	struct SwapChainSupportDetails
@@ -185,9 +206,14 @@ private:
 	{
 		//If the extent is not defined, the window size will be used
 		if (capabilities.currentExtent.width != (std::numeric_limits<uint32_t>::max)()) return capabilities.currentExtent;
-	
-		int width, height;
-		glfwGetFramebufferSize(vulkanContext->window.Ptr(), &width, &height);
+
+		int width = 0, height = 0;
+		vulkanContext->window.GetSize(width, height);
+		while (width == 0 || height == 0) 
+		{
+			vulkanContext->window.GetSize(width, height);
+			glfwWaitEvents();
+		}
 
 		VkExtent2D actualExtent = 
 		{
@@ -207,9 +233,11 @@ private:
 
 		for (size_t i = 0; i < m_SwapChainImages.size(); ++i)
 		{
-			tools::CreateImageView(device, m_SwapChainImages[i], m_Format, VK_IMAGE_ASPECT_COLOR_BIT, m_SwapChainImageViews[i]);
+			Image::CreateImageView(device, m_SwapChainImages[i], m_Format, VK_IMAGE_ASPECT_COLOR_BIT, m_SwapChainImageViews[i]);
 		}
 	}
+
+	inline static bool m_NeedsRecreation = false;
 
 	inline static VkSwapchainKHR m_SwapChain{};
 	inline static VkExtent2D m_Extends;

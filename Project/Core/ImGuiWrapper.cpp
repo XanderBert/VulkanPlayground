@@ -65,7 +65,7 @@ void ImGuiWrapper::Initialize(VkQueue graphicsQueue)
 	init_info.PipelineRenderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
 	init_info.PipelineRenderingCreateInfo.pColorAttachmentFormats = &SwapChain::Format();
 	init_info.PipelineRenderingCreateInfo.colorAttachmentCount = 1;
-	init_info.PipelineRenderingCreateInfo.depthAttachmentFormat = DepthResource::DepthResource::GetFormat();
+	init_info.PipelineRenderingCreateInfo.depthAttachmentFormat = DepthResource::GetFormat();
 
 	ImGui_ImplVulkan_Init(&init_info);
 

@@ -69,14 +69,22 @@ void VulkanBase::createSyncObjects()
 void VulkanBase::drawFrame()
 {
 	const VkDevice device = m_pContext->device;
-
 	vkWaitForFences(device, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
-	vkResetFences(device, 1, &inFlightFence);
 
 	uint32_t imageIndex;
-	vkAcquireNextImageKHR(device, SwapChain(), UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+	const VkResult nextImageResult = vkAcquireNextImageKHR(m_pContext->device, SwapChain::GetSwapChain(), UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+	if (nextImageResult == VK_ERROR_OUT_OF_DATE_KHR)
+	{
+		SwapChain::SetNeedsRecreation();
+		SwapChain::RecreateIfNeeded(m_pContext);
+		return;
+	}
+	else if (nextImageResult != VK_SUCCESS && nextImageResult != VK_SUBOPTIMAL_KHR)
+	{
+		LogError("Failed to acquire swap chain image!");
+	}
 
-	if (imageIndex > SwapChain::ImageCount()) return;
+	vkResetFences(device, 1, &inFlightFence);
 
 	CommandBufferManager::ResetCommandBuffer(commandBuffer);
 	CommandBufferManager::BeginCommandBufferRecording(commandBuffer, false, false);
@@ -92,7 +100,7 @@ void VulkanBase::drawFrame()
 
 	tools::InsertImageMemoryBarrier(
 		commandBuffer.Handle,
-		DepthResource::DepthResource::GetImage(),
+		DepthResource::GetImage(),
 		VK_IMAGE_LAYOUT_UNDEFINED,
 		VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
 		VkImageSubresourceRange{ VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 1 });
@@ -124,10 +132,7 @@ void VulkanBase::drawFrame()
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signalSemaphores;
 
-	if (vkQueueSubmit(m_pContext->graphicsQueue, 1, &submitInfo, inFlightFence) != VK_SUCCESS)
-	{
-		throw std::runtime_error("failed to submit draw command buffer!");
-	}
+	VulkanCheck(vkQueueSubmit(m_pContext->graphicsQueue, 1, &submitInfo, inFlightFence), "Failed To Submit Queue.");
 
 	CommandBufferManager::SubmitCommandBuffer(commandBuffer);
 
@@ -136,12 +141,23 @@ void VulkanBase::drawFrame()
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 	presentInfo.waitSemaphoreCount = 1;
 	presentInfo.pWaitSemaphores = signalSemaphores;
-	const VkSwapchainKHR swapChains[] = { SwapChain() };
+	const VkSwapchainKHR swapChains[] = { SwapChain::GetSwapChain() };
 	presentInfo.swapchainCount = 1;
 	presentInfo.pSwapchains = swapChains;
 	presentInfo.pImageIndices = &imageIndex;
 
-	VulkanCheck(vkQueuePresentKHR(presentQueue, &presentInfo), "Failed To Queue Present!");
+
+
+
+	const VkResult presentResult = vkQueuePresentKHR(presentQueue, &presentInfo);
+	if (presentResult == VK_ERROR_OUT_OF_DATE_KHR || presentResult == VK_SUBOPTIMAL_KHR)
+	{
+		SwapChain::SetNeedsRecreation();
+	}
+	else if (presentResult != VK_SUCCESS)
+	{
+		LogError("Failed to present swap chain image! to queue");
+	}
 }
 
 

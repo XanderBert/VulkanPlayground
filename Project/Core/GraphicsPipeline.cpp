@@ -3,6 +3,7 @@
 #include "DepthResource.h"
 #include "shaders/Logic/Shader.h"
 #include "Descriptor.h"
+#include "SwapChain.h"
 #include "Mesh/Material.h"
 
 void GraphicsPipeline::CreatePipeline(const VulkanContext* vulkanContext,Material* material)
@@ -36,7 +37,7 @@ void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline,
 	pipelineRenderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
 	pipelineRenderingCreateInfo.colorAttachmentCount = 1;
 	pipelineRenderingCreateInfo.pColorAttachmentFormats = &SwapChain::Format();
-	pipelineRenderingCreateInfo.depthAttachmentFormat = DepthResource::DepthResource::GetFormat();
+	pipelineRenderingCreateInfo.depthAttachmentFormat = DepthResource::GetFormat();
 
 
 	CreatePipelineLayout(vulkanContext->device, graphicsPipeline.m_PipelineLayout, graphicsPipeline);
@@ -59,7 +60,7 @@ void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline,
 	pipelineInfo.pColorBlendState = &CreateColorBlending(colorBlendAttachment);
 	pipelineInfo.pMultisampleState = &CreateMultisampling();
 	pipelineInfo.pViewportState = &CreateViewportState();
-	pipelineInfo.pDepthStencilState = &DepthResource::DepthResource::GetDepthPipelineInfo(VK_TRUE, VK_TRUE);
+	pipelineInfo.pDepthStencilState = &DepthResource::GetDepthPipelineInfo(VK_TRUE, VK_TRUE);
 	pipelineInfo.pDynamicState = &CreateDynamicState(dynamicStates);
 	pipelineInfo.pVertexInputState = &ShaderManager::GetVertexInputStateInfo();
 	

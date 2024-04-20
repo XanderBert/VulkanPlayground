@@ -89,7 +89,11 @@ set(SOURCES
     "shaders/Logic/SpirvHelper.h"
     "vulkanbase/VulkanUtil.cpp" 
     "Core/SwapChain.h" 
-    "Core/ImGuiWrapper.cpp" )
+    "Core/ImGuiWrapper.cpp"  
+    "Core/Image/ImageLoader.cpp" 
+    "Core/Image/ImageLoader.h" 
+    "Core/GlobalDescriptor.h"
+    "Core/GlobalDescriptor.cpp" "Core/DepthResource.cpp")
 
 
 include(FetchContent)
@@ -177,9 +181,8 @@ set (IMPLOT_SOURCE_FILES
 )
 
 
-
 set(EXTERNALS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../includes)
-
+set(STB_SOURCES ${EXTERNALS_DIR}/stb/stb_image.h)
 
 # Create the executable
 add_executable(
@@ -190,6 +193,7 @@ add_executable(
     ${IMGUIZMO_SOURCE_FILES} 
     ${IMPLOT_SOURCE_FILES} 
     ${LUA_SCRIPTS} 
+    ${STB_SOURCES}
 )
 
 

@@ -30,10 +30,14 @@ void VulkanBase::pickPhysicalDevice()
 
 bool VulkanBase::isDeviceSuitable(VkPhysicalDevice device)
 {
-	const QueueFamilyIndices indices = QueueFamilyIndices::FindQueueFamilies(device, SwapChain::GetSurface());
-	const bool extensionsSupported = checkDeviceExtensionSupport(device);
-	return indices.isComplete() && extensionsSupported;
+	VkPhysicalDeviceFeatures supportedFeatures;
+	vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
 
+	const QueueFamilyIndices indices = QueueFamilyIndices::FindQueueFamilies(device, SwapChain::GetSurface());
+
+	const bool extensionsSupported = checkDeviceExtensionSupport(device);
+
+	return indices.isComplete() && extensionsSupported && supportedFeatures.samplerAnisotropy;
 }
 
 void VulkanBase::createLogicalDevice()
@@ -60,9 +64,12 @@ void VulkanBase::createLogicalDevice()
 	queueCreateInfo.queueFamilyIndex = indices.graphicsFamily.value();
 	queueCreateInfo.queueCount = 1;
 
+
+	//Set the device features
 	VkPhysicalDeviceFeatures deviceFeatures{};
+	deviceFeatures.samplerAnisotropy = VK_TRUE;
 
-
+	//Set the Dynamic Rendering Extension
 	VkPhysicalDeviceDynamicRenderingFeaturesKHR dynamicRenderingFeature{};
 	dynamicRenderingFeature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR;
 	dynamicRenderingFeature.dynamicRendering = VK_TRUE;

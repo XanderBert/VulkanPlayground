@@ -124,14 +124,21 @@ VkDescriptorSetLayout& Shader::GetDescriptorSetLayout()
 
 void Shader::OnImGui(const std::string& materialName)
 {
-	std::string label = "Reload: " + m_FileName;
-	label += "##" + materialName;
+	ImGui::Text(m_FileName.c_str());
+	ImGui::Separator();
+	const std::string label = "Reload##" + m_FileName + materialName;
+	const std::string openLabel = "Edit##" + m_FileName + materialName;
 
+
+	if(ImGui::Button(openLabel.c_str()))
+	{
+		tools::OpenFile("shaders\\" + m_FileName);
+	}
+	ImGui::SameLine();
 	if(ImGui::Button(label.c_str()))
 	{
 		ShaderManager::ReloadShader(ServiceLocator::GetService<VulkanContext>(), m_FileName, static_cast<ShaderType>(m_ShaderInfo.stage));
 	}
-
 }
 
 std::string Shader::GetFileName() const

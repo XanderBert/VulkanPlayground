@@ -65,7 +65,7 @@ private:
 	inline static std::unordered_map<std::type_index, std::unique_ptr<void, void (*)(void const*)>> m_ServiceInstances{};
 };
 
-#include "../LuaScripts/LuaScriptRunner.h"
+#include "LuaScripts/LuaScriptRunner.h"
 #include "vulkanbase/VulkanTypes.h"
 class ServiceConfigurator 
 {

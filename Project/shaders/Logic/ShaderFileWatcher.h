@@ -2,7 +2,7 @@
 #include "efsw/include/efsw/efsw.hpp"
 #include "SpirvHelper.h"
 #include "efsw/System.hpp"
-#include "../Core/GraphicsPipeline.h"
+#include "Core/GraphicsPipeline.h"
 
 class ShaderListener : public efsw::FileWatchListener
 {

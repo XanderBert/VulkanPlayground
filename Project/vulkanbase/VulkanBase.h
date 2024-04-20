@@ -26,6 +26,7 @@
 #include "imgui_impl_vulkan.h"
 #include "Mesh/MaterialManager.h"
 #include "Core/SwapChain.h"
+#include <thread>
 
 
 
@@ -73,7 +74,7 @@ private:
 		SwapChain::Init(m_pContext);
 		// week 04 
 		
-		DepthResource::DepthResource::Init(m_pContext);
+		DepthResource::Init(m_pContext);
 
 
 		// Since we use an extension, we need to expliclity load the function pointers for extension related Vulkan commands
@@ -92,10 +93,21 @@ private:
 
 	void mainLoop()
 	{
+		const Window& window = m_pContext->window;
 
-		while (!glfwWindowShouldClose(m_pContext->window.Ptr())) 
+
+		while (!window.ShouldClose()) 
 		{
-			glfwPollEvents();			
+			window.PollEvents();
+
+			if(window.IsMinimized())
+			{
+				std::this_thread::sleep_for(std::chrono::milliseconds(100));
+				continue;
+			}
+
+			SwapChain::RecreateIfNeeded(m_pContext);
+
 			ImGuiWrapper::NewFrame();
 			drawFrame();
 			ImGuiWrapper::EndFrame();
@@ -114,7 +126,7 @@ private:
 		vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
 		vkDestroyFence(device, inFlightFence, nullptr);
 
-		DepthResource::DepthResource::Cleanup(m_pContext);
+		DepthResource::Cleanup(m_pContext);
 
 		if (enableValidationLayers) 
 		{
@@ -158,7 +170,7 @@ private:
 		VkRenderingAttachmentInfoKHR depthAttachmentInfo{};
 		depthAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
 		depthAttachmentInfo.pNext = VK_NULL_HANDLE;
-		depthAttachmentInfo.imageView = DepthResource::DepthResource::GetImageView();
+		depthAttachmentInfo.imageView = DepthResource::GetImageView();
 		depthAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 		depthAttachmentInfo.resolveMode = VK_RESOLVE_MODE_NONE;
 		depthAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;

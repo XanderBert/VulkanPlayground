@@ -50,6 +50,6 @@ namespace Core
 			vkCmdCopyBuffer(commandBuffer.Handle, srcBuffer, dstBuffer, 1, &copyRegion);
 
 			CommandBufferManager::EndCommandBufferSingleUse(vulkanContext, commandBuffer);
-		}
+		}		
 	} // namespace Buffer
 } // namespace Core

@@ -36,7 +36,5 @@ namespace tools
 		VkImageLayout                  newLayout,
 		VkImageSubresourceRange const& subresourceRange);
 
-	void CreateImageView(VkDevice device, VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, VkImageView& imageView);
-
-	bool HasStencilComponent(VkFormat format);
+	void OpenFile(const std::string& path);
 }
