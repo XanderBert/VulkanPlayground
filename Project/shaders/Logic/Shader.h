@@ -3,16 +3,8 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <glm/mat4x4.hpp>
 #include <vulkan/vulkan.h>
-
 #include "Mesh/Vertex.h"
-
-namespace Descriptor
-{
-	class DescriptorWriter;
-	class DescriptorBuilder;
-}
 
 class Material;
 class VulkanContext;
@@ -22,45 +14,6 @@ enum class ShaderType
 	VertexShader = VK_SHADER_STAGE_VERTEX_BIT,
 	FragmentShader = VK_SHADER_STAGE_FRAGMENT_BIT,
 	GeometryShader = VK_SHADER_STAGE_GEOMETRY_BIT,
-};
-
-
-//TODO: pad the dynamic buffer to 256 bytes
-//TODO: return actual pointers to the data instead of the handle, Or make a handle struct
-class DynamicBuffer final
-{
-public:
-	DynamicBuffer() = default;
-	~DynamicBuffer() = default;
-
-	DynamicBuffer& operator=(const DynamicBuffer&) = delete;
-	DynamicBuffer(const DynamicBuffer&) = delete;
-	DynamicBuffer(DynamicBuffer&&) = delete;
-	DynamicBuffer& operator=(DynamicBuffer&&) = delete;
-
-	void Init(VulkanContext* vulkanContext);
-	void ProperBind(int bindingNumber, const VkDescriptorSet& descriptorSet, Descriptor::DescriptorWriter& descriptorWriter, VulkanContext* vulkanContext);
-
-
-	void Cleanup(VkDevice device) const;
-
-	uint16_t AddVariable(const glm::vec4& value);
-	uint16_t AddVariable(const glm::mat4& matrix);
-	void UpdateVariable(uint16_t handle, const glm::mat4& matrix);
-	void UpdateVariable(uint16_t handle, const glm::vec4& value);
-
-private:
-	const float* GetData() const;
-	size_t GetSize() const;
-
-	uint16_t Insert(const float* dataPtr, uint8_t size);
-	void Update(uint16_t handle, const float* dataPtr, uint8_t size);
-	std::vector<float> m_Data;
-	
-
-	VkBuffer m_UniformBuffer;
-	VkDeviceMemory m_UniformBuffersMemory;
-	void* m_UniformBuffersMapped;
 };
 
 class Shader final
@@ -76,7 +29,6 @@ public:
 
 	VkPipelineShaderStageCreateInfo GetStageInfo() const;
 
-
 	void OnImGui(const std::string& materialName);
 
 	std::string GetFileName() const;
@@ -89,8 +41,6 @@ private:
 
 	VkPipelineShaderStageCreateInfo m_ShaderInfo{};
 	std::vector<Material*>  m_pMaterials;
-
-	bool m_HasUniformBuffer = false;
 
 	std::string m_FileName;
 };

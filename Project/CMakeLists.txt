@@ -93,7 +93,11 @@ set(SOURCES
     "Core/Image/ImageLoader.cpp" 
     "Core/Image/ImageLoader.h" 
     "Core/GlobalDescriptor.h"
-    "Core/GlobalDescriptor.cpp" "Core/DepthResource.cpp")
+    "Core/GlobalDescriptor.cpp" 
+    "Core/DepthResource.cpp" 
+    "Core/DynamicUniformBuffer.h"
+    "Core/DynamicUniformBuffer.cpp"
+)
 
 
 include(FetchContent)

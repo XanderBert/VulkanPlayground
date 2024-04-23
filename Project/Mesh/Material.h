@@ -12,6 +12,7 @@
 
 #include "Core/GlobalDescriptor.h"
 #include "shaders/Logic/Shader.h"
+#include "Core/DynamicUniformBuffer.h"
 
 enum class ShaderType;
 

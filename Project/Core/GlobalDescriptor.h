@@ -2,8 +2,7 @@
 #include "shaders/Logic/Shader.h"
 #include "Image/ImageLoader.h"
 #include "Descriptor.h"
-
-class DynamicBuffer;
+#include "DynamicUniformBuffer.h"
 
 
 struct GlobalDescriptor
