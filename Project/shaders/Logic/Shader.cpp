@@ -3,36 +3,42 @@
 #include "vulkanbase/VulkanTypes.h"
 #include <vector>
 
+#include "imgui.h"
 #include "SpirvHelper.h"
 #include "Patterns/ServiceLocator.h"
+
 
 //---------------------------------------------------------------
 //-------------------------DynamicBuffer-------------------------
 //---------------------------------------------------------------
-void DynamicBuffer::BindBuffer(VulkanContext* vulkanContext, int binding, VkShaderStageFlags shaderType, VkDescriptorSet& descriptorSet, VkDescriptorSetLayout& shaderDescriptorSetLayout)
+
+
+void DynamicBuffer::Init(VulkanContext* vulkanContext)
 {
-	//Setup the uniform buffer
-	const VkDeviceSize bufferSize = GetSize();
-	Core::Buffer::CreateBuffer(vulkanContext, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_UniformBuffer, m_UniformBuffersMemory);
-	vkMapMemory(vulkanContext->device, m_UniformBuffersMemory, 0, bufferSize, 0, &m_UniformBuffersMapped);
-
-	VkDescriptorBufferInfo bufferInfo{};
-	bufferInfo.buffer = m_UniformBuffer;
-	bufferInfo.offset = 0;
-	bufferInfo.range = GetSize();
+	//Pad the data to 256 bytes
+	//const size_t padding = 256 - (m_Data.size() % 256);
+	//m_Data.insert(m_Data.end(), padding, 0);
 
 
-	Descriptor::DescriptorManager::GetBuilder().BindBuffer(binding, &bufferInfo, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, shaderType).Build(descriptorSet, shaderDescriptorSetLayout );
+	//Log the size of the buffer in bytes
+	LogInfo("Dynamic buffer size: " + std::to_string(GetSize()) + " bytes");
+
+	Core::Buffer::CreateBuffer(vulkanContext, GetSize(), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_UniformBuffer, m_UniformBuffersMemory);
+	vkMapMemory(vulkanContext->device, m_UniformBuffersMemory, 0, GetSize(), 0, &m_UniformBuffersMapped);
 }
 
-void DynamicBuffer::Bind(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkDescriptorSet descriptorSet) const
+void DynamicBuffer::ProperBind(int bindingNumber, const VkDescriptorSet& descriptorSet,Descriptor::DescriptorWriter& descriptorWriter, VulkanContext* vulkanContext)
 {
-	//Bind the descriptor set for the uniform buffer
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
+	//Update the descriptor set
 
-	//Copy the dynamic buffer to the mapped buffer
 	memcpy(m_UniformBuffersMapped, GetData(), GetSize());
+
+	descriptorWriter.Cleanup();
+	descriptorWriter.WriteBuffer(bindingNumber, m_UniformBuffer, GetSize(), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+	descriptorWriter.UpdateSet(vulkanContext->device, descriptorSet);
 }
+
+
 
 void DynamicBuffer::Cleanup(VkDevice device) const
 {
@@ -64,9 +70,6 @@ void DynamicBuffer::UpdateVariable(uint16_t handle, const glm::mat4& value)
 	Update(handle, glm::value_ptr(value), size);
 }
 
-//---------------------------------------------------------------------
-//-------------------------DynamicBufferObject-------------------------
-//---------------------------------------------------------------------
 const float* DynamicBuffer::GetData() const
 {
 	return m_Data.data();
@@ -104,23 +107,6 @@ void Shader::AddMaterial(Material* material)
 	m_pMaterials.push_back(material);
 }
 
-void Shader::AddUniformBuffer(VulkanContext* vulkanContext, int binding, Material* material)
-{
-	//Check if the material is member of
-	const auto it = std::find(m_pMaterials.begin(), m_pMaterials.end(), material);
-	LogAssert(it != m_pMaterials.end(), "The passed material does not use this shader!", true)
-
-	if(m_HasUniformBuffer)
-	{
-		//Build the uniform buffer for this material
-		m_DynamicBuffer.BindBuffer(vulkanContext, binding, m_ShaderInfo.stage, material->GetDescriptorSet(), m_DescriptorSetLayout);
-	}
-}
-
-VkDescriptorSetLayout& Shader::GetDescriptorSetLayout()
-{
-	return m_DescriptorSetLayout;
-}
 
 void Shader::OnImGui(const std::string& materialName)
 {
@@ -148,9 +134,6 @@ std::string Shader::GetFileName() const
 
 void Shader::Cleanup(VkDevice device) const
 {
-	if (m_HasUniformBuffer)
-		m_DynamicBuffer.Cleanup(device);
-
 	CleanupModule(device);
 }
 
@@ -164,16 +147,6 @@ Shader::Shader(const VkPipelineShaderStageCreateInfo& shaderInfo, Material* mate
 	, m_pMaterials({ material })
 	, m_FileName(filename)
 {
-
-}
-
-
-void Shader::Bind(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, Material* material) const
-{
-	LogAssert(material, "Material is nullptr", true)
-
-	if (m_HasUniformBuffer)
-		m_DynamicBuffer.Bind(commandBuffer, pipelineLayout, material->GetDescriptorSet());
 
 }
 

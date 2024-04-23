@@ -43,19 +43,6 @@ public:
 private:
 	friend class GraphicsPipelineBuilder;
 
-
-	void SetShaders(const std::vector<Shader*>& shaders)
-	{
-		m_ActiveShaders = shaders;
-	}
-	
-	bool HasShaders() const
-	{
-		return !m_ActiveShaders.empty();
-	}
-
-
-	std::vector<Shader*> m_ActiveShaders{};
 	VkPipelineLayout m_PipelineLayout{};
 	VkPipeline m_GraphicsPipeline{};
 };
@@ -73,7 +60,7 @@ public:
 	GraphicsPipelineBuilder(GraphicsPipelineBuilder&&) = delete;
 	GraphicsPipelineBuilder& operator=(GraphicsPipelineBuilder&&) = delete;
 
-	static void CreatePipeline(GraphicsPipeline& graphicsPipeline, const VulkanContext* vulkanContext);
+	static void CreatePipeline(GraphicsPipeline& graphicsPipeline, const VulkanContext* vulkanContext, Material* material);
 
 
 private:
@@ -138,6 +125,4 @@ private:
 
 		return dynamicState;
 	}
-
-	static void CreatePipelineLayout(const VkDevice& device, VkPipelineLayout& pipelineLayout, const GraphicsPipeline& graphicsPipeline);
 };

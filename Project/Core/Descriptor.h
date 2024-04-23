@@ -1,8 +1,8 @@
 #pragma once
+#include <deque>
 #include <vulkan/vulkan.h>
-#include <unordered_map>
 #include "Buffer.h"
-#include "GlobalDescriptor.h"
+
 
 
 namespace Descriptor 
@@ -20,87 +20,63 @@ namespace Descriptor
 		DescriptorAllocator(DescriptorAllocator&&) = delete;
 		DescriptorAllocator& operator=(DescriptorAllocator&&) = delete;
 
-		struct PoolSizes
+		struct PoolSizeRatio
 		{
-			//multiplier on the number of descriptor sets allocated for the pools.
-			//These values should be played with to find the optimal value
-			std::vector<std::pair<VkDescriptorType, float>> sizes =
-			{
-				{ VK_DESCRIPTOR_TYPE_SAMPLER, 0.5f },
-				{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4.f },
-				{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 4.f },
-				{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1.f },
-				{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1.f },
-				{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1.f },
-				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2.f },
-				{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2.f },
-				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1.f },
-				{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1.f },
-				{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 0.5f }
-			};
+			VkDescriptorType type;
+			float ratio;
 		};
 
-		void Init(VkDevice device);
-		void ResetPools();
-		bool Allocate(VkDescriptorSet* set, VkDescriptorSetLayout layout);
-		void Cleanup() const;
+		//Allocate the first descriptor pool
+		void Init(VkDevice device, uint32_t maxSets, const std::vector<PoolSizeRatio>& poolRatios = std::vector<PoolSizeRatio>{});
 
-		VkDevice m_Device;
+		//Copy the full pools to the ready pools and clear the full pools.
+		void ClearPools(VkDevice device);
 
+		//Allocate a descriptor set from the ready pools, if there are none, create a new pool.
+		VkDescriptorSet Allocate(VkDevice device, VkDescriptorSetLayout layout);
 
+		void Cleanup(VkDevice device);
 	private:
-		VkDescriptorPool GrabPool();
+		//Get a pool from the ready vector, if there are none, create a new one.
+		VkDescriptorPool GrabPool(VkDevice device);
 
-		VkDescriptorPool m_CurrentPool{ VK_NULL_HANDLE };
-		PoolSizes m_DescriptorSizes {};
+		static VkDescriptorPool CreatePool(VkDevice device, uint32_t setCount, const std::vector<PoolSizeRatio>& poolRatios);
 
-
-		//Actively used pools
-		std::vector<VkDescriptorPool> m_UsedPools;
-
-		//Pools ready for reuse
-		std::vector<VkDescriptorPool> m_FreePools;
+		std::vector<PoolSizeRatio> m_PoolSizeRatios;
+		std::vector<VkDescriptorPool> m_FullPools;
+		std::vector<VkDescriptorPool> m_ReadyPools;
+		uint32_t setsPerPool;
 	};
 
-	//Caches for DescriptorSetLayouts to avoid creating duplicated layouts
-	class DescriptorLayoutCache final
+	class DescriptorWriter final
 	{
 	public:
-		DescriptorLayoutCache() = default;
-		~DescriptorLayoutCache() = default;
+		DescriptorWriter() = default;
+		~DescriptorWriter() = default;
+		DescriptorWriter(const DescriptorWriter&) = delete;
+		DescriptorWriter& operator=(const DescriptorWriter&) = delete;
+		DescriptorWriter(DescriptorWriter&&) = delete;
+		DescriptorWriter& operator=(DescriptorWriter&&) = delete;
 
-		DescriptorLayoutCache(const DescriptorLayoutCache&) = delete;
-		DescriptorLayoutCache& operator=(const DescriptorLayoutCache&) = delete;
-		DescriptorLayoutCache(DescriptorLayoutCache&&) = delete;
-		DescriptorLayoutCache& operator=(DescriptorLayoutCache&&) = delete;
+		//Queue Image writes
+		void WriteImage(int binding, VkImageView image, VkSampler sampler, VkImageLayout layout, VkDescriptorType type);
 
-		void Init(VkDevice device);
-		void Cleanup() const;
+		//Queue Buffer writes
+		void WriteBuffer(int binding, VkBuffer buffer, size_t size, size_t offset, VkDescriptorType type);
 
-		VkDescriptorSetLayout CreateDescriptorLayout(const VkDescriptorSetLayoutCreateInfo* info);
+		//Actual Write to the descriptor set
+		void UpdateSet(VkDevice device, VkDescriptorSet set);
 
-		struct DescriptorLayoutInfo
-		{
-			std::vector<VkDescriptorSetLayoutBinding> bindings;
-
-			//For Hash Checking
-			bool operator==(const DescriptorLayoutInfo& other) const;
-			size_t hash() const;
-		};
-
-
+		void Cleanup();
 
 	private:
 
-		//Custom hash function for the DescriptorLayoutInfo
-		struct DescriptorLayoutHash
-		{
-			std::size_t operator()(const DescriptorLayoutInfo& layoutInfo) const;
-		};
-
-		std::unordered_map<DescriptorLayoutInfo, VkDescriptorSetLayout, DescriptorLayoutHash> m_LayoutCache;
-		VkDevice m_Device;
+		//std::deque is guaranteed to keep pointers to elements valid
+		std::deque<VkDescriptorImageInfo> m_ImageInfos;
+		std::deque<VkDescriptorBufferInfo> m_BufferInfos;
+		std::vector<VkWriteDescriptorSet> m_Writes;
 	};
+
 
 	//allocate and write a descriptor set and its layout automatically.
 	class DescriptorBuilder final
@@ -109,25 +85,19 @@ namespace Descriptor
 		DescriptorBuilder() = default;
 		~DescriptorBuilder() = default;
 
+		DescriptorBuilder(const DescriptorBuilder&) = delete;
+		DescriptorBuilder& operator=(const DescriptorBuilder&) = delete;
+		DescriptorBuilder(DescriptorBuilder&&) = delete;
+		DescriptorBuilder& operator=(DescriptorBuilder&&) = delete;
 
-		static DescriptorBuilder Begin(DescriptorLayoutCache* layoutCache, DescriptorAllocator* allocator);
 
-		DescriptorBuilder& BindBuffer(uint32_t binding, const VkDescriptorBufferInfo* bufferInfo, VkDescriptorType type, VkShaderStageFlags stageFlags);
-		DescriptorBuilder& BindImage(uint32_t binding, const VkDescriptorImageInfo* imageInfo, VkDescriptorType type, VkShaderStageFlags stageFlags);
+		VkDescriptorSetLayout Build(VkDevice device, VkShaderStageFlags shaderStages);
 
-		bool Build(VkDescriptorSet& set, VkDescriptorSetLayout& layout);
+		void AddBinding(uint32_t binding, VkDescriptorType type);
+		void Cleanup();
 	private:
-
-		std::vector<VkWriteDescriptorSet> m_Writes;
 		std::vector<VkDescriptorSetLayoutBinding> m_Bindings;
-
-
-		DescriptorLayoutCache* m_Cache;
-		DescriptorAllocator* m_Allocator;
 	};
-
-	VkDescriptorPool CreatePool(VkDevice device, const DescriptorAllocator::PoolSizes& poolSizes, int maxSets, VkDescriptorPoolCreateFlags flags = 0);
-
 
 
 	//Manages the above classes
@@ -143,19 +113,13 @@ namespace Descriptor
 		DescriptorManager& operator=(DescriptorManager&&) = delete;
 
 		static void Init(VulkanContext* vulkanContext);
-
-		static void Cleanup();
-
-		static DescriptorAllocator* GetAllocator();
-		static DescriptorLayoutCache* GetCache();
-		static DescriptorBuilder& GetBuilder();
+		static void Cleanup(VkDevice device);
 
 
-		inline static GlobalDescriptor m_GlobalDescriptor;
+		static VkDescriptorSet DescriptorManager::Allocate(VkDevice device, VkDescriptorSetLayout setLayout, uint8_t frameNumber);
+		static void ClearPools(VkDevice device, uint8_t frameNumber);
 
 	private:
-		static inline std::unique_ptr<DescriptorAllocator> m_pDescriptorAllocator = std::make_unique<DescriptorAllocator>();
-		static inline std::unique_ptr<DescriptorLayoutCache> m_pDescriptorCache = std::make_unique<DescriptorLayoutCache>();
-		static inline DescriptorBuilder m_DescriptorBuilder;
+		static inline std::vector<std::unique_ptr<DescriptorAllocator>> m_FrameAllocators;
 	};
 }

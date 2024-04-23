@@ -84,6 +84,8 @@ void VulkanBase::drawFrame()
 		LogError("Failed to acquire swap chain image!");
 	}
 
+	Descriptor::DescriptorManager::ClearPools(m_pContext->device, imageIndex);
+
 	vkResetFences(device, 1, &inFlightFence);
 
 	CommandBufferManager::ResetCommandBuffer(commandBuffer);
@@ -206,19 +208,33 @@ void VulkanBase::createInstance()
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 	createInfo.ppEnabledExtensionNames = extensions.data();
 
-	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
-	if (enableValidationLayers)
+	//Validation Features:
+	if(enableValidationLayers)
 	{
+		VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
 		createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
 		createInfo.ppEnabledLayerNames = validationLayers.data();
-
 		populateDebugMessengerCreateInfo(debugCreateInfo);
-		createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
+
+		std::vector<VkValidationFeatureEnableEXT> enabledValidationFeatures;
+		enabledValidationFeatures.push_back(VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT);
+		enabledValidationFeatures.push_back(VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT);
+		enabledValidationFeatures.push_back(VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT);
+		enabledValidationFeatures.push_back(VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT);
+
+		VkValidationFeaturesEXT validationFeatures{};
+		validationFeatures.sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
+		validationFeatures.enabledValidationFeatureCount = enabledValidationFeatures.size();
+		validationFeatures.pEnabledValidationFeatures = enabledValidationFeatures.data();
+		validationFeatures.disabledValidationFeatureCount = 0;
+		validationFeatures.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
+
+
+		createInfo.pNext = (VkValidationFeaturesEXT*)&validationFeatures;
 	}
 	else
 	{
 		createInfo.enabledLayerCount = 0;
-
 		createInfo.pNext = nullptr;
 	}
 

@@ -164,7 +164,7 @@ namespace VulkanLogger
         std::cout << colorCode << prefix << " " << message << "\033[0m" << std::endl;
 
 #ifdef _DEBUG
-		if (level == LogLevel::LOGERROR) __debugbreak();
+		//if (level == LogLevel::LOGERROR) __debugbreak();
 #endif
     }
 }

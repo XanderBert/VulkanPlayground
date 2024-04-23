@@ -166,14 +166,14 @@ void ImGuiWrapper::NewFrame()
 {
 	ImGui_ImplVulkan_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
-	//ImGuizmo::BeginFrame();
 	ImGui::NewFrame();
 	ImGuizmo::BeginFrame();
+
+	//Enable Proper Docking
+	ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
 }
 
 void ImGuiWrapper::EndFrame()
 {
 	ImGui::EndFrame();
-	//ImGui::UpdatePlatformWindows();
-	//ImGui::RenderPlatformWindowsDefault();
 }

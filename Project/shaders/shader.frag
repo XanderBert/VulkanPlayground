@@ -22,4 +22,5 @@ void main()
 	//Saturate
 	//outColor = pow(outColor,vec4(1.4));
 	outColor = pow(outColor,vec4(1.4));
+	//outColor = vec4(inNormal, 1.0);
 }

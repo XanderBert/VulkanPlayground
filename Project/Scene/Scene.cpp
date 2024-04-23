@@ -12,7 +12,6 @@
 #include "Input/Input.h"
 #include <Mesh/MaterialManager.h>
 
-#include "ImGuizmo.h"
 #include "implot.h"
 #include "Patterns/ServiceLocator.h"
 
@@ -71,7 +70,6 @@ Scene::Scene(VulkanContext* vulkanContext)
 void Scene::Render(VkCommandBuffer commandBuffer) const
 {
 	GameTimer::UpdateDelta();
-	ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
 
 	const ImGuiIO& io = ImGui::GetIO(); (void)io;
 	const float ms = 1000.0f / io.Framerate;

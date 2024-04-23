@@ -44,7 +44,7 @@ public:
 		return m_ActiveMaterials.back();
 	}
 
-	static void CreatePipeline()
+	static void CreatePipelines()
 	{
 		for (const auto& material : m_ActiveMaterials)
 		{
@@ -60,6 +60,18 @@ public:
 		}
 	}
 
+	static void SetCurrentBoundPipeline(GraphicsPipeline* pipeline)
+	{
+		m_CurrentBoundPipeline = pipeline;
+	}
+
+	static GraphicsPipeline* GetCurrentBoundPipeline()
+	{
+		return m_CurrentBoundPipeline;
+	}
+
 private:
 	inline static std::vector<std::shared_ptr<Material>> m_ActiveMaterials;
+
+	inline static GraphicsPipeline* m_CurrentBoundPipeline = nullptr;
 };

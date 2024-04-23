@@ -5,11 +5,16 @@ layout(push_constant) uniform constants
     mat4 model;
 } push;
 
-layout(binding = 0) uniform UniformBufferObject 
+layout(set = 0, binding = 0) uniform UniformBufferObject 
 {
     mat4 viewProjection;
 	vec4 viewPos;
 } ubo;
+
+layout(set = 1, binding = 0) uniform uniformMaterial
+{
+	vec4 color;
+} material;
 
 layout(location = 0) in vec3 inPos;
 layout(location = 1) in vec3 inNormal;
@@ -22,7 +27,7 @@ layout(location = 2) out vec3 outViewDirection;
 
 void main() 
 {	
-    outNormal = inNormal;
+    outNormal = material.color.xyz;
 	outUV = inUV;
 	
 	vec4 pos = push.model * vec4(inPos, 1.0);

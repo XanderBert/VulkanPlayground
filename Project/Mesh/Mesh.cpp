@@ -43,6 +43,7 @@ void Mesh::Bind(VkCommandBuffer commandBuffer)
 
 	m_Visible = m_VisibleBuffer;
 	if (!m_Visible) return;
+
 	m_pMaterial->Bind(commandBuffer, m_ModelMatrix);
 
 	const VkBuffer vertexBuffers[] = { m_VertexBuffer };

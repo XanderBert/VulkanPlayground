@@ -182,11 +182,13 @@ Texture::Texture(const std::string& path, VulkanContext* vulkanContext)
 
 void Texture::BindImage(int binding)
 {
-	m_ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	m_ImageInfo.imageView = m_ImageView;
-	m_ImageInfo.sampler = m_Sampler;
+	//m_ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	//m_ImageInfo.imageView = m_ImageView;
+	//m_ImageInfo.sampler = m_Sampler;
 
-	Descriptor::DescriptorManager::GetBuilder().BindImage(binding, &m_ImageInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
+	//Descriptor::DescriptorManager::GetBuilder().BindImage(binding, &m_ImageInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
+
+	//TODO: Writer update Set
 }
 
 void Texture::Cleanup(VkDevice device) const

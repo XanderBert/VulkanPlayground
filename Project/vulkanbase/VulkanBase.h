@@ -11,8 +11,7 @@
 #include "shaders/Logic/ShaderFileWatcher.h"
 #include "Core/CommandBuffer.h"
 #include "Core/CommandPool.h"
-#include "Core/GraphicsPipeline.h"
-#include "Core/QueueFamilyIndices.h"
+
 
 #include "shaders/Logic/Shader.h"
 #include "Patterns/ServiceLocator.h"
@@ -52,7 +51,7 @@ public:
 		ImGuiWrapper::Initialize(m_pContext->graphicsQueue);
 		m_pScene = std::make_unique<Scene>(m_pContext);
 		Input::SetupInput(m_pContext->window.Ptr());
-		MaterialManager::CreatePipeline();
+		MaterialManager::CreatePipelines();
 		mainLoop();
 		cleanup();
 	}
@@ -133,7 +132,7 @@ private:
 			tools::DestroyDebugUtilsMessengerEXT(m_pContext->instance, debugMessenger, nullptr);
 		}
 
-		Descriptor::DescriptorManager::Cleanup();
+		Descriptor::DescriptorManager::Cleanup(m_pContext->device);
 		ShaderManager::Cleanup(m_pContext->device);
 		MaterialManager::Cleanup();
 		m_pScene->CleanUp();
@@ -209,6 +208,7 @@ private:
 
 
 		vkCmdBeginRenderingKHR(commandBuffer.Handle, &renderInfo);
+
 		m_pScene->Render(commandBuffer.Handle);
 		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer.Handle);
 		vkCmdEndRenderingKHR(commandBuffer.Handle);

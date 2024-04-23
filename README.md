@@ -7,3 +7,5 @@
 
 ## What do i want to get out of this project?
 First of all i want to setup a working runtime shader editor and abstract vulkan.
+
+![HotShaderReload](HotShaderReload.gif)

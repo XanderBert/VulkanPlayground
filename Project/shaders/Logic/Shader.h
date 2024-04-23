@@ -10,6 +10,7 @@
 
 namespace Descriptor
 {
+	class DescriptorWriter;
 	class DescriptorBuilder;
 }
 
@@ -23,6 +24,9 @@ enum class ShaderType
 	GeometryShader = VK_SHADER_STAGE_GEOMETRY_BIT,
 };
 
+
+//TODO: pad the dynamic buffer to 256 bytes
+//TODO: return actual pointers to the data instead of the handle, Or make a handle struct
 class DynamicBuffer final
 {
 public:
@@ -34,8 +38,9 @@ public:
 	DynamicBuffer(DynamicBuffer&&) = delete;
 	DynamicBuffer& operator=(DynamicBuffer&&) = delete;
 
-	void BindBuffer(VulkanContext* vulkanContext, int binding, VkShaderStageFlags shaderType, VkDescriptorSet& descriptorSet, VkDescriptorSetLayout& shaderDescriptorSetLayout);
-	void Bind(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkDescriptorSet descriptorSet) const;
+	void Init(VulkanContext* vulkanContext);
+	void ProperBind(int bindingNumber, const VkDescriptorSet& descriptorSet, Descriptor::DescriptorWriter& descriptorWriter, VulkanContext* vulkanContext);
+
 
 	void Cleanup(VkDevice device) const;
 
@@ -69,14 +74,8 @@ public:
 	Shader(Shader&&) = delete;
 	Shader& operator=(Shader&&) = delete;
 
-	//uint16_t AddMatrix(const glm::mat4& matrix, VulkanContext* vulkanContext = nullptr, int binding = 0);
-	void Bind(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, Material* material) const;
-
 	VkPipelineShaderStageCreateInfo GetStageInfo() const;
 
-	void AddUniformBuffer(VulkanContext* vulkanContext, int binding, Material* material);
-
-	VkDescriptorSetLayout& GetDescriptorSetLayout();
 
 	void OnImGui(const std::string& materialName);
 
@@ -92,12 +91,6 @@ private:
 	std::vector<Material*>  m_pMaterials;
 
 	bool m_HasUniformBuffer = false;
-
-	DynamicBuffer m_DynamicBuffer{};
-
-	//Todo:: A Shader will need a descriptor set for every frame in flight
-	//you cannot update a set that has been used, so if you ever plan on changing them you need one per material per frame in flight
-	VkDescriptorSetLayout m_DescriptorSetLayout{};
 
 	std::string m_FileName;
 };

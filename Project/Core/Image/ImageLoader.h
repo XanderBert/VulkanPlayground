@@ -53,6 +53,4 @@ private:
 	VkDeviceMemory m_ImageMemory{};
 	VkImageView m_ImageView{};
 	VkSampler m_Sampler{};
-	//uint32_t m_MipLevels{};
-	VkDescriptorImageInfo m_ImageInfo{};
 };
