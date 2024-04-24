@@ -8,4 +8,6 @@
 ## What do i want to get out of this project?
 First of all i want to setup a working runtime shader editor and abstract vulkan.
 
+I would like to have support for multiple Shader languages. The first one on the list is Slang (next to GLSL).
+
 ![HotShaderReload](HotShaderReload.gif)
