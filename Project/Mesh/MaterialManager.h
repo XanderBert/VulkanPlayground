@@ -16,7 +16,7 @@ public:
 	static void OnImGui()
 	{
 		ImGui::Begin("Materials");
-		ImGui::Text("Materials: %d", m_ActiveMaterials.size());
+		ImGui::Text("Materials: %d", static_cast<int>(m_ActiveMaterials.size()));
 		for (const auto& material : m_ActiveMaterials)
 		{
 			if(ImGui::CollapsingHeader(material->GetMaterialName().c_str()))

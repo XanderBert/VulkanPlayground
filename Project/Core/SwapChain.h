@@ -27,7 +27,7 @@ public:
 	//VkImage& operator[](int index) { return m_SwapChainImages[index]; }
 	inline static VkImage& Image(int index) { return m_SwapChainImages[index]; }
 
-	inline static void Init(VulkanContext* vulkanContext) 
+	inline static void Init(const VulkanContext* vulkanContext)
 	{
 		const VkPhysicalDevice physicalDevice = vulkanContext->physicalDevice;
 		const VkDevice device = vulkanContext->device;
@@ -88,13 +88,13 @@ public:
 
 		CreateImageViews(device);
 	}
-	inline static void CreateSurface(VulkanContext* vulkanContext)
+	inline static void CreateSurface(const VulkanContext* vulkanContext)
 	{
 		VulkanCheck(glfwCreateWindowSurface(vulkanContext->instance, vulkanContext->window.Ptr(), nullptr, &m_SwapChainSurface), "Failed To Create Window Surface")
 	}
 
 
-	inline static void DestroySwapChain(VulkanContext* vulkanContext)
+	inline static void DestroySwapChain(const VulkanContext* vulkanContext)
 	{
 		for (const auto imageView : m_SwapChainImageViews)
 		{
@@ -103,7 +103,7 @@ public:
 		vkDestroySwapchainKHR(vulkanContext->device, m_SwapChain, nullptr);
 	}
 
-	inline static void Cleanup(VulkanContext* vulkanContext)
+	inline static void Cleanup(const VulkanContext* vulkanContext)
 	{
 		DestroySwapChain(vulkanContext);
 		vkDestroySurfaceKHR(vulkanContext->instance, m_SwapChainSurface, nullptr);
@@ -202,10 +202,10 @@ private:
 		return VK_PRESENT_MODE_FIFO_KHR;
 	}
 
-	inline static VkExtent2D GetExtends(const VkSurfaceCapabilitiesKHR& capabilities, VulkanContext* vulkanContext) 
+	inline static VkExtent2D GetExtends(const VkSurfaceCapabilitiesKHR& capabilities, const VulkanContext* vulkanContext)
 	{
 		//If the extent is not defined, the window size will be used
-		if (capabilities.currentExtent.width != (std::numeric_limits<uint32_t>::max)()) return capabilities.currentExtent;
+		if (capabilities.currentExtent.width != UINT32_MAX) return capabilities.currentExtent;
 
 		int width = 0, height = 0;
 		vulkanContext->window.GetSize(width, height);

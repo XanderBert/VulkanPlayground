@@ -6,8 +6,8 @@ namespace GameTimer
 	typedef std::chrono::steady_clock::time_point TimePoint;
 	typedef std::chrono::duration<float, std::chrono::seconds::period> Duration;
 
-	inline TimePoint startTime = std::chrono::high_resolution_clock::now();
-	inline TimePoint deltaStartTime = std::chrono::high_resolution_clock::now();
+	inline auto startTime = std::chrono::high_resolution_clock::now();
+	inline auto deltaStartTime = std::chrono::high_resolution_clock::now();
 
 
 

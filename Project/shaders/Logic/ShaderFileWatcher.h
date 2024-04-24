@@ -57,7 +57,7 @@ public:
 		m_FileWatcher = std::make_unique<efsw::FileWatcher>();
 		m_Listener = std::make_unique<ShaderListener>();
 
-		efsw::WatchID watchID = m_FileWatcher->addWatch("shaders", m_Listener.get(), true);
+		m_FileWatcher->addWatch("shaders", m_Listener.get(), true);
 		m_FileWatcher->watch();
 	}
 

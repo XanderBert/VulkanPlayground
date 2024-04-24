@@ -1,5 +1,6 @@
 #include "DynamicUniformBuffer.h"
 
+#include <algorithm>
 #include <glm/vec4.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <vulkanbase/VulkanTypes.h>
@@ -11,8 +12,6 @@
 //---------------------------------------------------------------
 //-------------------------DynamicBuffer-------------------------
 //---------------------------------------------------------------
-
-
 void DynamicBuffer::Init(VulkanContext* vulkanContext)
 {
 	//Pad the data to 256 bytes
@@ -27,8 +26,7 @@ void DynamicBuffer::Init(VulkanContext* vulkanContext)
 	vkMapMemory(vulkanContext->device, m_UniformBuffersMemory, 0, GetSize(), 0, &m_UniformBuffersMapped);
 }
 
-void DynamicBuffer::ProperBind(int bindingNumber, const VkDescriptorSet& descriptorSet, Descriptor::DescriptorWriter& descriptorWriter, VulkanContext* vulkanContext)
-{
+void DynamicBuffer::ProperBind(int bindingNumber, const VkDescriptorSet& descriptorSet, Descriptor::DescriptorWriter& descriptorWriter, VulkanContext* vulkanContext) const {
 	//Update the descriptor set
 
 	memcpy(m_UniformBuffersMapped, GetData(), GetSize());

@@ -17,7 +17,7 @@ void ImGuiWrapper::Initialize(VkQueue graphicsQueue)
 {
 	const auto m_pContext = ServiceLocator::GetService<VulkanContext>();
 
-	// Create Descriptor Pool TODO: Move to a separate function
+	// Create Descriptor Pool TODO: Use our own descriptor pool implementation
 	// The example only requires a single combined image sampler descriptor for the font image and only uses one descriptor set (for that)
 	// If you wish to load e.g. additional textures you may need to alter pools sizes.
 	{
@@ -32,7 +32,7 @@ void ImGuiWrapper::Initialize(VkQueue graphicsQueue)
 		pool_info.maxSets = 1;
 		pool_info.poolSizeCount = (uint32_t)IM_ARRAYSIZE(pool_sizes);
 		pool_info.pPoolSizes = pool_sizes;
-		auto err = vkCreateDescriptorPool(m_pContext->device, &pool_info, nullptr, &descriptorPool);
+		VulkanCheck(vkCreateDescriptorPool(m_pContext->device, &pool_info, nullptr, &descriptorPool), "Failed To Create ImGui DescriptorPool");
 	}
 
 	IMGUI_CHECKVERSION();

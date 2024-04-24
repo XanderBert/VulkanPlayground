@@ -1,5 +1,6 @@
 #pragma once
 #include <vulkan/vulkan.h>
+#include <utility>
 #include <vector>
 #include <memory>
 #include <string>
@@ -29,9 +30,9 @@ class VulkanContext;
 class Material final
 {
 public:
-	explicit Material(VulkanContext* vulkanContext, const std::string& materialName)
+	explicit Material(VulkanContext* vulkanContext, std::string  materialName)
 	: m_pContext(vulkanContext)
-	, m_MaterialName(materialName)
+	, m_MaterialName(std::move(materialName))
 	{
 		m_Shaders.reserve(2);
 		m_pGraphicsPipeline = std::make_unique<GraphicsPipeline>();

@@ -26,10 +26,21 @@ FetchContent_MakeAvailable(glfw)
 # Find the required packages
 find_package(Vulkan REQUIRED COMPONENTS shaderc_combined)
 
+
+#set flags
+set(GCC_COVERAGE_COMPILE_FLAGS "-Wall -fpermissive")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}" )
+
+#set sanitisers only in debug mode
+set(SANITIZER_COMPILE_FLAGS "-fsanitize=address,undefined,leak,thread,memory -fno-omit-frame-pointer -g")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SANITIZER_COMPILE_FLAGS}")
+
 # Include Directories
 include_directories(${Vulkan_INCLUDE_DIRS})
 add_subdirectory(Project)
 add_subdirectory(includes)
+
+
 #find_package(VulkanMemoryAllocator CONFIG REQUIRED)
 # If using validation layers, copy the required JSON files (optional)
 # add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD

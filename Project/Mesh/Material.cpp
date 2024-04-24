@@ -2,6 +2,8 @@
 #include "vulkanbase/VulkanTypes.h"
 #include "Core/Descriptor.h"
 #include <shaders/Logic/Shader.h>
+
+#include <cmath>
 #include "MaterialManager.h"
 #include "Timer/GameTimer.h"
 
@@ -16,7 +18,7 @@ void Material::CleanUp() const
 
 void Material::OnImGui()
 {
-	ImGui::Text("Shader Count: %d", m_Shaders.size());
+	ImGui::Text("Shader Count: %d", static_cast<int>(m_Shaders.size()));
 
 	for (const auto& shader : m_Shaders)
 	{
@@ -24,7 +26,7 @@ void Material::OnImGui()
 	}
 }
 
-void Material::Bind(VkCommandBuffer commandBuffer, const glm::mat4x4& pushConstantMatrix)
+void Material::Bind(const VkCommandBuffer commandBuffer, const glm::mat4x4& pushConstantMatrix)
 {
 	//Update model matrix
 	m_pGraphicsPipeline->BindPushConstant(commandBuffer, pushConstantMatrix);
@@ -43,7 +45,7 @@ void Material::Bind(VkCommandBuffer commandBuffer, const glm::mat4x4& pushConsta
 
 	//Update the material uniform buffer for testing
 	const float time = GameTimer::GetElapsedTime();
-	const float changingValue = sin(time) * 0.5f + 0.5f;
+	const float changingValue = std::sin(time) * 0.5f + 0.5f;
 	m_MaterialUniformBuffer.UpdateVariable(0, glm::vec4{0.1f,changingValue,changingValue,1});
 
 	//Allocate the descriptor set
@@ -57,7 +59,7 @@ void Material::Bind(VkCommandBuffer commandBuffer, const glm::mat4x4& pushConsta
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pGraphicsPipeline->GetPipelineLayout(), 0, 2, sets, 0, nullptr);
 }
 
-Shader* Material::AddShader(const std::string& shaderPath, ShaderType shaderType)
+Shader* Material::AddShader(const std::string& shaderPath, const ShaderType shaderType)
 {
 	m_Shaders.push_back(ShaderManager::CreateShader(m_pContext, shaderPath, shaderType, this));
 	return m_Shaders.back();

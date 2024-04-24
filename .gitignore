@@ -46,3 +46,11 @@ out/*
 includes/imgui/.editorconfig
 includes/imgui/.gitattributes
 includes/imgui/.github/*
+
+#clang
+.clang-format
+.clang-tidy
+
+#clion cmake
+cmake-build-debug*/*
+cmake-build-release*/*

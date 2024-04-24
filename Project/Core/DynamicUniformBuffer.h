@@ -26,7 +26,7 @@ public:
 	DynamicBuffer& operator=(DynamicBuffer&&) = delete;
 
 	void Init(VulkanContext* vulkanContext);
-	void ProperBind(int bindingNumber, const VkDescriptorSet& descriptorSet, Descriptor::DescriptorWriter& descriptorWriter, VulkanContext* vulkanContext);
+	void ProperBind(int bindingNumber, const VkDescriptorSet& descriptorSet, Descriptor::DescriptorWriter& descriptorWriter, VulkanContext* vulkanContext) const;
 
 
 	void Cleanup(VkDevice device) const;

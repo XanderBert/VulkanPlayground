@@ -219,7 +219,7 @@ target_include_directories(
 
 string(REPLACE ".lib" "d.lib" SHADERC_DEBUG ${Vulkan_shaderc_combined_LIBRARY})
 
-target_link_options(${PROJECT_NAME}  PUBLIC "/ignore:4099")
+#target_link_options(${PROJECT_NAME}  PUBLIC "/ignore:4099")
 
 target_link_libraries(${PROJECT_NAME} 
     

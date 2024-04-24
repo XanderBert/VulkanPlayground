@@ -1,5 +1,6 @@
 #pragma once
 #include <deque>
+#include <memory>
 #include <vulkan/vulkan.h>
 #include "Buffer.h"
 
@@ -116,7 +117,7 @@ namespace Descriptor
 		static void Cleanup(VkDevice device);
 
 
-		static VkDescriptorSet DescriptorManager::Allocate(VkDevice device, VkDescriptorSetLayout setLayout, uint8_t frameNumber);
+		static VkDescriptorSet Allocate(VkDevice device, VkDescriptorSetLayout setLayout, uint8_t frameNumber);
 		static void ClearPools(VkDevice device, uint8_t frameNumber);
 
 	private:
