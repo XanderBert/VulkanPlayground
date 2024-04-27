@@ -18,34 +18,23 @@ public:
 		//Check if the file was created/modified
 		if(action == efsw::Actions::Modified || action == efsw::Actions::Moved)
 		{
-			const shaderc_shader_kind kind = GetShaderKind(filename);
-
-			//Check if its a shader file
-			if (kind == shaderc_glsl_infer_from_source) return;
+		    //Check if last 3 chars are .spv
+		    const std::string extension = filename.substr(filename.size() - 4, 4);
+            if(extension == ".spv")
+            {
+                LogInfo("Shader: " + filename + " is a .spv file, skipping");
+                return;
+            }
 
 			LogInfo("Shader: " + filename + " has event Modified");
 
 			//Compile and Save the shader
-			SpirvHelper::CompileAndSaveShader(filename, kind, "shaders/" + filename);
+			SpirvHelper::CompileAndSaveShader(filename);
 		}
 	}
 
 private:
-	static shaderc_shader_kind GetShaderKind(const std::string& filename)
-	{
-		// pick the last 4 characters of the filename
-		const std::string extension = filename.substr(filename.size() - 5, 5);
 
-		//return the kind based on the extionsion
-		if(extension == ".vert") return shaderc_glsl_vertex_shader;
-		if(extension == ".frag") return shaderc_glsl_fragment_shader;
-		if(extension == ".geom") return shaderc_glsl_geometry_shader;
-		if(extension == ".comp") return shaderc_glsl_compute_shader;
-		if(extension == ".tesc") return shaderc_glsl_tess_control_shader;
-		if(extension == ".tese") return shaderc_glsl_tess_evaluation_shader;
-
-		return shaderc_glsl_infer_from_source;
-	}
 };
 
 

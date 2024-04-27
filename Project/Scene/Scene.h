@@ -20,7 +20,7 @@ public:
 	Scene& operator=(Scene&&) = delete;
 
 
-	void Render(VkCommandBuffer commandBuffer) const;
+	void Render(VkCommandBuffer commandBuffer, VulkanContext* vulkanContext) const;
 
 
 	void CleanUp() const;

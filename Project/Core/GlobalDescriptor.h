@@ -10,7 +10,7 @@ struct GlobalDescriptor
 	static void Init(VulkanContext* vulkanContext);
 
 	
-	static void Bind(VulkanContext* vulkanContext);
+	static void Bind(VulkanContext* vulkanContext, const VkCommandBuffer commandBuffer, const VkPipelineLayout& pipelineLayout);
 
 	static VkDescriptorSetLayout& GetLayout();
 	static VkDescriptorSet& GetDescriptorSet();

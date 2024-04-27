@@ -19,15 +19,15 @@ public:
 	SwapChain& operator=(const SwapChain&) = delete;
 	SwapChain& operator=(SwapChain&&) = delete;
 
-	inline static VkSwapchainKHR GetSwapChain() { return m_SwapChain; }
+	static VkSwapchainKHR GetSwapChain() { return m_SwapChain; }
 
 	//This would be ideal bout it would mean the swapchain would need to be in a singleton class or a ServiceLocator
 	//It seems to be possible with the 2b c++ extension?
 	//overload [ ] operator to return m_SwapChainImages at index
 	//VkImage& operator[](int index) { return m_SwapChainImages[index]; }
-	inline static VkImage& Image(int index) { return m_SwapChainImages[index]; }
+	static VkImage& Image(int index) { return m_SwapChainImages[index]; }
 
-	inline static void Init(const VulkanContext* vulkanContext)
+	static void Init(const VulkanContext* vulkanContext)
 	{
 		const VkPhysicalDevice physicalDevice = vulkanContext->physicalDevice;
 		const VkDevice device = vulkanContext->device;
@@ -88,13 +88,13 @@ public:
 
 		CreateImageViews(device);
 	}
-	inline static void CreateSurface(const VulkanContext* vulkanContext)
+
+	static void CreateSurface(const VulkanContext* vulkanContext)
 	{
 		VulkanCheck(glfwCreateWindowSurface(vulkanContext->instance, vulkanContext->window.Ptr(), nullptr, &m_SwapChainSurface), "Failed To Create Window Surface")
 	}
 
-
-	inline static void DestroySwapChain(const VulkanContext* vulkanContext)
+	static void DestroySwapChain(const VulkanContext* vulkanContext)
 	{
 		for (const auto imageView : m_SwapChainImageViews)
 		{
@@ -103,22 +103,22 @@ public:
 		vkDestroySwapchainKHR(vulkanContext->device, m_SwapChain, nullptr);
 	}
 
-	inline static void Cleanup(const VulkanContext* vulkanContext)
+	static void Cleanup(const VulkanContext* vulkanContext)
 	{
 		DestroySwapChain(vulkanContext);
 		vkDestroySurfaceKHR(vulkanContext->instance, m_SwapChainSurface, nullptr);
 	}
 
-	inline static void SetNeedsRecreation() { m_NeedsRecreation = true; }
-	inline static VkSurfaceKHR& GetSurface() { return m_SwapChainSurface; }
-	inline static std::vector<VkImageView>& ImageViews() { return m_SwapChainImageViews; }
-	inline static VkExtent2D& Extends() { return m_Extends; }
-	inline static VkFormat& Format() { return m_Format; }
-	inline static uint8_t ImageCount() { return m_SwapChainImages.size(); }
+	static void SetNeedsRecreation() { m_NeedsRecreation = true; }
+	static VkSurfaceKHR& GetSurface() { return m_SwapChainSurface; }
+	static std::vector<VkImageView>& ImageViews() { return m_SwapChainImageViews; }
+	static VkExtent2D& Extends() { return m_Extends; }
+	static VkFormat& Format() { return m_Format; }
+	static uint8_t ImageCount() { return m_SwapChainImages.size(); }
 
 
 
-	inline static void RecreateIfNeeded(VulkanContext* vulkanContext)
+	static void RecreateIfNeeded(VulkanContext* vulkanContext)
 	{
 		if (!m_NeedsRecreation) return;
 
@@ -147,7 +147,7 @@ private:
 
 
 
-	inline static SwapChainSupportDetails GetSupportDetails(VkPhysicalDevice device)
+	static SwapChainSupportDetails GetSupportDetails(VkPhysicalDevice device)
 	{
 		LogAssert(m_SwapChainSurface != VK_NULL_HANDLE, "Swap chain surface is not initialized", true)
 
@@ -176,7 +176,7 @@ private:
 		return details;
 	}
 
-	inline static VkSurfaceFormatKHR GetSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
+	static VkSurfaceFormatKHR GetSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
 	{
 		for (const auto& availableFormat : availableFormats) 
 		{
@@ -189,7 +189,7 @@ private:
 		return availableFormats[0];
 	}
 
-	inline static VkPresentModeKHR GetPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
+	static VkPresentModeKHR GetPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
 	{
 		for (const auto& availablePresentMode : availablePresentModes) 
 		{
@@ -202,7 +202,7 @@ private:
 		return VK_PRESENT_MODE_FIFO_KHR;
 	}
 
-	inline static VkExtent2D GetExtends(const VkSurfaceCapabilitiesKHR& capabilities, const VulkanContext* vulkanContext)
+	static VkExtent2D GetExtends(const VkSurfaceCapabilitiesKHR& capabilities, const VulkanContext* vulkanContext)
 	{
 		//If the extent is not defined, the window size will be used
 		if (capabilities.currentExtent.width != UINT32_MAX) return capabilities.currentExtent;
@@ -227,7 +227,7 @@ private:
 		return actualExtent;
 	}
 
-	inline static void CreateImageViews(VkDevice device) 
+	static void CreateImageViews(VkDevice device)
 	{
 		m_SwapChainImageViews.resize(m_SwapChainImages.size());
 

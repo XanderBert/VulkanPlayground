@@ -23,16 +23,17 @@ public:
 	void Bind(VkCommandBuffer commandBuffer);
 	void OnImGui();
 	void Render(VkCommandBuffer commandBuffer);
-	void CleanUp() const;
+	void CleanUp();
 
 	std::string GetMeshName() const { return m_MeshName; }
-
+    Material* GetMaterial() const { return m_pMaterial.get(); }
 
 	//TODO: Move to a component system
-	//TRS
 	void SetPosition(const glm::vec3& position);
 	void SetScale(const glm::vec3& scale);
 	void SetRotation(const glm::vec3& rotation);
+
+    //void AddTexture(int binding, const std::string& texturePath);
 
 private:
 	void CreateVertexBuffer(const std::vector<Vertex>& vertices);
@@ -64,4 +65,6 @@ private:
 
 	bool m_Visible = true;
 	bool m_VisibleBuffer = true;
+
+    DescriptorSet m_MeshDescriptorSet{};
 };

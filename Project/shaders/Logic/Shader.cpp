@@ -73,6 +73,7 @@ VkPipelineShaderStageCreateInfo Shader::GetStageInfo() const
 //-------------------------ShaderManager-------------------------
 //---------------------------------------------------------------
 
+
 VkPipelineShaderStageCreateInfo ShaderManager::ShaderBuilder::CreateShaderInfo(const VkDevice& device, VkShaderStageFlagBits shaderStage, const std::string& fileName)
 {
 	const std::string fileLocation = "shaders/" + fileName + ".spv";
@@ -125,16 +126,16 @@ void ShaderManager::ReloadShader(VulkanContext* vulkanContext, const std::string
 
 Shader* ShaderManager::CreateShader(VulkanContext* vulkanContext, const std::string& fileName, ShaderType shaderType, Material* material)
 {
-	//Check if the shader already exists
-	const auto it = m_ShaderInfo.find(fileName);
-	
-	if (it != m_ShaderInfo.end())
+	// Check if the shader already exists
+
+    if (const auto it = m_ShaderInfo.find(fileName); it != m_ShaderInfo.end())
 	{
 		Shader* shader = it->second.get();
 		shader->AddMaterial(material);
 		return shader;
 	}
 
+    SpirvHelper::CompileAndSaveShader(fileName);
 	VkPipelineShaderStageCreateInfo shaderInfo = ShaderBuilder::CreateShaderInfo(vulkanContext->device, static_cast<VkShaderStageFlagBits>(shaderType), fileName);
 
 
@@ -143,7 +144,8 @@ Shader* ShaderManager::CreateShader(VulkanContext* vulkanContext, const std::str
 
 	m_ShaderInfo.insert(std::make_pair(fileName, std::move(shaderPtr)));
 
-	return shader;
+    // ReSharper disable once CppDFALocalValueEscapesFunction
+    return shader;
 }
 
 void ShaderManager::Cleanup(VkDevice device)

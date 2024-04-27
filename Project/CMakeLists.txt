@@ -97,6 +97,8 @@ set(SOURCES
     "Core/DepthResource.cpp" 
     "Core/DynamicUniformBuffer.h"
     "Core/DynamicUniformBuffer.cpp"
+    "Core/DescriptorSet.cpp"
+    "Core/DescriptorSet.h"
 )
 
 

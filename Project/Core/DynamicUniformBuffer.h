@@ -17,19 +17,49 @@ namespace Descriptor
 class DynamicBuffer final
 {
 public:
-	DynamicBuffer() = default;
+	explicit DynamicBuffer() = default;
 	~DynamicBuffer() = default;
 
 	DynamicBuffer& operator=(const DynamicBuffer&) = delete;
 	DynamicBuffer(const DynamicBuffer&) = delete;
-	DynamicBuffer(DynamicBuffer&&) = delete;
-	DynamicBuffer& operator=(DynamicBuffer&&) = delete;
+
+    DynamicBuffer(DynamicBuffer&& other) noexcept
+    {
+	    if(this != &other)
+        {
+            m_Data = std::move(other.m_Data);
+            m_UniformBuffer = other.m_UniformBuffer;
+            m_UniformBuffersMemory = other.m_UniformBuffersMemory;
+            m_UniformBuffersMapped = other.m_UniformBuffersMapped;
+
+            other.m_UniformBuffer = nullptr;
+            other.m_UniformBuffersMemory = nullptr;
+            other.m_UniformBuffersMapped = nullptr;
+        }
+	}
+	DynamicBuffer& operator=(DynamicBuffer&& other) noexcept
+    {
+	    if (this != &other)
+	    {
+	        // Move members from 'other' to 'this'
+	        m_Data = std::move(other.m_Data);
+	        m_UniformBuffer = other.m_UniformBuffer;
+	        m_UniformBuffersMemory = other.m_UniformBuffersMemory;
+	        m_UniformBuffersMapped = other.m_UniformBuffersMapped;
+
+	        // Reset the moved-from object's members
+	        other.m_UniformBuffer = nullptr;
+	        other.m_UniformBuffersMemory = nullptr;
+	        other.m_UniformBuffersMapped = nullptr;
+	    }
+
+	    return *this;
+	};
 
 	void Init(VulkanContext* vulkanContext);
 	void ProperBind(int bindingNumber, const VkDescriptorSet& descriptorSet, Descriptor::DescriptorWriter& descriptorWriter, VulkanContext* vulkanContext) const;
-
-
-	void Cleanup(VkDevice device) const;
+    void FullRebind(int bindingNumber, const VkDescriptorSet& descriptorSet, Descriptor::DescriptorWriter& descriptorWriter, VulkanContext* vulkanContext) const;
+    void Cleanup(VkDevice device) const;
 
 	uint16_t AddVariable(const glm::vec4& value);
 	uint16_t AddVariable(const glm::mat4& matrix);

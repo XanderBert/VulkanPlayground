@@ -43,7 +43,7 @@ void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline,
 	colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 	colorBlendAttachment.blendEnable = VK_FALSE;
 
-	const std::vector<VkDynamicState> dynamicStates =
+	const std::vector dynamicStates =
 	{
 		VK_DYNAMIC_STATE_VIEWPORT,
 		VK_DYNAMIC_STATE_SCISSOR
@@ -63,7 +63,6 @@ void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline,
 	
 
 	std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
-
 	for (const auto& shader : material->GetShaders())
 	{
 		shaderStages.push_back(shader->GetStageInfo());

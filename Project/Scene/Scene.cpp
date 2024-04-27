@@ -37,20 +37,25 @@ Scene::Scene(VulkanContext* vulkanContext)
 	};
 
 
-	std::shared_ptr<Material> material01 = MaterialManager::CreateMaterial(vulkanContext, "shader2D.vert", "shader2.frag", "MT_2D");
 	std::shared_ptr<Material> material02 = MaterialManager::CreateMaterial(vulkanContext, "shader.vert", "shader.frag", "MT_Depth");
+    material02->GetDescriptorSet()->AddTexture(1, "vehicle_diffuse.png", vulkanContext);
+
+    std::shared_ptr<Material> material01 = MaterialManager::CreateMaterial(vulkanContext, "shader2D.vert", "shader2.frag", "MT_2D");
+    material01->GetDescriptorSet()->AddTexture(1, "texture.jpg", vulkanContext);
 
 
-	m_Meshes.push_back(std::make_unique<Mesh>(vertices2, indices2, material01, "Simple Rectangle"));
+    m_Meshes.push_back(std::make_unique<Mesh>(vertices2, indices2, material01, "Simple Rectangle"));
 	m_Meshes.back()->SetPosition(glm::vec3(-0.5f, 0.5f, 0.0f));
 	m_Meshes.back()->SetScale(glm::vec3(0.6f));
 
-	m_Meshes.push_back(std::make_unique<Mesh>("ball.obj", material01));
-	m_Meshes.back()->SetPosition(glm::vec3(-0.8f, -0.8f, 0.0f));
-	m_Meshes.back()->SetScale(glm::vec3(0.1f, 0.2f, 0.1f));
+    //
+	// m_Meshes.push_back(std::make_unique<Mesh>("ball.obj", material01));
+	// m_Meshes.back()->SetPosition(glm::vec3(-0.8f, -0.8f, 0.0f));
+	// m_Meshes.back()->SetScale(glm::vec3(0.1f, 0.2f, 0.1f));
 
 
 	m_Meshes.push_back(std::make_unique<Mesh>("viking.obj", material02));
+	//m_Meshes.push_back(std::make_unique<Mesh>("viking.obj", material02));
 	m_Meshes.push_back(std::make_unique<Mesh>("vehicle.obj", material02));
 	m_Meshes.back()->SetPosition(glm::vec3{ -1.0f, 2.6f,0.f });
 	m_Meshes.back()->SetRotation(glm::vec3{ 90.f, 0.f, 0.f });
@@ -67,7 +72,7 @@ Scene::Scene(VulkanContext* vulkanContext)
 }
 
 
-void Scene::Render(VkCommandBuffer commandBuffer) const
+void Scene::Render(VkCommandBuffer commandBuffer, VulkanContext* vulkanContext) const
 {
 	GameTimer::UpdateDelta();
 
@@ -101,7 +106,7 @@ void Scene::Render(VkCommandBuffer commandBuffer) const
 
 	for (const auto& mesh : m_Meshes)
 	{
-		mesh->Bind(commandBuffer);
+	    mesh->Bind(commandBuffer);
 
 		ImGui::Begin("Mesh");
 		if(ImGui::CollapsingHeader(mesh->GetMeshName().c_str()))

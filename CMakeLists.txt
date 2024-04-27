@@ -28,7 +28,7 @@ find_package(Vulkan REQUIRED COMPONENTS shaderc_combined)
 
 
 #set flags
-set(GCC_COVERAGE_COMPILE_FLAGS "-Wall -fpermissive")
+set(GCC_COVERAGE_COMPILE_FLAGS "-fpermissive")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}" )
 
 #set sanitisers only in debug mode

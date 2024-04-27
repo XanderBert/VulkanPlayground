@@ -72,9 +72,9 @@ private:
 		ShaderBuilder(const ShaderBuilder&) = delete;
 		ShaderBuilder& operator=(const ShaderBuilder&) = delete;
 		ShaderBuilder(ShaderBuilder&&) = delete;
-		ShaderBuilder& operator=(ShaderBuilder&&) = delete;
+		ShaderBuilder &operator=(ShaderBuilder &&) = delete;
 
-		static VkPipelineShaderStageCreateInfo CreateShaderInfo(const VkDevice& device, VkShaderStageFlagBits shaderStage, const std::string& fileName);
+        static VkPipelineShaderStageCreateInfo CreateShaderInfo(const VkDevice& device, VkShaderStageFlagBits shaderStage, const std::string& fileName);
 
 
 	private:

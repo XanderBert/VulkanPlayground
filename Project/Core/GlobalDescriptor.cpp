@@ -18,14 +18,15 @@ void GlobalDescriptor::Init(VulkanContext* vulkanContext)
 
 
 
-void GlobalDescriptor::Bind(VulkanContext* vulkanContext)
+void GlobalDescriptor::Bind(VulkanContext* vulkanContext, const VkCommandBuffer commandBuffer, const VkPipelineLayout& pipelineLayout)
 {
-	m_GlobalBuffer.UpdateVariable(0, Camera::Camera::GetViewProjectionMatrix());
+	m_GlobalBuffer.UpdateVariable(0, Camera::GetViewProjectionMatrix());
 	m_GlobalBuffer.UpdateVariable(cameraHandle, glm::vec4(Camera::GetPosition(), 1.0f));
 
 	m_GlobalDescriptorSet = Descriptor::DescriptorManager::Allocate(vulkanContext->device, m_GlobalDescriptorSetLayout, 0);
 
-	m_GlobalBuffer.ProperBind(0, m_GlobalDescriptorSet, m_Writer, vulkanContext);
+	m_GlobalBuffer.FullRebind(0, m_GlobalDescriptorSet, m_Writer, vulkanContext);
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &GetDescriptorSet(), 0, nullptr);
 }
 
 VkDescriptorSetLayout& GlobalDescriptor::GetLayout()

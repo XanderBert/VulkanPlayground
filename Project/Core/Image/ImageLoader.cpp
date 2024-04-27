@@ -133,7 +133,7 @@ namespace Image
 	void TransitionAndCopyAndImageBuffer(VulkanContext* vulkanContext, VkBuffer srcBuffer, VkImage dstImage, uint32_t width, uint32_t height)
 	{
 		//Create Command Buffer
-		CommandBuffer commandBuffer;
+		CommandBuffer commandBuffer{};
 		CommandBufferManager::CreateCommandBufferSingleUse(vulkanContext, commandBuffer);
 
 		//Transition the image to transfer destination
@@ -171,29 +171,20 @@ namespace Image
 	}
 }
 
-Texture::Texture(const std::string& path, VulkanContext* vulkanContext)
+Texture::Texture(const std::string& path, int binding,  VulkanContext* vulkanContext)
 {
 	ImageLoader::CreateTexture(path, vulkanContext, m_Image, m_ImageMemory);
 	Image::CreateImageView(vulkanContext->device, m_Image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, m_ImageView);
-
-	//TODO: Move to a TextureManager
 	Image::CreateSampler(vulkanContext, m_Sampler);
 }
 
-void Texture::BindImage(int binding)
+void Texture::ProperBind(int bindingNumber, const VkDescriptorSet &descriptorSet, Descriptor::DescriptorWriter &descriptorWriter, VulkanContext *vulkanContext) const
 {
-	//m_ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	//m_ImageInfo.imageView = m_ImageView;
-	//m_ImageInfo.sampler = m_Sampler;
-
-	//Descriptor::DescriptorManager::GetBuilder().BindImage(binding, &m_ImageInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
-
-	//TODO: Writer update Set
+    descriptorWriter.WriteImage(bindingNumber, m_ImageView, m_Sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 }
 
 void Texture::Cleanup(VkDevice device) const
 {
-	//TODO: Move to a TextureManager
 	vkDestroySampler(device, m_Sampler, nullptr);
 	vkDestroyImageView(device, m_ImageView, nullptr);
 	vkFreeMemory(device, m_ImageMemory, nullptr);

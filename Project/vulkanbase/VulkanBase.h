@@ -209,7 +209,7 @@ private:
 
 		vkCmdBeginRenderingKHR(commandBuffer.Handle, &renderInfo);
 
-		m_pScene->Render(commandBuffer.Handle);
+		m_pScene->Render(commandBuffer.Handle, m_pContext);
 		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer.Handle);
 		vkCmdEndRenderingKHR(commandBuffer.Handle);
 	}

@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
 #include <vulkan/vulkan_core.h>
+
+#include "Core/Descriptor.h"
 #include "vulkanbase/VulkanTypes.h"
 
 
@@ -34,19 +36,24 @@ namespace ImageLoader
 class Texture
 {
 public:
-	Texture(const std::string& path, VulkanContext* vulkanContext);
+	Texture(const std::string& path, int binding,  VulkanContext* vulkanContext);
 	~Texture() = default;
 	Texture(const Texture&) = delete;
 	Texture& operator=(const Texture&) = delete;
-	Texture(Texture&&) = delete;
+	Texture(Texture&& other) noexcept
+	{
+        if(&other != this)
+        {
+            m_Image = other.m_Image;
+            m_ImageMemory = other.m_ImageMemory;
+            m_ImageView = other.m_ImageView;
+            m_Sampler = other.m_Sampler;
+        }
+	};
 	Texture& operator=(Texture&&) = delete;
 
-	void BindImage(int binding);
-
-	VkImageView GetImageView() const { return m_ImageView; }
-	VkSampler GetSampler() const { return m_Sampler; }
-
-	void Cleanup(VkDevice device) const;
+    void ProperBind(int bindingNumber, const VkDescriptorSet& descriptorSet, Descriptor::DescriptorWriter& descriptorWriter, VulkanContext* vulkanContext) const;
+    void Cleanup(VkDevice device) const;
 
 private:
 	VkImage m_Image{};

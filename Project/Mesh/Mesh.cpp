@@ -100,8 +100,10 @@ void Mesh::Render(VkCommandBuffer commandBuffer)
 	vkCmdDrawIndexed(commandBuffer, m_IndexCount, 1, 0, 0, 0);
 }
 
-void Mesh::CleanUp() const
+void Mesh::CleanUp()
 {
+    //m_MeshDescriptorSet.CleanUp(m_pContext->device);
+
 	vkDestroyBuffer(m_pContext->device, m_VertexBuffer, nullptr);
 	vkFreeMemory(m_pContext->device, m_VertexBufferMemory, nullptr);
 
@@ -120,12 +122,15 @@ void Mesh::SetScale(const glm::vec3& scale)
 }
 
 
-void Mesh::SetRotation(const glm::vec3& rotation)
-{
-	m_ModelMatrix = glm::rotate(m_ModelMatrix, glm::radians(rotation.x), MathConstants::RIGHT);
-	m_ModelMatrix = glm::rotate(m_ModelMatrix, glm::radians(rotation.y), MathConstants::UP);
-	m_ModelMatrix = glm::rotate(m_ModelMatrix, glm::radians(rotation.z), MathConstants::FORWARD);
+void Mesh::SetRotation(const glm::vec3 &rotation) {
+    m_ModelMatrix = glm::rotate(m_ModelMatrix, glm::radians(rotation.x), MathConstants::RIGHT);
+    m_ModelMatrix = glm::rotate(m_ModelMatrix, glm::radians(rotation.y), MathConstants::UP);
+    m_ModelMatrix = glm::rotate(m_ModelMatrix, glm::radians(rotation.z), MathConstants::FORWARD);
 }
+// void Mesh::AddTexture(int binding, const std::string &texturePath)
+// {
+//     m_MeshDescriptorSet.AddTexture(binding, texturePath, m_pContext);
+// }
 
 void Mesh::CreateVertexBuffer(const std::vector<Vertex>& vertices)
 {
