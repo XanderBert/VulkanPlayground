@@ -36,6 +36,8 @@ public:
     VkDescriptorSetLayout &GetLayout(VulkanContext* pContext);
 
     void CleanUp(VkDevice device);
+
+    void OnImGui() const;
 private:
     std::unordered_map<int, DynamicBuffer> m_UniformBuffers{};
     std::unordered_map<int, Texture> m_Textures{};

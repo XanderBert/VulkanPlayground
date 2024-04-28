@@ -117,7 +117,7 @@ private:
 
 	void cleanup() const
 	{
-		ImGuiWrapper::Cleanup();
+
 
 		const VkDevice device = m_pContext->device;
 
@@ -136,6 +136,9 @@ private:
 		ShaderManager::Cleanup(m_pContext->device);
 		MaterialManager::Cleanup();
 		m_pScene->CleanUp();
+
+	    ImGuiWrapper::Cleanup();
+
 		SwapChain::Cleanup(m_pContext);
 		m_pContext->CleanUp();
 	}

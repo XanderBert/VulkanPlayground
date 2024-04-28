@@ -38,6 +38,8 @@ void Material::OnImGui() const
 	{
 		shader->OnImGui(m_MaterialName);
 	}
+
+    m_DescriptorSet.OnImGui();
 }
 
 void Material::Bind(const VkCommandBuffer commandBuffer, const glm::mat4x4& pushConstantMatrix)
@@ -59,8 +61,8 @@ void Material::Bind(const VkCommandBuffer commandBuffer, const glm::mat4x4& push
     // }
 
     //Don't bind the same pipeline if it's already bound
-    if(MaterialManager::GetCurrentBoundPipeline() ==  m_pGraphicsPipeline.get()) return;
-    MaterialManager::SetCurrentBoundPipeline(m_pGraphicsPipeline.get());
+    //if(MaterialManager::GetCurrentBoundPipeline() ==  m_pGraphicsPipeline.get()) return;
+    //MaterialManager::SetCurrentBoundPipeline(m_pGraphicsPipeline.get());
 
     //Bind the pipeline
     m_pGraphicsPipeline->BindPipeline(commandBuffer);

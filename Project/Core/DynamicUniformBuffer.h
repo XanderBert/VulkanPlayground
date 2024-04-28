@@ -37,24 +37,7 @@ public:
             other.m_UniformBuffersMapped = nullptr;
         }
 	}
-	DynamicBuffer& operator=(DynamicBuffer&& other) noexcept
-    {
-	    if (this != &other)
-	    {
-	        // Move members from 'other' to 'this'
-	        m_Data = std::move(other.m_Data);
-	        m_UniformBuffer = other.m_UniformBuffer;
-	        m_UniformBuffersMemory = other.m_UniformBuffersMemory;
-	        m_UniformBuffersMapped = other.m_UniformBuffersMapped;
-
-	        // Reset the moved-from object's members
-	        other.m_UniformBuffer = nullptr;
-	        other.m_UniformBuffersMemory = nullptr;
-	        other.m_UniformBuffersMapped = nullptr;
-	    }
-
-	    return *this;
-	};
+	DynamicBuffer& operator=(DynamicBuffer&& other) noexcept = delete;
 
 	void Init(VulkanContext* vulkanContext);
 	void ProperBind(int bindingNumber, const VkDescriptorSet& descriptorSet, Descriptor::DescriptorWriter& descriptorWriter, VulkanContext* vulkanContext) const;
@@ -66,6 +49,7 @@ public:
 	void UpdateVariable(uint16_t handle, const glm::mat4& matrix);
 	void UpdateVariable(uint16_t handle, const glm::vec4& value);
 
+    void OnImGui() const;
 private:
 	const float* GetData() const;
 	size_t GetSize() const;

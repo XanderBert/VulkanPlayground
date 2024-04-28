@@ -63,10 +63,19 @@ uint16_t DynamicBuffer::AddVariable(const glm::mat4& value)
 	return Insert(glm::value_ptr(value), size);
 }
 
-void DynamicBuffer::UpdateVariable(uint16_t handle, const glm::vec4& value)
-{
-	constexpr uint8_t size = sizeof(glm::vec4) / sizeof(float);
-	Update(handle, glm::value_ptr(value), size);
+void DynamicBuffer::UpdateVariable(uint16_t handle, const glm::vec4 &value) {
+    constexpr uint8_t size = sizeof(glm::vec4) / sizeof(float);
+    Update(handle, glm::value_ptr(value), size);
+}
+void DynamicBuffer::OnImGui() const {
+    ImGui::Text("Uniform Buffer Size: %d bytes", GetSize());
+    ImGui::Text("Data: ");
+
+    //Display data in rows, each row has 4 floats
+    for(int i {}; i <= m_Data.size() - 4; ++i)
+    {
+        ImGui::Text("%f %f %f %f", m_Data[i], m_Data[i + 1], m_Data[i + 2], m_Data[i + 3]);
+    }
 }
 
 void DynamicBuffer::UpdateVariable(uint16_t handle, const glm::mat4& value)

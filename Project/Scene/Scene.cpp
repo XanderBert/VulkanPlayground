@@ -40,13 +40,13 @@ Scene::Scene(VulkanContext* vulkanContext)
 	std::shared_ptr<Material> material02 = MaterialManager::CreateMaterial(vulkanContext, "shader.vert", "shader.frag", "MT_Depth");
     material02->GetDescriptorSet()->AddTexture(1, "vehicle_diffuse.png", vulkanContext);
 
-    std::shared_ptr<Material> material01 = MaterialManager::CreateMaterial(vulkanContext, "shader2D.vert", "shader2.frag", "MT_2D");
-    material01->GetDescriptorSet()->AddTexture(1, "texture.jpg", vulkanContext);
+    //std::shared_ptr<Material> material01 = MaterialManager::CreateMaterial(vulkanContext, "shader2D.vert", "shader2.frag", "MT_2D");
+    //material01->GetDescriptorSet()->AddTexture(1, "texture.jpg", vulkanContext);
 
 
-    m_Meshes.push_back(std::make_unique<Mesh>(vertices2, indices2, material01, "Simple Rectangle"));
-	m_Meshes.back()->SetPosition(glm::vec3(-0.5f, 0.5f, 0.0f));
-	m_Meshes.back()->SetScale(glm::vec3(0.6f));
+ //    m_Meshes.push_back(std::make_unique<Mesh>(vertices2, indices2, material01, "Simple Rectangle"));
+	// m_Meshes.back()->SetPosition(glm::vec3(-0.5f, 0.5f, 0.0f));
+	// m_Meshes.back()->SetScale(glm::vec3(0.6f));
 
     //
 	// m_Meshes.push_back(std::make_unique<Mesh>("ball.obj", material01));

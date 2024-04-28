@@ -49,7 +49,7 @@ void DescriptorSet::AddTexture(int binding, const std::string &path, VulkanConte
     }
 
     // Add a new texture at binding x
-    const auto [iterator, isEmplaced] = m_Textures.try_emplace(binding, Texture(path, binding, pContext));
+    const auto [iterator, isEmplaced] = m_Textures.try_emplace(binding, Texture(path, pContext));
     if (!isEmplaced)
     {
         LogError("Binding at:" + std::to_string(binding) + " is allready used for a Texture");
@@ -104,20 +104,34 @@ VkDescriptorSetLayout &DescriptorSet::GetLayout(VulkanContext* pContext)
     return m_DescriptorSetLayout;
 }
 
-void DescriptorSet::CleanUp(VkDevice device)
-{
-    //Cleanup the uniform buffers
-    for(auto&[binding, ubo]: m_UniformBuffers)
-    {
+void DescriptorSet::CleanUp(VkDevice device) {
+    // Cleanup the uniform buffers
+    for (auto &[binding, ubo]: m_UniformBuffers) {
         ubo.Cleanup(device);
     }
 
-    //Cleanup the textures
-    for(auto& [binding, texture]: m_Textures)
-    {
+    // Cleanup the textures
+    for (auto &[binding, texture]: m_Textures) {
         texture.Cleanup(device);
     }
 
-    //Cleanup the layout
+    // Cleanup the layout
     vkDestroyDescriptorSetLayout(device, m_DescriptorSetLayout, nullptr);
+}
+void DescriptorSet::OnImGui() const
+{
+
+    ImGui::Separator();
+    ImGui::Text("Textures:");
+    for(auto& [binding, texture] : m_Textures)
+    {
+        texture.OnImGui(m_DescriptorSet);
+    }
+
+    ImGui::Separator();
+    ImGui::Text("Uniform Buffers:");
+    for(auto& [binding, ubo] : m_UniformBuffers)
+    {
+        ubo.OnImGui();
+    }
 }

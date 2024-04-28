@@ -7,34 +7,35 @@
 #include "Core/CommandBuffer.h"
 #include "Core/Descriptor.h"
 #include "Core/Logger.h"
+#include "vulkanbase/VulkanBase.h"
 
 namespace ImageLoader
 {
-	void CreateTexture(const std::string& path, VulkanContext* vulkanContext, VkImage& image, VkDeviceMemory& imageMemory)
+	void CreateTexture(const std::string& path, VulkanContext* vulkanContext, VkImage& image, VkDeviceMemory& imageMemory, glm::ivec2 &imageSize)
 	{
-		int texWidth;
-		int texHeight;
 		int texChannels;
+	    int width;
+	    int height;
+		stbi_uc* pixels = stbi_load(path.c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
+	    LogAssert(pixels, "failed to load texture image!", true)
 
-		stbi_uc* pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 
-		const VkDeviceSize imageSize = static_cast<VkDeviceSize>(texWidth) * texHeight * 4;
-
-		LogAssert(pixels, "failed to load texture image!", true)
-
+		const VkDeviceSize deviceImageSize = static_cast<VkDeviceSize>(width) * height * 4;
 
 		VkBuffer stagingBuffer;
 		VkDeviceMemory stagingBufferMemory;
 
-		Core::Buffer::CreateStagingBuffer<stbi_uc>(vulkanContext, imageSize, stagingBuffer, stagingBufferMemory, pixels);
+		Core::Buffer::CreateStagingBuffer<stbi_uc>(vulkanContext, deviceImageSize, stagingBuffer, stagingBufferMemory, pixels);
 
 		stbi_image_free(pixels);
 
-		Image::CreateImage(vulkanContext, texWidth, texHeight, 1, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
-		Image::TransitionAndCopyAndImageBuffer(vulkanContext, stagingBuffer, image, texWidth, texHeight);
+		Image::CreateImage(vulkanContext, width, height, 1, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
+		Image::TransitionAndCopyAndImageBuffer(vulkanContext, stagingBuffer, image, width, height);
 
 		vkDestroyBuffer(vulkanContext->device, stagingBuffer, nullptr);
 		vkFreeMemory(vulkanContext->device, stagingBufferMemory, nullptr);
+
+	    imageSize = {width, height};
 	}
 }
 
@@ -171,22 +172,31 @@ namespace Image
 	}
 }
 
-Texture::Texture(const std::string& path, int binding,  VulkanContext* vulkanContext)
+Texture::Texture(const std::string& path, VulkanContext* vulkanContext)
 {
-	ImageLoader::CreateTexture(path, vulkanContext, m_Image, m_ImageMemory);
+	ImageLoader::CreateTexture(path, vulkanContext, m_Image, m_ImageMemory, m_ImageSize);
 	Image::CreateImageView(vulkanContext->device, m_Image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, m_ImageView);
 	Image::CreateSampler(vulkanContext, m_Sampler);
+
+    m_ImGuiDescriptorSet = ImGui_ImplVulkan_AddTexture(m_Sampler, m_ImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
-void Texture::ProperBind(int bindingNumber, const VkDescriptorSet &descriptorSet, Descriptor::DescriptorWriter &descriptorWriter, VulkanContext *vulkanContext) const
+void Texture::ProperBind(int bindingNumber, const VkDescriptorSet &descriptorSet, Descriptor::DescriptorWriter &descriptorWriter, VulkanContext *vulkanContext)
 {
     descriptorWriter.WriteImage(bindingNumber, m_ImageView, m_Sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 }
 
 void Texture::Cleanup(VkDevice device) const
 {
-	vkDestroySampler(device, m_Sampler, nullptr);
-	vkDestroyImageView(device, m_ImageView, nullptr);
-	vkFreeMemory(device, m_ImageMemory, nullptr);
-	vkDestroyImage(device, m_Image, nullptr);
+    ImGui_ImplVulkan_RemoveTexture(m_ImGuiDescriptorSet);
+
+
+    vkDestroySampler(device, m_Sampler, nullptr);
+    vkDestroyImageView(device, m_ImageView, nullptr);
+    vkFreeMemory(device, m_ImageMemory, nullptr);
+    vkDestroyImage(device, m_Image, nullptr);
+}
+void Texture::OnImGui(VkDescriptorSet descS) const
+{
+    ImGui::Image(static_cast<void*>(m_ImGuiDescriptorSet), ImVec2(m_ImageSize.x / 5.0f , m_ImageSize.y  / 5.0f));
 }
