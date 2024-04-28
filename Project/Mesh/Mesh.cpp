@@ -1,13 +1,14 @@
 #include "Mesh.h"
 #include <chrono>
 
+#include "Camera/Camera.h"
+#include "Core/ImGuiWrapper.h"
 #include "ImGuizmo.h"
 #include "ModelLoader.h"
-#include "vulkanbase/VulkanTypes.h"
-#include "Vertex.h"
-#include "Camera/Camera.h"
 #include "Patterns/ServiceLocator.h"
 #include "Timer/GameTimer.h"
+#include "Vertex.h"
+#include "vulkanbase/VulkanTypes.h"
 
 
 Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, std::shared_ptr<Material> material, const std::string& meshName)
@@ -91,6 +92,9 @@ void Mesh::OnImGui()
 	ImGui::DragFloat3(rotationLabel.c_str(), matrixRotation, 0.1f);
 	ImGui::DragFloat3(scaleLabel.c_str(), matrixScale, 0.1f);
 	ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, value_ptr(m_ModelMatrix));
+
+    //Guizmos
+    ImGuizmo::Manipulate(value_ptr(Camera::GetViewMatrix()), value_ptr(Camera::GetInvertedYProjectionMatrix()), ImGuizmoHandler::GizmoOperation, ImGuizmo::MODE:: LOCAL, value_ptr(m_ModelMatrix));
 }
 
 

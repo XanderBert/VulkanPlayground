@@ -2,6 +2,10 @@
 
 #include <vulkan/vulkan_core.h>
 
+#define IMGUI_DEFINE_MATH_OPERATORS
+#include "imgui.h"
+#include "ImGuizmo.h"
+
 
 class ImGuiWrapper final
 {
@@ -22,6 +26,15 @@ public:
 
 private:
 	inline static VkDescriptorPool descriptorPool;
+};
+
+struct ImGuizmoHandler
+{
+    inline static ImGuizmo::OPERATION GizmoOperation = ImGuizmo::TRANSLATE;
+
+    inline static void RotateOperation() { GizmoOperation = ImGuizmo::ROTATE; }
+    inline static void TranslateOperation() { GizmoOperation = ImGuizmo::TRANSLATE; }
+    inline static void ScaleOperation() { GizmoOperation = ImGuizmo::SCALE; }
 };
 
 

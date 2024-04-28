@@ -1,17 +1,16 @@
 #include "ImGuiWrapper.h"
 
-
-#define IMGUI_DEFINE_MATH_OPERATORS
-#include "imgui.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_vulkan.h"
 #include "ImGuizmo.h"
 
-#include "vulkanbase/VulkanTypes.h"
+#include "Camera/Camera.h"
+#include "DepthResource.h"
 #include "Patterns/ServiceLocator.h"
 #include "SwapChain.h"
-#include "DepthResource.h"
 #include "implot.h"
+#include "vulkanbase/VulkanTypes.h"
+#include "glm/gtc/type_ptr.hpp"
 
 void ImGuiWrapper::Initialize(VkQueue graphicsQueue)
 {
@@ -167,10 +166,15 @@ void ImGuiWrapper::NewFrame()
 	ImGui_ImplVulkan_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
-	ImGuizmo::BeginFrame();
-
-	//Enable Proper Docking
+    //Enable Proper Docking
 	ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
+
+    ImGuizmo::BeginFrame();
+    ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, SwapChain::Extends().width, SwapChain::Extends().height);
+
+    //glm::mat4 mat = glm::mat4(1);
+    // mat = glm::rotate(mat, glm::radians(90.0f), MathConstants::FORWARD);
+    //ImGuizmo::DrawGrid(glm::value_ptr(Camera::GetViewMatrix()), glm::value_ptr(Camera::GetInvertedYProjectionMatrix()), glm::value_ptr(mat), 10.f);
 }
 
 void ImGuiWrapper::EndFrame()

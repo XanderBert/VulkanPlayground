@@ -30,6 +30,7 @@ public:
     Camera& operator=(Camera&&) = delete;
 
     static glm::mat4 GetViewMatrix();
+    static glm::mat4 GetInvertedYProjectionMatrix();
     static glm::mat4 GetProjectionMatrix();
     static glm::mat4 GetViewInverseMatrix();
     static glm::mat4 GetViewProjectionMatrix();

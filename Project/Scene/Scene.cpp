@@ -69,6 +69,10 @@ Scene::Scene(VulkanContext* vulkanContext)
 	Input::BindFunction({ GLFW_KEY_D, Input::KeyType::Hold }, Camera::MoveLeft);
 	Input::BindFunction({ GLFW_MOUSE_BUTTON_RIGHT, Input::KeyType::Press }, Camera::OnRightPressed);
 	Input::AddMouseMovementListener(Camera::OnMouseMoved);
+
+    Input::BindFunction({GLFW_KEY_R, Input::KeyType::Press}, ImGuizmoHandler::TranslateOperation);
+    Input::BindFunction({GLFW_KEY_T, Input::KeyType::Press}, ImGuizmoHandler::RotateOperation);
+    Input::BindFunction({GLFW_KEY_Y, Input::KeyType::Press}, ImGuizmoHandler::ScaleOperation);
 }
 
 

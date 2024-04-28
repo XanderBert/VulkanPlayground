@@ -117,8 +117,6 @@ private:
 
 	void cleanup() const
 	{
-
-
 		const VkDevice device = m_pContext->device;
 
 		vkDestroySemaphore(device, renderFinishedSemaphore, nullptr);
