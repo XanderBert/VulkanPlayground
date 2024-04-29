@@ -36,18 +36,18 @@ Scene::Scene(VulkanContext* vulkanContext)
 		4, 5, 6, 6, 7, 4
 	};
     //
-    // std::shared_ptr<Material> material01 = MaterialManager::CreateMaterial(vulkanContext, "shader.vert", "shader.frag", "MTI_Depth_Nap");
-    // material01->GetDescriptorSet()->AddTexture(1, "nap_albedo.jpg", vulkanContext);
-    // material01->GetDescriptorSet()->AddTexture(2, "nap_normal.jpg", vulkanContext);
-    // material01->GetDescriptorSet()->AddTexture(3, "nap_metal.jpg", vulkanContext);
-    // material01->GetDescriptorSet()->AddTexture(4, "nap_rough.jpg", vulkanContext);
+    std::shared_ptr<Material> material01 = MaterialManager::CreateMaterial(vulkanContext, "shader.vert", "shader.frag", "MTI_Depth_Nap");
+    material01->GetDescriptorSet()->AddTexture(1, "nap_albedo.jpg", vulkanContext);
+    material01->GetDescriptorSet()->AddTexture(2, "nap_normal.jpg", vulkanContext);
+    material01->GetDescriptorSet()->AddTexture(3, "nap_metal.jpg", vulkanContext);
+    material01->GetDescriptorSet()->AddTexture(4, "nap_rough.jpg", vulkanContext);
 
 
 	std::shared_ptr<Material> material02 = MaterialManager::CreateMaterial(vulkanContext, "shader.vert", "shader.frag", "MTI_Depth_Veh");
-    // material02->GetDescriptorSet()->AddTexture(1, "vehicle_diffuse.png", vulkanContext);
-    // material02->GetDescriptorSet()->AddTexture(2, "vehicle_normal.png", vulkanContext);
-    // material02->GetDescriptorSet()->AddTexture(3, "vehicle_specular.png", vulkanContext);
-    // material02->GetDescriptorSet()->AddTexture(4, "vehicle_gloss.png", vulkanContext);
+    material02->GetDescriptorSet()->AddTexture(1, "vehicle_diffuse.png", vulkanContext);
+    material02->GetDescriptorSet()->AddTexture(2, "vehicle_normal.png", vulkanContext);
+    material02->GetDescriptorSet()->AddTexture(3, "vehicle_specular.png", vulkanContext);
+    material02->GetDescriptorSet()->AddTexture(4, "vehicle_gloss.png", vulkanContext);
 
 
 

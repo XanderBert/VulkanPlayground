@@ -53,8 +53,8 @@ public:
 
         return *this;
     }
-    ~ImGuiTexture();
 
+    void Cleanup();
     void Render(ImVec2 size) const;
 
 private:

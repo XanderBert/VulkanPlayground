@@ -211,9 +211,8 @@ void ImGuiWrapper::EndFrame()
     ImGuiDescriptorSet = ImGui_ImplVulkan_AddTexture(sampler, imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
-//ImGuiTexture &ImGuiTexture::operator=(ImGuiTexture &&other) noexcept
+void ImGuiTexture::Cleanup() {
+    ImGui_ImplVulkan_RemoveTexture(ImGuiDescriptorSet);
+}
 
-
-
-ImGuiTexture::~ImGuiTexture() { ImGui_ImplVulkan_RemoveTexture(ImGuiDescriptorSet); }
 void ImGuiTexture::Render(ImVec2 size) const { ImGui::Image(static_cast<void *>(ImGuiDescriptorSet), size); }

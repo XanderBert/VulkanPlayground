@@ -4,6 +4,7 @@
 #include "Camera/Camera.h"
 #include "Core/ImGuiWrapper.h"
 #include "ImGuizmo.h"
+#include "MaterialManager.h"
 #include "ModelLoader.h"
 #include "Patterns/ServiceLocator.h"
 #include "Timer/GameTimer.h"
@@ -65,8 +66,20 @@ void Mesh::OnImGui()
 		ImGui::Text("Mesh Name: %s", m_MeshName.c_str());
 		ImGui::Text("Vertex Count: %d", m_VertexCount);
 		ImGui::Text("Index Count: %d", m_IndexCount);
-		ImGui::Text("Material: %s", m_pMaterial->GetMaterialName().c_str());
 
+        //Get Dropdown menu with all material names
+	    auto materials = MaterialManager::GetMaterials();
+        int selectedMaterialIndex = 0;
+	    if(ImGui::ListBox("##Mateial:",&selectedMaterialIndex , MaterialManager::ImGuiMaterialGetter, materials.data(), materials.size()))
+	    {
+	        m_pMaterial = materials[selectedMaterialIndex];
+
+	        std::string log = "Material changed to: " + m_pMaterial->GetMaterialName() + "For Mesh: " + m_MeshName;
+	        LogInfo(log);
+	    }
+
+
+		ImGui::Text("Material: %s", m_pMaterial->GetMaterialName().c_str());
 	}
 	ImGui::Unindent();
 	ImGui::Separator();

@@ -31,6 +31,7 @@ public:
 	static std::shared_ptr<Material> CreateMaterial(VulkanContext* vulkanContext, const std::string& materialName)
 	{
 		m_ActiveMaterials.push_back(std::make_shared<Material>(vulkanContext, materialName));
+	    m_MaterialNames.push_back(materialName);
 		return m_ActiveMaterials.back();
 	}
 
@@ -41,6 +42,7 @@ public:
 		m_ActiveMaterials.back()->AddShader(vertexShaderName, ShaderType::VertexShader);
 		m_ActiveMaterials.back()->AddShader(fragmentShaderName, ShaderType::FragmentShader);
 
+	    m_MaterialNames.push_back(materialName);
 		return m_ActiveMaterials.back();
 	}
 
@@ -72,8 +74,25 @@ public:
 		return m_CurrentBoundPipeline;
 	}
 
-private:
-	inline static std::vector<std::shared_ptr<Material>> m_ActiveMaterials;
+    static std::vector<std::string> GetMaterialNames()
+    {
+	    return m_MaterialNames;
+	}
 
+    static std::vector<std::shared_ptr<Material>> GetMaterials()
+    {
+	    return m_ActiveMaterials;
+	}
+
+    //TODO This needs to be moved to a more appropriate place
+    static bool ImGuiMaterialGetter(void* data, int idx, const char** out_text)
+    {
+	    *out_text = m_MaterialNames[idx].c_str();
+	    return true;
+	}
+
+private:
+    inline static std::vector<std::string> m_MaterialNames;
+	inline static std::vector<std::shared_ptr<Material>> m_ActiveMaterials;
 	inline static GraphicsPipeline* m_CurrentBoundPipeline = nullptr;
 };

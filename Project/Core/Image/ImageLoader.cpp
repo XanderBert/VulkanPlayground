@@ -199,6 +199,7 @@ void Texture::ProperBind(int bindingNumber, Descriptor::DescriptorWriter &descri
 
 void Texture::Cleanup(VkDevice device) const
 {
+    m_ImTexture->Cleanup();
     vkDestroySampler(device, m_Sampler, nullptr);
     vkDestroyImageView(device, m_ImageView, nullptr);
     vkFreeMemory(device, m_ImageMemory, nullptr);
