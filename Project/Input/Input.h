@@ -79,22 +79,22 @@ namespace Input
 	{
 		windowPtr = window;
 
-		glfwSetKeyCallback(window, [](GLFWwindow* window, int key, int scancode, int action, int mods)
+		glfwSetKeyCallback(window, [](GLFWwindow*, int key, int, int action, int)
 		{
 			KeyEvent(key, action);
 		});
 
-		glfwSetCursorPosCallback(window, [](GLFWwindow* window, double xpos, double ypos) 
+		glfwSetCursorPosCallback(window, [](GLFWwindow*, double xpos, double ypos)
 		{
 			ImGuiIO& io = ImGui::GetIO();
-			io.AddMousePosEvent(xpos, ypos);
+			io.AddMousePosEvent(static_cast<float>(xpos), static_cast<float>(ypos));
 
 			if(io.WantCaptureMouse) return;
 
 			MouseMove(xpos, ypos);
 		});
 
-		glfwSetMouseButtonCallback(window, [](GLFWwindow* window, int button, int action, int mods) 
+		glfwSetMouseButtonCallback(window, [](GLFWwindow*, int button, int action, int)
 		{
 			ImGuiIO& io = ImGui::GetIO();
 			io.AddMouseButtonEvent(button, action);
@@ -103,6 +103,8 @@ namespace Input
 
 			KeyEvent(button, action);
 		});
+
+	    LogInfo("Input Setup");
 	}
 
 	inline glm::vec2 GetMousePosition()

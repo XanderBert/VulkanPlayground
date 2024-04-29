@@ -1,12 +1,13 @@
 #include "Shader.h"
-#include "Mesh/Material.h"
-#include "vulkanbase/VulkanTypes.h"
+
+#include <ranges>
+
 #include <vector>
-#include "imgui.h"
-#include "SpirvHelper.h"
+#include "Mesh/Material.h"
 #include "Patterns/ServiceLocator.h"
-
-
+#include "SpirvHelper.h"
+#include "imgui.h"
+#include "vulkanbase/VulkanTypes.h"
 
 
 //--------------------------------------------------------
@@ -120,14 +121,13 @@ void ShaderManager::ReloadShader(VulkanContext* vulkanContext, const std::string
 	//Update the shader for every material
 	for (Material* material : shader->m_pMaterials)
 	{
-		material->ReloadShaders(shader);
+		material->ReloadShaders();
 	}
 }
 
 Shader* ShaderManager::CreateShader(VulkanContext* vulkanContext, const std::string& fileName, ShaderType shaderType, Material* material)
 {
 	// Check if the shader already exists
-
     if (const auto it = m_ShaderInfo.find(fileName); it != m_ShaderInfo.end())
 	{
 		Shader* shader = it->second.get();
@@ -135,7 +135,7 @@ Shader* ShaderManager::CreateShader(VulkanContext* vulkanContext, const std::str
 		return shader;
 	}
 
-    SpirvHelper::CompileAndSaveShader(fileName);
+    //SpirvHelper::CompileAndSaveShader(fileName);
 	VkPipelineShaderStageCreateInfo shaderInfo = ShaderBuilder::CreateShaderInfo(vulkanContext->device, static_cast<VkShaderStageFlagBits>(shaderType), fileName);
 
 
@@ -150,9 +150,9 @@ Shader* ShaderManager::CreateShader(VulkanContext* vulkanContext, const std::str
 
 void ShaderManager::Cleanup(VkDevice device)
 {
-	for (const auto& shaderInfo : m_ShaderInfo)
+	for (const auto &shader: m_ShaderInfo | std::views::values)
 	{
-		shaderInfo.second->Cleanup(device);
+		shader->Cleanup(device);
 	}
 
 	m_ShaderInfo.clear();
@@ -160,22 +160,26 @@ void ShaderManager::Cleanup(VkDevice device)
 
 VkPipelineVertexInputStateCreateInfo ShaderManager::GetVertexInputStateInfo()
 {
-	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
-	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-
-	vertexInputInfo.vertexBindingDescriptionCount = 1;
-	vertexInputInfo.pVertexBindingDescriptions = &m_VertexInputBindingDescription;
-	vertexInputInfo.vertexAttributeDescriptionCount = m_VertexInputAttributeDescription.size();
-	vertexInputInfo.pVertexAttributeDescriptions = m_VertexInputAttributeDescription.data();
-
+	constexpr VkPipelineVertexInputStateCreateInfo vertexInputInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+        .vertexBindingDescriptionCount = 1,
+        .pVertexBindingDescriptions = &m_VertexInputBindingDescription,
+        .vertexAttributeDescriptionCount = static_cast<uint32_t>(m_VertexInputAttributeDescription.size()),
+        .pVertexAttributeDescriptions = m_VertexInputAttributeDescription.data()
+    };
+    
 	return vertexInputInfo;
 }
 
 VkPipelineInputAssemblyStateCreateInfo ShaderManager::GetInputAssemblyStateInfo()
 {
-	VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
-	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-	inputAssembly.primitiveRestartEnable = VK_FALSE;
+	constexpr VkPipelineInputAssemblyStateCreateInfo inputAssembly
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+        .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+        .primitiveRestartEnable = VK_FALSE
+    };
+
 	return inputAssembly;
 }

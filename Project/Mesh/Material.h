@@ -43,7 +43,7 @@ public:
     void Bind(VkCommandBuffer commandBuffer, const glm::mat4x4& pushConstantMatrix);
 
     Shader* AddShader(const std::string& shaderPath, ShaderType shaderType);
-	void ReloadShaders(Shader* shader);
+	void ReloadShaders();
     std::vector<Shader*> GetShaders() const;
 
     const VkPipelineLayout& GetPipelineLayout() const;

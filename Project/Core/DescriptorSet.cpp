@@ -78,11 +78,11 @@ void DescriptorSet::Bind(VulkanContext *pContext, const VkCommandBuffer &command
 
     // Update the data of all the ubo's
     for (auto &[binding, ubo]: m_UniformBuffers) {
-        ubo.ProperBind(binding, m_DescriptorSet, m_DescriptorWriter, pContext);
+        ubo.ProperBind(binding, m_DescriptorWriter);
     }
 
     for (auto &[binding, texture]: m_Textures) {
-        texture.ProperBind(binding, m_DescriptorSet, m_DescriptorWriter, pContext);
+        texture.ProperBind(binding, m_DescriptorWriter);
     }
 
     m_DescriptorWriter.UpdateSet(pContext->device, m_DescriptorSet);
@@ -125,7 +125,7 @@ void DescriptorSet::OnImGui() const
     ImGui::Text("Textures:");
     for(auto& [binding, texture] : m_Textures)
     {
-        texture.OnImGui(m_DescriptorSet);
+        texture.OnImGui();
     }
 
     ImGui::Separator();

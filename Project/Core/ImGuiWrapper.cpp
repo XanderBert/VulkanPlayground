@@ -68,7 +68,6 @@ void ImGuiWrapper::Initialize(VkQueue graphicsQueue)
 
 	ImGui_ImplVulkan_Init(&init_info);
 
-
 	ImVec4* colors = ImGui::GetStyle().Colors;
 	colors[ImGuiCol_Text] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
 	colors[ImGuiCol_TextDisabled] = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
@@ -149,6 +148,9 @@ void ImGuiWrapper::Initialize(VkQueue graphicsQueue)
 	style.GrabRounding = 3;
 	style.LogSliderDeadzone = 4;
 	style.TabRounding = 4;
+
+
+    LogInfo("Imgui Initialized");
 }
 
 void ImGuiWrapper::Cleanup()
@@ -170,11 +172,34 @@ void ImGuiWrapper::NewFrame()
 	ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
 
     ImGuizmo::BeginFrame();
-    ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, SwapChain::Extends().width, SwapChain::Extends().height);
+    ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, static_cast<float>(SwapChain::Extends().width), static_cast<float>(SwapChain::Extends().height));
 
-    //glm::mat4 mat = glm::mat4(1);
-    // mat = glm::rotate(mat, glm::radians(90.0f), MathConstants::FORWARD);
-    //ImGuizmo::DrawGrid(glm::value_ptr(Camera::GetViewMatrix()), glm::value_ptr(Camera::GetInvertedYProjectionMatrix()), glm::value_ptr(mat), 10.f);
+    //ImGui::ShowDemoWindow();
+
+    if (ImGui::BeginMainMenuBar()) {
+        if (ImGui::BeginMenu("File"))
+        {
+            if (ImGui::MenuItem("Import", "Ctrl+I"))
+            {
+                //Open File Dialog
+                //Test import mesh
+                LogInfo("Importing Mesh...");
+            }
+
+            ImGui::EndMenu();
+        }
+        // if (ImGui::BeginMenu("Edit"))
+        // {
+        //     if (ImGui::MenuItem("Undo", "CTRL+Z")) {}
+        //     if (ImGui::MenuItem("Redo", "CTRL+Y", false, false)) {}  // Disabled item
+        //     ImGui::Separator();
+        //     if (ImGui::MenuItem("Cut", "CTRL+X")) {}
+        //     if (ImGui::MenuItem("Copy", "CTRL+C")) {}
+        //     if (ImGui::MenuItem("Paste", "CTRL+V")) {}
+        //     ImGui::EndMenu();
+        // }
+        ImGui::EndMainMenuBar();
+    }
 }
 
 void ImGuiWrapper::EndFrame()

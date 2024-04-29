@@ -26,7 +26,7 @@ void DynamicBuffer::Init(VulkanContext* vulkanContext)
 	vkMapMemory(vulkanContext->device, m_UniformBuffersMemory, 0, GetSize(), 0, &m_UniformBuffersMapped);
 }
 
-void DynamicBuffer::ProperBind(int bindingNumber, const VkDescriptorSet &descriptorSet, Descriptor::DescriptorWriter &descriptorWriter, VulkanContext *vulkanContext) const {
+void DynamicBuffer::ProperBind(int bindingNumber, Descriptor::DescriptorWriter &descriptorWriter) const {
     //Update the data for the descriptor set
     memcpy(m_UniformBuffersMapped, GetData(), GetSize());
 
@@ -40,8 +40,6 @@ void DynamicBuffer::FullRebind(int bindingNumber, const VkDescriptorSet &descrip
     descriptorWriter.Cleanup();
     descriptorWriter.WriteBuffer(bindingNumber, m_UniformBuffer, GetSize(), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
     descriptorWriter.UpdateSet(vulkanContext->device, descriptorSet);
-
-
 }
 
 

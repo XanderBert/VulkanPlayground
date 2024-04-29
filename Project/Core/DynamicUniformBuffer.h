@@ -40,7 +40,7 @@ public:
 	DynamicBuffer& operator=(DynamicBuffer&& other) noexcept = delete;
 
 	void Init(VulkanContext* vulkanContext);
-	void ProperBind(int bindingNumber, const VkDescriptorSet& descriptorSet, Descriptor::DescriptorWriter& descriptorWriter, VulkanContext* vulkanContext) const;
+	void ProperBind(int bindingNumber, Descriptor::DescriptorWriter& descriptorWriter) const;
     void FullRebind(int bindingNumber, const VkDescriptorSet& descriptorSet, Descriptor::DescriptorWriter& descriptorWriter, VulkanContext* vulkanContext) const;
     void Cleanup(VkDevice device) const;
 

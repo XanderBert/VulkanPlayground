@@ -4,6 +4,7 @@
 #include <typeinfo>
 #include <unordered_map>
 #include <cassert>
+#include <sstream>
 
 
 
@@ -81,5 +82,7 @@ public:
 	{
 		ServiceLocator::RegisterService<LuaScriptRunner>();
 		ServiceLocator::RegisterService<VulkanContext>();
+
+	    LogInfo("Services Configured");
 	}
 };

@@ -181,7 +181,7 @@ Texture::Texture(const std::string& path, VulkanContext* vulkanContext)
     m_ImGuiDescriptorSet = ImGui_ImplVulkan_AddTexture(m_Sampler, m_ImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
-void Texture::ProperBind(int bindingNumber, const VkDescriptorSet &descriptorSet, Descriptor::DescriptorWriter &descriptorWriter, VulkanContext *vulkanContext)
+void Texture::ProperBind(int bindingNumber, Descriptor::DescriptorWriter &descriptorWriter)
 {
     descriptorWriter.WriteImage(bindingNumber, m_ImageView, m_Sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 }
@@ -196,7 +196,7 @@ void Texture::Cleanup(VkDevice device) const
     vkFreeMemory(device, m_ImageMemory, nullptr);
     vkDestroyImage(device, m_Image, nullptr);
 }
-void Texture::OnImGui(VkDescriptorSet descS) const
+void Texture::OnImGui() const
 {
     ImGui::Image(static_cast<void*>(m_ImGuiDescriptorSet), ImVec2(m_ImageSize.x / 5.0f , m_ImageSize.y  / 5.0f));
 }

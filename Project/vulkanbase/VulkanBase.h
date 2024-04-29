@@ -88,6 +88,8 @@ private:
 
 		// week 06
 		createSyncObjects();
+
+	    LogInfo("Vulkan Initialized");
 	}
 
 	void mainLoop()
@@ -210,7 +212,7 @@ private:
 
 		vkCmdBeginRenderingKHR(commandBuffer.Handle, &renderInfo);
 
-		m_pScene->Render(commandBuffer.Handle, m_pContext);
+		m_pScene->Render(commandBuffer.Handle);
 		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer.Handle);
 		vkCmdEndRenderingKHR(commandBuffer.Handle);
 	}
@@ -221,14 +223,14 @@ private:
 	bool isDeviceSuitable(VkPhysicalDevice device);
 	void createLogicalDevice();
 	void setupDebugMessenger();
-	bool checkDeviceExtensionSupport(VkPhysicalDevice device);
+    static bool checkDeviceExtensionSupport(VkPhysicalDevice device);
 	void createInstance();
 	std::vector<const char*> getRequiredExtensions();
 	void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
 	void createSyncObjects();
 	void drawFrame();
 
-	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
+	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void*)
 	{
 		VulkanLogger::LogLevel logLevel = VulkanLogger::LogLevel::LOGERROR;
 

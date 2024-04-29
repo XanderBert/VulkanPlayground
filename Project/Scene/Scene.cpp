@@ -35,12 +35,24 @@ Scene::Scene(VulkanContext* vulkanContext)
 		0, 1, 2, 2, 3, 0,
 		4, 5, 6, 6, 7, 4
 	};
+    //
+    // std::shared_ptr<Material> material01 = MaterialManager::CreateMaterial(vulkanContext, "shader.vert", "shader.frag", "MTI_Depth_Nap");
+    // material01->GetDescriptorSet()->AddTexture(1, "nap_albedo.jpg", vulkanContext);
+    // material01->GetDescriptorSet()->AddTexture(2, "nap_normal.jpg", vulkanContext);
+    // material01->GetDescriptorSet()->AddTexture(3, "nap_metal.jpg", vulkanContext);
+    // material01->GetDescriptorSet()->AddTexture(4, "nap_rough.jpg", vulkanContext);
 
 
-	std::shared_ptr<Material> material02 = MaterialManager::CreateMaterial(vulkanContext, "shader.vert", "shader.frag", "MT_Depth");
-    material02->GetDescriptorSet()->AddTexture(1, "vehicle_diffuse.png", vulkanContext);
+	std::shared_ptr<Material> material02 = MaterialManager::CreateMaterial(vulkanContext, "shader.vert", "shader.frag", "MTI_Depth_Veh");
+    // material02->GetDescriptorSet()->AddTexture(1, "vehicle_diffuse.png", vulkanContext);
+    // material02->GetDescriptorSet()->AddTexture(2, "vehicle_normal.png", vulkanContext);
+    // material02->GetDescriptorSet()->AddTexture(3, "vehicle_specular.png", vulkanContext);
+    // material02->GetDescriptorSet()->AddTexture(4, "vehicle_gloss.png", vulkanContext);
 
-    //std::shared_ptr<Material> material01 = MaterialManager::CreateMaterial(vulkanContext, "shader2D.vert", "shader2.frag", "MT_2D");
+
+
+
+
     //material01->GetDescriptorSet()->AddTexture(1, "texture.jpg", vulkanContext);
 
 
@@ -54,9 +66,9 @@ Scene::Scene(VulkanContext* vulkanContext)
 	// m_Meshes.back()->SetScale(glm::vec3(0.1f, 0.2f, 0.1f));
 
 
-	m_Meshes.push_back(std::make_unique<Mesh>("viking.obj", material02));
+	//m_Meshes.push_back(std::make_unique<Mesh>("vehicle.obj", material01));
 	//m_Meshes.push_back(std::make_unique<Mesh>("viking.obj", material02));
-	m_Meshes.push_back(std::make_unique<Mesh>("vehicle.obj", material02));
+	m_Meshes.push_back(std::make_unique<Mesh>("vehicle.obj", material02, "veh02"));
 	m_Meshes.back()->SetPosition(glm::vec3{ -1.0f, 2.6f,0.f });
 	m_Meshes.back()->SetRotation(glm::vec3{ 90.f, 0.f, 0.f });
 	m_Meshes.back()->SetScale(glm::vec3(0.1f));
@@ -73,10 +85,12 @@ Scene::Scene(VulkanContext* vulkanContext)
     Input::BindFunction({GLFW_KEY_R, Input::KeyType::Press}, ImGuizmoHandler::TranslateOperation);
     Input::BindFunction({GLFW_KEY_T, Input::KeyType::Press}, ImGuizmoHandler::RotateOperation);
     Input::BindFunction({GLFW_KEY_Y, Input::KeyType::Press}, ImGuizmoHandler::ScaleOperation);
+
+    LogInfo("Scene Made");
 }
 
 
-void Scene::Render(VkCommandBuffer commandBuffer, VulkanContext* vulkanContext) const
+void Scene::Render(VkCommandBuffer commandBuffer) const
 {
 	GameTimer::UpdateDelta();
 
@@ -96,7 +110,7 @@ void Scene::Render(VkCommandBuffer commandBuffer, VulkanContext* vulkanContext) 
 		if (frameTimes.size() > 1500) frameTimes.erase(frameTimes.begin());
 
 		ImPlot::SetupAxes("time", "ms", ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_NoTickLabels, ImPlotAxisFlags_AutoFit);
-		ImPlot::PlotLine("Frame Times", frameTimes.data(), frameTimes.size(), 0.001, 0, ImPlotLineFlags_Shaded);
+		ImPlot::PlotLine("Frame Times", frameTimes.data(), static_cast<int>(frameTimes.size()), 0.001, 0, ImPlotLineFlags_Shaded);
 		ImPlot::EndPlot();
 	}
 

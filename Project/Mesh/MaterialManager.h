@@ -50,6 +50,8 @@ public:
 		{
 			material->CreatePipeline();
 		}
+
+	    LogInfo("Vulkan Pipelines made");
 	}
 
 	static void Cleanup()

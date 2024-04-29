@@ -55,10 +55,10 @@ public:
 	};
 	Texture& operator=(Texture&&) = delete;
 
-    void ProperBind(int bindingNumber, const VkDescriptorSet& descriptorSet, Descriptor::DescriptorWriter& descriptorWriter, VulkanContext* vulkanContext);
+    void ProperBind(int bindingNumber, Descriptor::DescriptorWriter& descriptorWriter);
     void Cleanup(VkDevice device) const;
 
-    void OnImGui(VkDescriptorSet descS) const;
+    void OnImGui() const;
 private:
     VkDescriptorSet m_ImGuiDescriptorSet{};
 

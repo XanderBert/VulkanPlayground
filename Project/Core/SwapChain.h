@@ -114,7 +114,7 @@ public:
 	static std::vector<VkImageView>& ImageViews() { return m_SwapChainImageViews; }
 	static VkExtent2D& Extends() { return m_Extends; }
 	static VkFormat& Format() { return m_Format; }
-	static uint8_t ImageCount() { return m_SwapChainImages.size(); }
+	static uint8_t ImageCount() { return static_cast<uint8_t>(m_SwapChainImages.size()); }
 
 
 

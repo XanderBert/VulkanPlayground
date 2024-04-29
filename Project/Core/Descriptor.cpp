@@ -35,7 +35,7 @@ namespace Descriptor
 
 		const VkDescriptorPool newPool = CreatePool(device, maxSets, poolRatios);
 
-		setsPerPool = maxSets * 1.5; //grow it next allocation
+		setsPerPool = static_cast<uint32_t>(1.5f * static_cast<float>(maxSets)); //grow it next allocation
 
 		m_ReadyPools.push_back(newPool);
 	}
@@ -121,7 +121,7 @@ namespace Descriptor
 			//Create a new pool
 			newPool = CreatePool(device, setsPerPool, m_PoolSizeRatios);
 
-			setsPerPool = setsPerPool * setMultiplier;
+			setsPerPool = static_cast<uint32_t>(static_cast<float>(setsPerPool) * setMultiplier);
 			if (setsPerPool > maxSets)
 			{
 				setsPerPool = maxSets;
@@ -139,7 +139,7 @@ namespace Descriptor
 		{
 			VkDescriptorPoolSize poolSize;
 			poolSize.type = ratio.type;
-			poolSize.descriptorCount = ratio.ratio * setCount;
+			poolSize.descriptorCount = static_cast<uint32_t>(ratio.ratio * static_cast<float>(setCount));
 
 			poolSizes.emplace_back(poolSize);
 		}
@@ -329,7 +329,7 @@ namespace Descriptor
 		return m_FrameAllocators[frameNumber]->Allocate(device, setLayout);
 	}
 
-	void DescriptorManager::ClearPools(VkDevice device, uint8_t frameNumber)
+	void DescriptorManager::ClearPools(VkDevice device)
 	{
 		m_FrameAllocators[0]->ClearPools(device);
 	}

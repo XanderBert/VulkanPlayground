@@ -227,7 +227,7 @@ target_link_libraries(${PROJECT_NAME}
     
 PRIVATE ${Vulkan_LIBRARIES}
     PUBLIC glfw
-    PUBLIC debug ${SHADERC_DEBUG} 
+    PUBLIC debug ${SHADERC_DEBUG} optimized ${Vulkan_shaderc_combined_LIBRARY}
     PRIVATE lua::lua
     PRIVATE efsw-static
     PRIVATE glm

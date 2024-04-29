@@ -3,8 +3,8 @@ cmake_minimum_required(VERSION 3.27)
 # Project Name
 project(VulkanPlayground)
 
-# Use C++17
-set(CMAKE_CXX_STANDARD 17)
+# Use C++20
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(FetchContent)
@@ -28,12 +28,16 @@ find_package(Vulkan REQUIRED COMPONENTS shaderc_combined)
 
 
 #set flags
-set(GCC_COVERAGE_COMPILE_FLAGS "-fpermissive")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}" )
+#set(GCC_COVERAGE_COMPILE_FLAGS "-fpermissive")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}" )
 
 #set sanitisers only in debug mode
-set(SANITIZER_COMPILE_FLAGS "-fsanitize=address,undefined,leak,thread,memory -fno-omit-frame-pointer -g")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SANITIZER_COMPILE_FLAGS}")
+
+#if (MSVC)
+#    add_compile_options(/W4 /WX)
+#else()
+#    add_compile_options(-Wall -Wextra -pedantic -Werror)
+#endif()
 
 # Include Directories
 include_directories(${Vulkan_INCLUDE_DIRS})

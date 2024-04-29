@@ -84,7 +84,7 @@ void VulkanBase::drawFrame()
 		LogError("Failed to acquire swap chain image!");
 	}
 
-	Descriptor::DescriptorManager::ClearPools(m_pContext->device, imageIndex);
+	Descriptor::DescriptorManager::ClearPools(m_pContext->device);
 
 	vkResetFences(device, 1, &inFlightFence);
 
@@ -94,7 +94,7 @@ void VulkanBase::drawFrame()
 
 	tools::InsertImageMemoryBarrier(
 		commandBuffer.Handle,
-		SwapChain::Image(imageIndex),
+		SwapChain::Image(static_cast<uint8_t>(imageIndex)),
 		VK_IMAGE_LAYOUT_UNDEFINED,
 		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 		VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 });
@@ -111,7 +111,7 @@ void VulkanBase::drawFrame()
 
 	tools::InsertImageMemoryBarrier(
 		commandBuffer.Handle,
-		SwapChain::Image(imageIndex),
+		SwapChain::Image(static_cast<uint8_t>(imageIndex)),
 		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 		VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
 		VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 });
@@ -187,6 +187,7 @@ bool VulkanBase::checkDeviceExtensionSupport(VkPhysicalDevice device)
 
 void VulkanBase::createInstance()
 {
+
 	if (enableValidationLayers && !checkValidationLayerSupport())
 	{
 		throw std::runtime_error("validation layers requested, but not available!");
@@ -224,7 +225,7 @@ void VulkanBase::createInstance()
 
 		VkValidationFeaturesEXT validationFeatures{};
 		validationFeatures.sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
-		validationFeatures.enabledValidationFeatureCount = enabledValidationFeatures.size();
+		validationFeatures.enabledValidationFeatureCount = static_cast<uint32_t>(enabledValidationFeatures.size());
 		validationFeatures.pEnabledValidationFeatures = enabledValidationFeatures.data();
 		validationFeatures.disabledValidationFeatureCount = 0;
 		validationFeatures.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;

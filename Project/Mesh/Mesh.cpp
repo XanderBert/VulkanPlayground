@@ -173,12 +173,9 @@ void Mesh::CreateIndexBuffer(const std::vector<uint32_t>& indices)
 	m_IndexCount = static_cast<uint16_t>(indices.size());
 	LogAssert(m_IndexCount >= 3, "Mesh has less then 3 indices", false);
 
-
 	//Get the device and the buffer size
 	const VkDevice device = m_pContext->device;
 	const VkDeviceSize bufferSize = sizeof(indices[0]) * m_IndexCount;
-
-	auto data = indices.data();
 
 	//Create a staging buffer
 	VkBuffer stagingBuffer;

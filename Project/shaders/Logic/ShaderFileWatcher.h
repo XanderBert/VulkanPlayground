@@ -10,7 +10,7 @@ public:
 
 	ShaderListener() = default;
 
-	void handleFileAction(efsw::WatchID watchid, const std::string& dir, const std::string& filename, efsw::Action action,	std::string oldFilename) override
+	void handleFileAction(efsw::WatchID, const std::string&, const std::string& filename, efsw::Action action,	std::string oldFilename) override
 	{
 		//Wait for a bit to make sure the file is done being written (as sometimes it is not done yet)
 		efsw::System::sleep(100);

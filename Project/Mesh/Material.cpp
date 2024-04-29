@@ -83,7 +83,7 @@ Shader* Material::AddShader(const std::string& shaderPath, const ShaderType shad
 	return m_Shaders.back();
 }
 
-void Material::ReloadShaders(Shader *shader)
+void Material::ReloadShaders()
 {
     m_pGraphicsPipeline->CreatePipeline(m_pContext, this);
 }
@@ -110,7 +110,7 @@ VkPipelineLayoutCreateInfo Material::GetPipelineLayoutCreateInfo()
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = m_SetLayouts.size();
+    pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(m_SetLayouts.size());
     pipelineLayoutInfo.pSetLayouts = m_SetLayouts.data();
     pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
     pipelineLayoutInfo.pushConstantRangeCount = 1;

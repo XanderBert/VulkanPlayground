@@ -30,18 +30,46 @@ void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline,
 
 	const VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = material->GetPipelineLayoutCreateInfo();
 	VulkanCheck(vkCreatePipelineLayout(vulkanContext->device, &pipelineLayoutCreateInfo, nullptr, &graphicsPipeline.m_PipelineLayout ), "Failed To Create PipelineLayout")
+    LogInfo("Layout Created For: " + material->GetMaterialName());
 
 	//Create dynamic rendering structure
-	VkPipelineRenderingCreateInfoKHR pipelineRenderingCreateInfo{};
-	pipelineRenderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
-	pipelineRenderingCreateInfo.colorAttachmentCount = 1;
-	pipelineRenderingCreateInfo.pColorAttachmentFormats = &SwapChain::Format();
-	pipelineRenderingCreateInfo.depthAttachmentFormat = DepthResource::GetFormat();
+	const VkPipelineRenderingCreateInfoKHR pipelineRenderingCreateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR,
+        .colorAttachmentCount = 1,
+        .pColorAttachmentFormats = &SwapChain::Format(),
+        .depthAttachmentFormat = DepthResource::GetFormat(),
+    };
 
 
-	VkPipelineColorBlendAttachmentState colorBlendAttachment{};
-	colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-	colorBlendAttachment.blendEnable = VK_FALSE;
+    constexpr VkPipelineRasterizationStateCreateInfo rasterizer
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+        .depthClampEnable = VK_FALSE,
+        .rasterizerDiscardEnable = VK_FALSE,
+        .polygonMode = VK_POLYGON_MODE_FILL,
+        .cullMode = VK_CULL_MODE_BACK_BIT,
+        .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
+        .depthBiasEnable = VK_FALSE,
+        .lineWidth = 1.0f,
+    };
+
+
+	constexpr VkPipelineColorBlendAttachmentState colorBlendAttachment
+    {
+        .blendEnable = VK_FALSE,
+        .colorWriteMask =  VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+    };
+    const VkPipelineColorBlendStateCreateInfo colorBlending
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+        .logicOpEnable = VK_FALSE,
+        .logicOp = VK_LOGIC_OP_COPY,
+        .attachmentCount = 1,
+        .pAttachments = &colorBlendAttachment,
+        .blendConstants = { 0.0f, 0.0f, 0.0f, 0.0f }
+    };
+
 
 	const std::vector dynamicStates =
 	{
@@ -49,18 +77,30 @@ void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline,
 		VK_DYNAMIC_STATE_SCISSOR
 	};
 
-	VkGraphicsPipelineCreateInfo pipelineInfo{ VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO };
-	pipelineInfo.pNext = &pipelineRenderingCreateInfo;
-	pipelineInfo.renderPass = VK_NULL_HANDLE;
-	pipelineInfo.pInputAssemblyState = &ShaderManager::GetInputAssemblyStateInfo();
-	pipelineInfo.pRasterizationState = &CreateRasterizer();
-	pipelineInfo.pColorBlendState = &CreateColorBlending(colorBlendAttachment);
-	pipelineInfo.pMultisampleState = &CreateMultisampling();
-	pipelineInfo.pViewportState = &CreateViewportState();
-	pipelineInfo.pDepthStencilState = &DepthResource::GetDepthPipelineInfo(VK_TRUE, VK_TRUE);
-	pipelineInfo.pDynamicState = &CreateDynamicState(dynamicStates);
-	pipelineInfo.pVertexInputState = &ShaderManager::GetVertexInputStateInfo();
-	
+    const VkPipelineDynamicStateCreateInfo dynamicState
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+        .dynamicStateCount = static_cast<uint32_t>(dynamicStates.size()),
+        .pDynamicStates = dynamicStates.data()
+    };
+
+    constexpr VkPipelineViewportStateCreateInfo viewportState
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+        .viewportCount = 1,
+        .scissorCount = 1
+    };
+
+    constexpr VkPipelineMultisampleStateCreateInfo multisampling
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+        .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+        .sampleShadingEnable = VK_FALSE,
+    };
+
+    const auto inputAssemblyState = ShaderManager::GetInputAssemblyStateInfo();
+    const auto depthStencilState = DepthResource::GetDepthPipelineInfo(VK_TRUE, VK_TRUE);
+    const auto vertexInputState = ShaderManager::GetVertexInputStateInfo();
 
 	std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
 	for (const auto& shader : material->GetShaders())
@@ -68,9 +108,29 @@ void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline,
 		shaderStages.push_back(shader->GetStageInfo());
 	}
 
-	pipelineInfo.stageCount = shaderStages.size();
-	pipelineInfo.pStages = shaderStages.data();
-	pipelineInfo.layout = graphicsPipeline.m_PipelineLayout;
+    const VkGraphicsPipelineCreateInfo pipelineInfo
+    {
+        .sType =  VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+        .pNext = &pipelineRenderingCreateInfo,
+        .stageCount = static_cast<uint32_t>(shaderStages.size()),
+        .pStages = shaderStages.data(),
+        .pVertexInputState = &vertexInputState,
+        .pInputAssemblyState = &inputAssemblyState,
+        .pViewportState = &viewportState,
+        .pRasterizationState = &rasterizer,
+        .pMultisampleState = &multisampling,
+        .pDepthStencilState = &depthStencilState,
+        .pColorBlendState = &colorBlending,
+        .pDynamicState = &dynamicState,
+        .layout = graphicsPipeline.m_PipelineLayout,
+        .renderPass = VK_NULL_HANDLE,
+        .subpass = 0,
+        .basePipelineHandle = VK_NULL_HANDLE,
+        .basePipelineIndex = -1
+    };
 
-	VulkanCheck(vkCreateGraphicsPipelines(vulkanContext->device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline.m_GraphicsPipeline), "Failed to create graphics pipeline!")
+    LogInfo("Creating Pipeline For: " + material->GetMaterialName());
+    VulkanCheck(vkCreateGraphicsPipelines(vulkanContext->device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline.m_GraphicsPipeline), "Failed to create graphics pipeline!")
+
+    LogInfo("Pipeline Created For: " + material->GetMaterialName());
 }

@@ -118,7 +118,7 @@ namespace Descriptor
 
 
 		static VkDescriptorSet Allocate(VkDevice device, VkDescriptorSetLayout setLayout, uint8_t frameNumber);
-		static void ClearPools(VkDevice device, uint8_t frameNumber);
+		static void ClearPools(VkDevice device);
 
 	private:
 		static inline std::vector<std::unique_ptr<DescriptorAllocator>> m_FrameAllocators;

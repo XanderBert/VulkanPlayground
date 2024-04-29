@@ -52,5 +52,4 @@ includes/imgui/.github/*
 .clang-tidy
 
 #clion cmake
-cmake-build-debug*/*
-cmake-build-release*/*
+cmake-build-*/*
