@@ -1,16 +1,14 @@
 #include "ImGuiWrapper.h"
-
+#include <glm/gtc/type_ptr.hpp>
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_vulkan.h"
-#include "ImGuizmo.h"
+#include "implot.h"
 
-#include "Camera/Camera.h"
 #include "DepthResource.h"
 #include "Patterns/ServiceLocator.h"
 #include "SwapChain.h"
-#include "implot.h"
 #include "vulkanbase/VulkanTypes.h"
-#include "glm/gtc/type_ptr.hpp"
+
 
 void ImGuiWrapper::Initialize(VkQueue graphicsQueue)
 {
@@ -20,7 +18,7 @@ void ImGuiWrapper::Initialize(VkQueue graphicsQueue)
 	// The example only requires a single combined image sampler descriptor for the font image and only uses one descriptor set (for that)
 	// If you wish to load e.g. additional textures you may need to alter pools sizes.
 	{
-		const VkDescriptorPoolSize pool_sizes[] =
+        constexpr VkDescriptorPoolSize pool_sizes[] =
 		{
 			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 100 },
 		};
@@ -206,3 +204,16 @@ void ImGuiWrapper::EndFrame()
 {
 	ImGui::EndFrame();
 }
+
+
+
+ ImGuiTexture::ImGuiTexture(VkSampler sampler, VkImageView imageView) {
+    ImGuiDescriptorSet = ImGui_ImplVulkan_AddTexture(sampler, imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+}
+
+//ImGuiTexture &ImGuiTexture::operator=(ImGuiTexture &&other) noexcept
+
+
+
+ImGuiTexture::~ImGuiTexture() { ImGui_ImplVulkan_RemoveTexture(ImGuiDescriptorSet); }
+void ImGuiTexture::Render(ImVec2 size) const { ImGui::Image(static_cast<void *>(ImGuiDescriptorSet), size); }

@@ -172,15 +172,26 @@ namespace Image
 	}
 }
 
-Texture::Texture(const std::string& path, VulkanContext* vulkanContext)
+Texture::Texture(const std::string &path, VulkanContext *vulkanContext)
 {
-	ImageLoader::CreateTexture(path, vulkanContext, m_Image, m_ImageMemory, m_ImageSize);
-	Image::CreateImageView(vulkanContext->device, m_Image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, m_ImageView);
-	Image::CreateSampler(vulkanContext, m_Sampler);
+    ImageLoader::CreateTexture(path, vulkanContext, m_Image, m_ImageMemory, m_ImageSize);
+    Image::CreateImageView(vulkanContext->device, m_Image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT,m_ImageView);
+    Image::CreateSampler(vulkanContext, m_Sampler);
 
-    m_ImGuiDescriptorSet = ImGui_ImplVulkan_AddTexture(m_Sampler, m_ImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    m_ImTexture = std::make_unique<ImGuiTexture>(m_Sampler, m_ImageView);
 }
 
+Texture::Texture(Texture &&other) noexcept
+{
+    if (&other != this) {
+        m_Image = other.m_Image;
+        m_ImageMemory = other.m_ImageMemory;
+        m_ImageView = other.m_ImageView;
+        m_Sampler = other.m_Sampler;
+        m_ImTexture = std::move(other.m_ImTexture);
+        m_ImageSize = other.m_ImageSize;
+    }
+}
 void Texture::ProperBind(int bindingNumber, Descriptor::DescriptorWriter &descriptorWriter)
 {
     descriptorWriter.WriteImage(bindingNumber, m_ImageView, m_Sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
@@ -188,9 +199,6 @@ void Texture::ProperBind(int bindingNumber, Descriptor::DescriptorWriter &descri
 
 void Texture::Cleanup(VkDevice device) const
 {
-    ImGui_ImplVulkan_RemoveTexture(m_ImGuiDescriptorSet);
-
-
     vkDestroySampler(device, m_Sampler, nullptr);
     vkDestroyImageView(device, m_ImageView, nullptr);
     vkFreeMemory(device, m_ImageMemory, nullptr);
@@ -198,5 +206,5 @@ void Texture::Cleanup(VkDevice device) const
 }
 void Texture::OnImGui() const
 {
-    ImGui::Image(static_cast<void*>(m_ImGuiDescriptorSet), ImVec2(m_ImageSize.x / 5.0f , m_ImageSize.y  / 5.0f));
+    m_ImTexture->Render(ImVec2(m_ImageSize.x / 5.0f , m_ImageSize.y  / 5.0f));
 }

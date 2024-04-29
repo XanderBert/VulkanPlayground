@@ -4,6 +4,7 @@
 #include <glm/vec2.hpp>
 
 #include "Core/Descriptor.h"
+#include "Core/ImGuiWrapper.h"
 #include "vulkanbase/VulkanTypes.h"
 
 
@@ -41,18 +42,8 @@ public:
 	~Texture() = default;
 	Texture(const Texture&) = delete;
 	Texture& operator=(const Texture&) = delete;
-	Texture(Texture&& other) noexcept
-	{
-        if(&other != this)
-        {
-            m_Image = other.m_Image;
-            m_ImageMemory = other.m_ImageMemory;
-            m_ImageView = other.m_ImageView;
-            m_Sampler = other.m_Sampler;
-            m_ImGuiDescriptorSet = other.m_ImGuiDescriptorSet;
-            m_ImageSize = other.m_ImageSize;
-        }
-	};
+	Texture(Texture &&other) noexcept;
+    ;
 	Texture& operator=(Texture&&) = delete;
 
     void ProperBind(int bindingNumber, Descriptor::DescriptorWriter& descriptorWriter);
@@ -60,7 +51,7 @@ public:
 
     void OnImGui() const;
 private:
-    VkDescriptorSet m_ImGuiDescriptorSet{};
+    std::unique_ptr<ImGuiTexture> m_ImTexture;
 
     glm::ivec2 m_ImageSize{};
 

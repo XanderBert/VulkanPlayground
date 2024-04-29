@@ -1,10 +1,10 @@
 #pragma once
-
-#include <vulkan/vulkan_core.h>
-
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui.h"
 #include "ImGuizmo.h"
+
+#include <vulkan/vulkan.h>
+
 
 
 class ImGuiWrapper final
@@ -32,11 +32,34 @@ struct ImGuizmoHandler
 {
     inline static ImGuizmo::OPERATION GizmoOperation = ImGuizmo::TRANSLATE;
 
-    inline static void RotateOperation() { GizmoOperation = ImGuizmo::ROTATE; }
-    inline static void TranslateOperation() { GizmoOperation = ImGuizmo::TRANSLATE; }
-    inline static void ScaleOperation() { GizmoOperation = ImGuizmo::SCALE; }
+    static void RotateOperation() { GizmoOperation = ImGuizmo::ROTATE; }
+    static void TranslateOperation() { GizmoOperation = ImGuizmo::TRANSLATE; }
+    static void ScaleOperation() { GizmoOperation = ImGuizmo::SCALE; }
 };
 
+class ImGuiTexture final
+{
+public:
+    ImGuiTexture(VkSampler sampler, VkImageView imageView);
+    ImGuiTexture(const ImGuiTexture&) = delete;
+    ImGuiTexture& operator=(const ImGuiTexture&) = delete;
+    ImGuiTexture(ImGuiTexture&&) = delete;
+    ImGuiTexture& operator=(ImGuiTexture&& other) noexcept
+    {
+        if(&other != this)
+        {
+            ImGuiDescriptorSet = other.ImGuiDescriptorSet;
+        }
+
+        return *this;
+    }
+    ~ImGuiTexture();
+
+    void Render(ImVec2 size) const;
+
+private:
+    VkDescriptorSet ImGuiDescriptorSet;
+};
 
 
 

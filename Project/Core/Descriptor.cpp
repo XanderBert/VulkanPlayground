@@ -324,12 +324,11 @@ namespace Descriptor
 
 
 
-	VkDescriptorSet DescriptorManager::Allocate(VkDevice device, VkDescriptorSetLayout setLayout, uint8_t frameNumber)
-	{
-		return m_FrameAllocators[frameNumber]->Allocate(device, setLayout);
-	}
+	VkDescriptorSet DescriptorManager::Allocate(VkDevice device, VkDescriptorSetLayout setLayout, uint8_t frameNumber) {
+        return m_FrameAllocators[frameNumber]->Allocate(device, setLayout);
+    }
 
-	void DescriptorManager::ClearPools(VkDevice device)
+    void DescriptorManager::ClearPools(VkDevice device)
 	{
 		m_FrameAllocators[0]->ClearPools(device);
 	}
