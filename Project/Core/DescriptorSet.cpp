@@ -118,7 +118,7 @@ void DescriptorSet::CleanUp(VkDevice device) {
     // Cleanup the layout
     vkDestroyDescriptorSetLayout(device, m_DescriptorSetLayout, nullptr);
 }
-void DescriptorSet::OnImGui() const
+void DescriptorSet::OnImGui()
 {
 
     ImGui::Separator();

@@ -38,7 +38,7 @@ public:
 	Material(Material&&) = delete;
 	Material& operator=(Material&&) = delete;
 
-	void OnImGui() const;
+	void OnImGui();
 
     void Bind(VkCommandBuffer commandBuffer, const glm::mat4x4& pushConstantMatrix);
 

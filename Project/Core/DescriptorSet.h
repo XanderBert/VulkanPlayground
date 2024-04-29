@@ -37,7 +37,7 @@ public:
 
     void CleanUp(VkDevice device);
 
-    void OnImGui() const;
+    void OnImGui();
 private:
     std::unordered_map<int, DynamicBuffer> m_UniformBuffers{};
     std::unordered_map<int, Texture> m_Textures{};

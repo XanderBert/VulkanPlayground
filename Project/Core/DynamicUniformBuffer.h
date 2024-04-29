@@ -49,7 +49,7 @@ public:
 	void UpdateVariable(uint16_t handle, const glm::mat4& matrix);
 	void UpdateVariable(uint16_t handle, const glm::vec4& value);
 
-    void OnImGui() const;
+    void OnImGui();
 private:
 	const float* GetData() const;
 	size_t GetSize() const;

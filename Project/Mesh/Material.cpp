@@ -26,11 +26,9 @@ Material::Material(VulkanContext *vulkanContext, std::string materialName)
 
     const auto ubo = m_DescriptorSet.AddUniformBuffer(0);
     ubo->AddVariable(glm::vec4{1});
-
-    //m_DescriptorSet.AddTexture(1, "texture.jpg",m_pContext);
 }
 
-void Material::OnImGui() const
+void Material::OnImGui()
 {
 	ImGui::Text("Shader Count: %d", static_cast<int>(m_Shaders.size()));
 
@@ -46,7 +44,9 @@ void Material::Bind(const VkCommandBuffer commandBuffer, const glm::mat4x4& push
 {
     //Update model matrix
     m_pGraphicsPipeline->BindPushConstant(commandBuffer, pushConstantMatrix);
-
+    m_pGraphicsPipeline->BindPipeline(commandBuffer);
+    GlobalDescriptor::Bind(m_pContext, commandBuffer, m_pGraphicsPipeline->GetPipelineLayout());
+    m_DescriptorSet.Bind(m_pContext, commandBuffer, m_pGraphicsPipeline->GetPipelineLayout(), 1);
 
     //TODO: This is a temporary solution to avoid binding the same pipeline multiple times
     //This would be a better solution:
@@ -63,18 +63,6 @@ void Material::Bind(const VkCommandBuffer commandBuffer, const glm::mat4x4& push
     //Don't bind the same pipeline if it's already bound
     //if(MaterialManager::GetCurrentBoundPipeline() ==  m_pGraphicsPipeline.get()) return;
     //MaterialManager::SetCurrentBoundPipeline(m_pGraphicsPipeline.get());
-
-    //Bind the pipeline
-    m_pGraphicsPipeline->BindPipeline(commandBuffer);
-
-    GlobalDescriptor::Bind(m_pContext, commandBuffer, m_pGraphicsPipeline->GetPipelineLayout());
-
-    //Update the material uniform buffer for testing
-    const float time = GameTimer::GetElapsedTime();
-    const float changingValue = std::sin(time) * 0.5f + 0.5f;
-    m_DescriptorSet.GetUniformBuffer(0)->UpdateVariable(0, glm::vec4{changingValue});
-
-    m_DescriptorSet.Bind(m_pContext, commandBuffer, m_pGraphicsPipeline->GetPipelineLayout(), 1);
 }
 
 Shader* Material::AddShader(const std::string& shaderPath, const ShaderType shaderType)

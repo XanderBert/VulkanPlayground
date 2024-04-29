@@ -65,14 +65,21 @@ void DynamicBuffer::UpdateVariable(uint16_t handle, const glm::vec4 &value) {
     constexpr uint8_t size = sizeof(glm::vec4) / sizeof(float);
     Update(handle, glm::value_ptr(value), size);
 }
-void DynamicBuffer::OnImGui() const {
+void DynamicBuffer::OnImGui()
+{
     ImGui::Text("Uniform Buffer Size: %d bytes", GetSize());
     ImGui::Text("Data: ");
+
+    std::string labelAddition = "##" + std::to_string(reinterpret_cast<uintptr_t>(this));
 
     //Display data in rows, each row has 4 floats
     for(int i {}; i <= m_Data.size() - 4; ++i)
     {
-        ImGui::Text("%f %f %f %f", m_Data[i], m_Data[i + 1], m_Data[i + 2], m_Data[i + 3]);
+        const std::string label = std::to_string(i) + labelAddition;
+
+        //Get pointer to Those 4 floats  floats
+        float* dataPtr = m_Data.data() + i;
+        ImGui::ColorEdit4(label.c_str(), dataPtr);
     }
 }
 

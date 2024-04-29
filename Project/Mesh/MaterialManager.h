@@ -25,7 +25,11 @@ public:
 	            auto material = CreateMaterial(pContext, "shader.vert", "shader.frag", "New Test Material");
 
 	            //TODO: In a perfect world, I would read the shader files and look at set 1. Add all the needed bindings to the descriptor set
-                //Add the needed bindings for the descriptorset
+                //TODO: This would actually also be done when a shader gets reloaded because bindings could be added or removed
+                //Actual data can just be an imgui widget that can be added to the descriptor set.
+	            //A texture will for now just be grey. But textures would need to be switched out when clicked on it.
+
+	            //Add the needed bindings for the descriptorset
 	            material->GetDescriptorSet()->AddTexture(1, "vehicle_normal.png", pContext);
 
 	            //Create Pipeline
