@@ -2,6 +2,7 @@
 #include <memory>
 #include <vector>
 #include "Material.h"
+#include "Patterns/ServiceLocator.h"
 
 class MaterialManager final
 {
@@ -15,7 +16,26 @@ public:
 
 	static void OnImGui()
 	{
-		ImGui::Begin("Materials");
+        ImGui::Begin("Material Factory");
+
+	        if(ImGui::Button("New Material"))
+	        {
+	            VulkanContext* pContext = ServiceLocator::GetService<VulkanContext>();
+
+	            auto material = CreateMaterial(pContext, "shader.vert", "shader.frag", "New Test Material");
+
+	            //TODO: In a perfect world, I would read the shader files and look at set 1. Add all the needed bindings to the descriptor set
+                //Add the needed bindings for the descriptorset
+	            material->GetDescriptorSet()->AddTexture(1, "vehicle_normal.png", pContext);
+
+	            //Create Pipeline
+                material->CreatePipeline();
+	        }
+
+	    ImGui::End();
+
+
+		ImGui::Begin("Active Materials");
 		ImGui::Text("Materials: %d", static_cast<int>(m_ActiveMaterials.size()));
 		for (const auto& material : m_ActiveMaterials)
 		{
