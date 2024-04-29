@@ -36,6 +36,7 @@ public:
 		}
 		return meshes;
 	}
+    void AddMesh(std::unique_ptr<Mesh> mesh);
 
 private:
 	std::vector<std::unique_ptr<Mesh>> m_Meshes{};

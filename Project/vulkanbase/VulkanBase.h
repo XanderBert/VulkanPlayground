@@ -22,11 +22,12 @@
 #include "Core/Logger.h"
 #include "Input/Input.h"
 
-#include "imgui_impl_vulkan.h"
-#include "Mesh/MaterialManager.h"
-#include "Core/SwapChain.h"
 #include <thread>
+#include "Core/SwapChain.h"
+#include "Mesh/MaterialManager.h"
+#include "imgui_impl_vulkan.h"
 
+#include "Scene/SceneManager.h"
 
 
 struct ImGui_ImplVulkan_InitInfo;
@@ -49,8 +50,11 @@ public:
 		ServiceConfigurator::Configure();
 		initVulkan();
 		ImGuiWrapper::Initialize(m_pContext->graphicsQueue);
-		m_pScene = std::make_unique<Scene>(m_pContext);
-		Input::SetupInput(m_pContext->window.Ptr());
+
+	    SceneManager::AddScene(std::make_unique<Scene>(m_pContext));
+
+
+	    Input::SetupInput(m_pContext->window.Ptr());
 		MaterialManager::CreatePipelines();
 		mainLoop();
 		cleanup();
@@ -135,16 +139,13 @@ private:
 		Descriptor::DescriptorManager::Cleanup(m_pContext->device);
 		ShaderManager::Cleanup(m_pContext->device);
 		MaterialManager::Cleanup();
-		m_pScene->CleanUp();
-
+		SceneManager::CleanUp();
 	    ImGuiWrapper::Cleanup();
-
 		SwapChain::Cleanup(m_pContext);
 		m_pContext->CleanUp();
 	}
 
 	VulkanContext* m_pContext{};
-	std::unique_ptr<Scene> m_pScene;
 	ShaderFileWatcher shaderFileWatcher{};
 	CommandBuffer commandBuffer{};
 	PFN_vkCmdBeginRenderingKHR vkCmdBeginRenderingKHR{ VK_NULL_HANDLE };
@@ -211,8 +212,7 @@ private:
 
 
 		vkCmdBeginRenderingKHR(commandBuffer.Handle, &renderInfo);
-
-		m_pScene->Render(commandBuffer.Handle);
+        SceneManager::Render(commandBuffer.Handle);
 		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer.Handle);
 		vkCmdEndRenderingKHR(commandBuffer.Handle);
 	}

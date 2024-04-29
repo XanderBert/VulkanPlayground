@@ -135,7 +135,7 @@ Shader* ShaderManager::CreateShader(VulkanContext* vulkanContext, const std::str
 		return shader;
 	}
 
-    //SpirvHelper::CompileAndSaveShader(fileName);
+    SpirvHelper::CompileAndSaveShader(fileName);
 	VkPipelineShaderStageCreateInfo shaderInfo = ShaderBuilder::CreateShaderInfo(vulkanContext->device, static_cast<VkShaderStageFlagBits>(shaderType), fileName);
 
 

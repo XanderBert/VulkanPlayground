@@ -21,3 +21,4 @@ TODO:
 - Scene Graph
 - Scene Serialization
 - Scene Deserialization
+- Make 2 types of Descriptor Allocators (Each Frame (Dynamic Descriptor Sets) and One Time (Static Descriptor Sets))

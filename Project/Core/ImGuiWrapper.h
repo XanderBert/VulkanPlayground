@@ -1,8 +1,8 @@
 #pragma once
 #define IMGUI_DEFINE_MATH_OPERATORS
+
 #include "imgui.h"
 #include "ImGuizmo.h"
-
 #include <vulkan/vulkan.h>
 
 
@@ -23,6 +23,8 @@ public:
 	static void Cleanup();
 	static void NewFrame();
 	static void EndFrame();
+
+    static void SetDarkStyle();
 
 private:
 	inline static VkDescriptorPool descriptorPool;

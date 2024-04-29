@@ -47,7 +47,7 @@ public:
 				const std::string shaderName = m_ShaderName + m_ShaderExtension;
 
 				//Create the actual shader based on the BaseShaders
-				CreateShader("shaders/BaseShaders/BaseShader" + m_ShaderExtension, "shaders", shaderName);
+				CreateShader("shaders/shader" + m_ShaderExtension, "shaders", shaderName);
 			}
 		}
 		ImGui::End();

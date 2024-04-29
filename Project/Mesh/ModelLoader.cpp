@@ -6,7 +6,7 @@
 #include "Vertex.h"
 #include "Core/Logger.h"
 
-
+//TODO Move to a seperate thread
 namespace ObjLoader
 {
 	void LoadObj(const std::string& filePath, std::vector<Vertex>& vertices, std::vector<uint32_t>& indices)
@@ -25,9 +25,13 @@ namespace ObjLoader
 			LogError("Failed to load: " + filePath);
 			LogError(errors);
 			LogWarning(warnings);
+		    return;
 		}
 
-		std::unordered_map<Vertex, uint32_t, VertexHasher> uniqueVertices{};
+        std::string logMaterials = filePath + " has " + std::to_string(materials.size()) + " Materials";
+	    LogInfo(logMaterials);
+
+	    std::unordered_map<Vertex, uint32_t, VertexHasher> uniqueVertices{};
 		for (auto& shape : shapes)
 		{
 			tinyobj::mesh_t& mesh = shape.mesh;
@@ -44,6 +48,12 @@ namespace ObjLoader
 				glm::vec3 normal{};
 				if(i.normal_index != -1)
 				{
+				    if(3 * i.normal_index + 2 >= attributes.vertices.size())
+				    {
+				        LogError("This is not a supported .Obj file! The Normals Index is out of bounds!");
+				        return;
+				    }
+
 					normal =
 					{
 						attributes.vertices[3 * i.normal_index],
@@ -76,5 +86,7 @@ namespace ObjLoader
 				indices.push_back(uniqueVertices[vertex]);
 			}
 		}
+
+	    LogInfo("Successfully loaded: " + filePath);
 	}
 }

@@ -1,10 +1,9 @@
 -- create_shader.lua
 function CreateShader(sourceFileName, destinationFolder, destinationFileName)
-   
     local sourceFile = io.open(sourceFileName, "rb")
 
     if not sourceFile then
-        print("Failed to open the source file for reading.")
+        print("Failed to open:" .. sourceFileName .. " the source file for reading.")
         return
     end
 
@@ -15,7 +14,7 @@ function CreateShader(sourceFileName, destinationFolder, destinationFileName)
     local destinationFile = io.open(destinationPath, "wb")
 
     if not destinationFile then
-        print("Failed to open the destination file for writing.")
+        print("Failed to open the destination file for writing: " .. destinationPath)
         return
     end
 

@@ -1,6 +1,6 @@
 #version 450
 
-//layout(set = 0, binding = 0) uniform sampler2D combinedTexture;
+layout(set = 1, binding = 1) uniform sampler2D albedoMap;
 
 layout (location = 0) in vec2 inUV;
 layout (location = 1) in vec3 inNormal;
@@ -11,6 +11,8 @@ layout(location = 0) out vec4 outColor;
 void main() 
 {
 	vec4 color = vec4(0.8, 0.8, 0.8, 1);
+	color = texture(albedoMap, inUV);
+
 	const float ambient = 0.1;
 
 	vec3 N = normalize(inNormal);

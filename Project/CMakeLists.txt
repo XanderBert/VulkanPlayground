@@ -99,6 +99,8 @@ set(SOURCES
     "Core/DynamicUniformBuffer.cpp"
     "Core/DescriptorSet.cpp"
     "Core/DescriptorSet.h"
+        Scene/SceneManager.cpp
+        Scene/SceneManager.h
 )
 
 
@@ -186,6 +188,17 @@ set (IMPLOT_SOURCE_FILES
     ${implot_SOURCE_DIR}/implot_internal.h
 )
 
+FetchContent_Declare(
+        ImGuiFileDialog
+        GIT_REPOSITORY  https://github.com/aiekick/ImGuiFileDialog.git
+)
+FetchContent_MakeAvailable(ImGuiFileDialog)
+set (IMGUIFILEDIALOG_SOURCE_FILES
+        ${imguifiledialog_SOURCE_DIR}/ImGuiFileDialog.cpp
+        ${imguifiledialog_SOURCE_DIR}/ImGuiFileDialog.h
+        ${imguifiledialog_SOURCE_DIR}/ImGuiFileDialogConfig.h
+)
+
 
 set(EXTERNALS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../includes)
 set(STB_SOURCES ${EXTERNALS_DIR}/stb/stb_image.h)
@@ -197,7 +210,8 @@ add_executable(
     ${GLSL_SOURCE_FILES}  
     ${IMGUI_SOURCE_FILES} 
     ${IMGUIZMO_SOURCE_FILES} 
-    ${IMPLOT_SOURCE_FILES} 
+    ${IMPLOT_SOURCE_FILES}
+    ${IMGUIFILEDIALOG_SOURCE_FILES}
     ${LUA_SCRIPTS} 
     ${STB_SOURCES}
 )
@@ -217,19 +231,17 @@ target_include_directories(
     PRIVATE ${IMGUI_DIR}
     PRIVATE ${imguizmo_SOURCE_DIR}
     PRIVATE ${implot_SOURCE_DIR}
+    PRIVATE ${imguifiledialog_SOURCE_DIR}
 )
 
 string(REPLACE ".lib" "d.lib" SHADERC_DEBUG ${Vulkan_shaderc_combined_LIBRARY})
-
-#target_link_options(${PROJECT_NAME}  PUBLIC "/ignore:4099")
-
-target_link_libraries(${PROJECT_NAME} 
-    
-PRIVATE ${Vulkan_LIBRARIES}
+target_link_libraries(${PROJECT_NAME}
+    PRIVATE ${Vulkan_LIBRARIES}
     PUBLIC glfw
     PUBLIC debug ${SHADERC_DEBUG} optimized ${Vulkan_shaderc_combined_LIBRARY}
     PRIVATE lua::lua
     PRIVATE efsw-static
     PRIVATE glm
     PRIVATE tinyobjloader
+    #PRIVATE ImGuiFileDialog
 )

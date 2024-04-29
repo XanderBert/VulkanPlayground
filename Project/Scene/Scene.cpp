@@ -141,8 +141,11 @@ void Scene::Render(VkCommandBuffer commandBuffer) const
 
 void Scene::CleanUp() const
 {
-	for (const auto& mesh : m_Meshes)
-	{
-		mesh->CleanUp();
-	}
+    for (const auto &mesh: m_Meshes) {
+        mesh->CleanUp();
+    }
+}
+void Scene::AddMesh(std::unique_ptr<Mesh> mesh)
+{
+    m_Meshes.push_back(std::move(mesh));
 }

@@ -4,11 +4,16 @@
 #include "backends/imgui_impl_vulkan.h"
 #include "implot.h"
 
+
 #include "DepthResource.h"
+#include "Mesh/MaterialManager.h"
 #include "Patterns/ServiceLocator.h"
+#include "Scene/Scene.h"
+#include "Scene/SceneManager.h"
 #include "SwapChain.h"
 #include "vulkanbase/VulkanTypes.h"
 
+#include <ImGuiFileDialog.h>
 
 void ImGuiWrapper::Initialize(VkQueue graphicsQueue)
 {
@@ -65,7 +70,86 @@ void ImGuiWrapper::Initialize(VkQueue graphicsQueue)
 	init_info.PipelineRenderingCreateInfo.depthAttachmentFormat = DepthResource::GetFormat();
 
 	ImGui_ImplVulkan_Init(&init_info);
+    SetDarkStyle();
+    LogInfo("Imgui Initialized");
+}
 
+void ImGuiWrapper::Cleanup()
+{
+	ImGui_ImplVulkan_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImPlot::DestroyContext();
+	ImGui::DestroyContext();
+
+	vkDestroyDescriptorPool(ServiceLocator::GetService<VulkanContext>()->device, descriptorPool, nullptr);
+}
+
+void ImGuiWrapper::NewFrame()
+{
+	ImGui_ImplVulkan_NewFrame();
+	ImGui_ImplGlfw_NewFrame();
+	ImGui::NewFrame();
+    //Enable Proper Docking
+	ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
+
+    ImGuizmo::BeginFrame();
+    ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, static_cast<float>(SwapChain::Extends().width), static_cast<float>(SwapChain::Extends().height));
+
+    if (ImGui::BeginMainMenuBar()) {
+        if (ImGui::BeginMenu("File"))
+        {
+            if (ImGui::MenuItem("Import", "Ctrl+I"))
+            {
+                //Open File Dialog
+                //Test import mesh
+                LogInfo("Importing Mesh...");
+
+                IGFD::FileDialogConfig config;
+                config.path = ".";
+                config.countSelectionMax = 1;
+                config.flags = ImGuiFileDialogFlags_Modal;
+                ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".obj", config);
+            }
+
+            ImGui::EndMenu();
+        }
+        // if (ImGui::BeginMenu("Edit"))
+        // {
+        //     if (ImGui::MenuItem("Undo", "CTRL+Z")) {}
+        //     if (ImGui::MenuItem("Redo", "CTRL+Y", false, false)) {}  // Disabled item
+        //     ImGui::Separator();
+        //     if (ImGui::MenuItem("Cut", "CTRL+X")) {}
+        //     if (ImGui::MenuItem("Copy", "CTRL+C")) {}
+        //     if (ImGui::MenuItem("Paste", "CTRL+V")) {}
+        //     ImGui::EndMenu();
+        // }
+        ImGui::EndMainMenuBar();
+    }
+
+    // Display The File Dialog When Needed
+    if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+    {
+        if (ImGuiFileDialog::Instance()->IsOk())
+        {
+            std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+            std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
+            std::string fullPath = filePath + "\\" + filePathName;
+
+            std::shared_ptr<Material> baseMaterial = MaterialManager::GetMaterials()[0];
+            std::unique_ptr<Mesh> newMesh = std::make_unique<Mesh>(fullPath, baseMaterial, filePathName);
+            SceneManager::GetActiveScene()->AddMesh(std::move(newMesh));
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
+}
+
+void ImGuiWrapper::EndFrame()
+{
+    ImGui::EndFrame();
+}
+
+void ImGuiWrapper::SetDarkStyle()
+{
 	ImVec4* colors = ImGui::GetStyle().Colors;
 	colors[ImGuiCol_Text] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
 	colors[ImGuiCol_TextDisabled] = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
@@ -146,72 +230,15 @@ void ImGuiWrapper::Initialize(VkQueue graphicsQueue)
 	style.GrabRounding = 3;
 	style.LogSliderDeadzone = 4;
 	style.TabRounding = 4;
-
-
-    LogInfo("Imgui Initialized");
-}
-
-void ImGuiWrapper::Cleanup()
-{
-	ImGui_ImplVulkan_Shutdown();
-	ImGui_ImplGlfw_Shutdown();
-	ImPlot::DestroyContext();
-	ImGui::DestroyContext();
-
-	vkDestroyDescriptorPool(ServiceLocator::GetService<VulkanContext>()->device, descriptorPool, nullptr);
-}
-
-void ImGuiWrapper::NewFrame()
-{
-	ImGui_ImplVulkan_NewFrame();
-	ImGui_ImplGlfw_NewFrame();
-	ImGui::NewFrame();
-    //Enable Proper Docking
-	ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
-
-    ImGuizmo::BeginFrame();
-    ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, static_cast<float>(SwapChain::Extends().width), static_cast<float>(SwapChain::Extends().height));
-
-    //ImGui::ShowDemoWindow();
-
-    if (ImGui::BeginMainMenuBar()) {
-        if (ImGui::BeginMenu("File"))
-        {
-            if (ImGui::MenuItem("Import", "Ctrl+I"))
-            {
-                //Open File Dialog
-                //Test import mesh
-                LogInfo("Importing Mesh...");
-            }
-
-            ImGui::EndMenu();
-        }
-        // if (ImGui::BeginMenu("Edit"))
-        // {
-        //     if (ImGui::MenuItem("Undo", "CTRL+Z")) {}
-        //     if (ImGui::MenuItem("Redo", "CTRL+Y", false, false)) {}  // Disabled item
-        //     ImGui::Separator();
-        //     if (ImGui::MenuItem("Cut", "CTRL+X")) {}
-        //     if (ImGui::MenuItem("Copy", "CTRL+C")) {}
-        //     if (ImGui::MenuItem("Paste", "CTRL+V")) {}
-        //     ImGui::EndMenu();
-        // }
-        ImGui::EndMainMenuBar();
-    }
-}
-
-void ImGuiWrapper::EndFrame()
-{
-	ImGui::EndFrame();
 }
 
 
-
- ImGuiTexture::ImGuiTexture(VkSampler sampler, VkImageView imageView) {
+ImGuiTexture::ImGuiTexture(VkSampler sampler, VkImageView imageView) {
     ImGuiDescriptorSet = ImGui_ImplVulkan_AddTexture(sampler, imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
-void ImGuiTexture::Cleanup() {
+void ImGuiTexture::Cleanup()
+{
     ImGui_ImplVulkan_RemoveTexture(ImGuiDescriptorSet);
 }
 
