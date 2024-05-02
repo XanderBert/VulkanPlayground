@@ -11,8 +11,11 @@ struct Vertex;
 class Mesh final
 {
 public:
-	Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, std::shared_ptr<Material> material, const std::string& meshName);
-	Mesh(const std::string& modelPath, std::shared_ptr<Material> material, const std::string& meshName = "");
+	Mesh(const std::vector<Vertex> &vertices, const std::vector<uint32_t> &indices,
+         const std::shared_ptr<Material> &material, const std::string &meshName);
+    Mesh(const std::vector<Vertex> &vertices, const std::vector<uint32_t> &indices,
+         const std::shared_ptr<Material> &material, std::string meshName);
+    Mesh(const std::string& modelPath, const std::shared_ptr<Material> &material, const std::string& meshName = "");
 	~Mesh() = default;
 
 	Mesh(const Mesh&) = delete;

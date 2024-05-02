@@ -1,29 +1,14 @@
 #pragma once
-#include <vulkan/vulkan.h>
-#include <utility>
-#include <vector>
+#include <glm/glm.hpp>
 #include <memory>
 #include <string>
-#include <glm/glm.hpp>
-
-#include <Core/Descriptor.h>
-#include <Core/GraphicsPipeline.h>
-#include <glm/gtc/type_ptr.hpp>
-
+#include <vector>
+#include <vulkan/vulkan.h>
 #include "Core/DescriptorSet.h"
-#include "Core/DynamicUniformBuffer.h"
-#include "Core/GlobalDescriptor.h"
-#include "shaders/Logic/Shader.h"
+#include "Core/GraphicsPipeline.h"
+
 
 enum class ShaderType;
-
-namespace Descriptor
-{
-	class DescriptorLayoutCache;
-	class DescriptorAllocator;
-}
-
-
 class Shader;
 class VulkanContext;
 
@@ -42,27 +27,24 @@ public:
 
     void Bind(VkCommandBuffer commandBuffer, const glm::mat4x4& pushConstantMatrix);
 
+    //Checks if a shader with the same type already exists,
+    //if so it removes it and adds the new one
+    Shader* SetShader(const std::string& shaderPath, ShaderType shaderType);
+
+    //Adds a shader of the specified type without checking if one is allready present of the same type
     Shader* AddShader(const std::string& shaderPath, ShaderType shaderType);
-	void ReloadShaders();
-    std::vector<Shader*> GetShaders() const;
 
-    const VkPipelineLayout& GetPipelineLayout() const;
+    void CreatePipeline();
 
-    VkPipelineLayoutCreateInfo GetPipelineLayoutCreateInfo();
-
-    std::string GetMaterialName() const
-	{
-		return m_MaterialName;
-	}
-
-    DescriptorSet* GetDescriptorSet()
-    {
-        return &m_DescriptorSet;
-    }
+    [[nodiscard]] std::vector<Shader*> GetShaders() const;
+    [[nodiscard]] const VkPipelineLayout& GetPipelineLayout() const;
+    [[nodiscard]] VkPipelineLayoutCreateInfo GetPipelineLayoutCreateInfo();
+    [[nodiscard]] std::string GetMaterialName() const;
+    [[nodiscard]] DescriptorSet* GetDescriptorSet();
 
 private:
 	friend class MaterialManager;
-	void CreatePipeline();
+
 	void CleanUp();
 
 	std::unique_ptr<GraphicsPipeline> m_pGraphicsPipeline;

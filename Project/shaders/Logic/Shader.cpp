@@ -14,9 +14,14 @@
 //-------------------------Shader-------------------------
 //--------------------------------------------------------
 
-void Shader::AddMaterial(Material* material)
+void Shader::AddMaterial(Material *material)
 {
-	m_pMaterials.push_back(material);
+    m_pMaterials.push_back(material);
+}
+
+void Shader::RemoveMaterial(Material *material)
+{
+    std::erase(m_pMaterials, material);
 }
 
 
@@ -41,25 +46,25 @@ void Shader::OnImGui(const std::string& materialName)
 
 std::string Shader::GetFileName() const
 {
-	return m_FileName;
+    return m_FileName;
+}
+
+ShaderType Shader::GetShaderType() const
+{
+    return static_cast<ShaderType>(m_ShaderInfo.stage);
 }
 
 void Shader::Cleanup(VkDevice device) const
 {
-	CleanupModule(device);
+    vkDestroyShaderModule(device, m_ShaderInfo.module, nullptr);
 }
 
-void Shader::CleanupModule(VkDevice device) const
-{
-	vkDestroyShaderModule(device, m_ShaderInfo.module, nullptr);
-}
 
 Shader::Shader(const VkPipelineShaderStageCreateInfo& shaderInfo, Material* material, const std::string& filename)
 	: m_ShaderInfo(shaderInfo)
 	, m_pMaterials({ material })
 	, m_FileName(filename)
 {
-
 }
 
 VkPipelineShaderStageCreateInfo Shader::GetStageInfo() const
@@ -105,7 +110,7 @@ VkShaderModule ShaderManager::ShaderBuilder::CreateShaderModule(const VkDevice& 
 	return shaderModule;
 }
 
-void ShaderManager::ReloadShader(VulkanContext* vulkanContext, const std::string& fileName, ShaderType shaderType)
+void ShaderManager::ReloadShader(const VulkanContext * vulkanContext, const std::string& fileName, ShaderType shaderType)
 {
 	LogInfo("Reloading shader: " + fileName);
 
@@ -113,49 +118,69 @@ void ShaderManager::ReloadShader(VulkanContext* vulkanContext, const std::string
 	LogAssert(it != m_ShaderInfo.end(), "Shader does not exist", true)
 
 	Shader* shader = it->second.get();
-	shader->CleanupModule(vulkanContext->device);
+	shader->Cleanup(vulkanContext->device);
 
 	const VkPipelineShaderStageCreateInfo shaderInfo = ShaderBuilder::CreateShaderInfo(vulkanContext->device, static_cast<VkShaderStageFlagBits>(shaderType), fileName);
 	shader->m_ShaderInfo = shaderInfo;
 
+
 	//Update the shader for every material
 	for (Material* material : shader->m_pMaterials)
 	{
-		material->ReloadShaders();
+		material->CreatePipeline();
 	}
 }
 
-Shader* ShaderManager::CreateShader(VulkanContext* vulkanContext, const std::string& fileName, ShaderType shaderType, Material* material)
-{
-	// Check if the shader already exists
-    if (const auto it = m_ShaderInfo.find(fileName); it != m_ShaderInfo.end())
-	{
-		Shader* shader = it->second.get();
-		shader->AddMaterial(material);
-		return shader;
-	}
+Shader *ShaderManager::CreateShader(const VulkanContext *vulkanContext, const std::string &fileName,
+                                    ShaderType shaderType, Material *material) {
+    // Check if the shader already exists
+    if (const auto it = m_ShaderInfo.find(fileName); it != m_ShaderInfo.end()) {
+        Shader *shader = it->second.get();
+        shader->AddMaterial(material);
+        return shader;
+    }
 
     SpirvHelper::CompileAndSaveShader(fileName);
-	VkPipelineShaderStageCreateInfo shaderInfo = ShaderBuilder::CreateShaderInfo(vulkanContext->device, static_cast<VkShaderStageFlagBits>(shaderType), fileName);
+    VkPipelineShaderStageCreateInfo shaderInfo = ShaderBuilder::CreateShaderInfo(
+            vulkanContext->device, static_cast<VkShaderStageFlagBits>(shaderType), fileName);
 
 
-	std::unique_ptr<Shader> shaderPtr = std::make_unique<Shader>(shaderInfo, material, fileName);
-	Shader* shader = shaderPtr.get();
+    std::unique_ptr<Shader> shaderPtr = std::make_unique<Shader>(shaderInfo, material, fileName);
+    Shader *shader = shaderPtr.get();
 
-	m_ShaderInfo.insert(std::make_pair(fileName, std::move(shaderPtr)));
+    m_ShaderInfo.insert(std::make_pair(fileName, std::move(shaderPtr)));
 
-    // ReSharper disable once CppDFALocalValueEscapesFunction
     return shader;
 }
+void ShaderManager::RemoveMaterial(Shader *shader, Material *material)
+{
+    shader->RemoveMaterial(material);
+}
+
 
 void ShaderManager::Cleanup(VkDevice device)
 {
-	for (const auto &shader: m_ShaderInfo | std::views::values)
-	{
-		shader->Cleanup(device);
-	}
+    for (const auto &shader: m_ShaderInfo | std::views::values)
+    {
+        shader->Cleanup(device);
+    }
 
-	m_ShaderInfo.clear();
+    m_ShaderInfo.clear();
+}
+
+bool ShaderManager::ImGuiShaderGetter(void *data, int idx, const char **out_text) {
+    if (idx < 0 || idx >= m_ShaderInfo.size())
+        return false;
+
+    auto it = m_ShaderInfo.begin();
+
+    // Move the iterator to the desired index
+    std::advance(it, idx);
+
+    // Get the shader name at the index
+    *out_text = it->first.c_str();
+
+    return true;
 }
 
 VkPipelineVertexInputStateCreateInfo ShaderManager::GetVertexInputStateInfo()

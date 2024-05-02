@@ -3,6 +3,7 @@
 #include <vector>
 #include "Material.h"
 #include "Patterns/ServiceLocator.h"
+#include "shaders/Logic/Shader.h"
 
 class MaterialManager final
 {

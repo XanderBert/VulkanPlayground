@@ -7,6 +7,7 @@
 
 #include "Buffer.h"
 #include "Descriptor.h"
+#include "Patterns/ServiceLocator.h"
 
 
 //---------------------------------------------------------------
@@ -14,13 +15,8 @@
 //---------------------------------------------------------------
 void DynamicBuffer::Init(VulkanContext* vulkanContext)
 {
-	//Pad the data to 256 bytes
-	//const size_t padding = 256 - (m_Data.size() % 256);
-	//m_Data.insert(m_Data.end(), padding, 0);
-
-
 	//Log the size of the buffer in bytes
-	LogInfo("Dynamic buffer size: " + std::to_string(GetSize()) + " bytes");
+	LogInfo("Initializing Dynamic buffer with size: " + std::to_string(GetSize()) + " bytes");
 
 	Core::Buffer::CreateBuffer(vulkanContext, GetSize(), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_UniformBuffer, m_UniformBuffersMemory);
 	vkMapMemory(vulkanContext->device, m_UniformBuffersMemory, 0, GetSize(), 0, &m_UniformBuffersMapped);
@@ -67,19 +63,34 @@ void DynamicBuffer::UpdateVariable(uint16_t handle, const glm::vec4 &value) {
 }
 void DynamicBuffer::OnImGui()
 {
-    ImGui::Text("Uniform Buffer Size: %d bytes", GetSize());
-    ImGui::Text("Data: ");
-
     std::string labelAddition = "##" + std::to_string(reinterpret_cast<uintptr_t>(this));
 
+    ImGui::Text("Uniform Buffer Size: %d bytes", GetSize());
+    ImGui::Text("Data: ");
     //Display data in rows, each row has 4 floats
-    for(int i {}; i <= m_Data.size() - 4; ++i)
+    for(int i {}; i <= m_Data.size() - 4; i += 4)
     {
         const std::string label = std::to_string(i) + labelAddition;
 
         //Get pointer to Those 4 floats  floats
         float* dataPtr = m_Data.data() + i;
         ImGui::ColorEdit4(label.c_str(), dataPtr);
+    }
+
+    std::string labelAddColor4 = "Add Color4" + labelAddition;
+    if(ImGui::Button(labelAddColor4.c_str()))
+    {
+        AddVariable(glm::vec4{0});
+        Cleanup(ServiceLocator::GetService<VulkanContext>()->device);
+        Init(ServiceLocator::GetService<VulkanContext>());
+    }
+
+    std::string labelAddMat4 = "Add Mat4" + labelAddition;
+    if(ImGui::Button(labelAddMat4.c_str()))
+    {
+        AddVariable(glm::mat4{1});
+        Cleanup(ServiceLocator::GetService<VulkanContext>()->device);
+        Init(ServiceLocator::GetService<VulkanContext>());
     }
 }
 

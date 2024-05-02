@@ -1,5 +1,8 @@
 #include "Mesh.h"
 #include <chrono>
+#include <glm/gtx/rotate_vector.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <utility>
 
 #include "Camera/Camera.h"
 #include "Core/ImGuiWrapper.h"
@@ -12,16 +15,17 @@
 #include "vulkanbase/VulkanTypes.h"
 
 
-Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, std::shared_ptr<Material> material, const std::string& meshName)
+Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices,
+           const std::shared_ptr<Material> &material, std::string  meshName)
 	:m_pMaterial(material)
-	, m_MeshName(meshName)
+	, m_MeshName(std::move(meshName))
 {
 	m_pContext = ServiceLocator::GetService<VulkanContext>();
 	CreateVertexBuffer(vertices);
 	CreateIndexBuffer(indices);
 }
 
-Mesh::Mesh(const std::string& modelPath, std::shared_ptr<Material> material, const std::string& meshName)
+Mesh::Mesh(const std::string& modelPath, const std::shared_ptr<Material> &material, const std::string& meshName)
 	:m_pMaterial(material)
 {
 	m_MeshName = meshName.empty() ? m_MeshName = modelPath : m_MeshName = meshName;
@@ -103,7 +107,7 @@ void Mesh::OnImGui()
 	ImGui::DragFloat3(translationLabel.c_str(), matrixTranslation, 0.1f);
 	ImGui::DragFloat3(rotationLabel.c_str(), matrixRotation, 0.1f);
 	ImGui::DragFloat3(scaleLabel.c_str(), matrixScale, 0.1f);
-	ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, value_ptr(m_ModelMatrix));
+	ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, glm::value_ptr(m_ModelMatrix));
 
     //Guizmos
     ImGuizmo::Manipulate(value_ptr(Camera::GetViewMatrix()), value_ptr(Camera::GetInvertedYProjectionMatrix()), ImGuizmoHandler::GizmoOperation, ImGuizmo::MODE:: LOCAL, value_ptr(m_ModelMatrix));
@@ -143,10 +147,6 @@ void Mesh::SetRotation(const glm::vec3 &rotation) {
     m_ModelMatrix = glm::rotate(m_ModelMatrix, glm::radians(rotation.y), MathConstants::UP);
     m_ModelMatrix = glm::rotate(m_ModelMatrix, glm::radians(rotation.z), MathConstants::FORWARD);
 }
-// void Mesh::AddTexture(int binding, const std::string &texturePath)
-// {
-//     m_MeshDescriptorSet.AddTexture(binding, texturePath, m_pContext);
-// }
 
 void Mesh::CreateVertexBuffer(const std::vector<Vertex>& vertices)
 {

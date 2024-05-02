@@ -27,17 +27,19 @@ public:
 	Shader(Shader&&) = delete;
 	Shader& operator=(Shader&&) = delete;
 
-	VkPipelineShaderStageCreateInfo GetStageInfo() const;
-
 	void OnImGui(const std::string& materialName);
 
-	std::string GetFileName() const;
+    [[nodiscard]] VkPipelineShaderStageCreateInfo GetStageInfo() const;
+	[[nodiscard]] std::string GetFileName() const;
+    [[nodiscard]] ShaderType GetShaderType() const;
+
 private:
 	friend class ShaderManager;
 
 	void AddMaterial(Material* material);
+    void RemoveMaterial(Material* material);
+
 	void Cleanup(VkDevice device) const;
-	void CleanupModule(VkDevice device) const;
 
 	VkPipelineShaderStageCreateInfo m_ShaderInfo{};
 	std::vector<Material*>  m_pMaterials;
@@ -55,13 +57,17 @@ public:
 	ShaderManager(ShaderManager&&) = delete;
 	ShaderManager& operator=(ShaderManager&&) = delete;
 
-	static void ReloadShader(VulkanContext* vulkanContext, const std::string& fileName, ShaderType shaderType);
+	static void ReloadShader(const VulkanContext * vulkanContext, const std::string& fileName, ShaderType shaderType);
+	static Shader* CreateShader(const VulkanContext * vulkanContext, const std::string& fileName, ShaderType shaderType, Material* material);
+    static void RemoveMaterial(Shader* shader, Material* material);
 
-	static Shader* CreateShader(VulkanContext* vulkanContext, const std::string& fileName, ShaderType shaderType, Material* material);
 
-	static void Cleanup(VkDevice device);
+    static void Cleanup(VkDevice device);
 
-	static VkPipelineVertexInputStateCreateInfo GetVertexInputStateInfo();
+    //TODO This needs to be moved to a more appropriate place
+    static bool ImGuiShaderGetter(void *data, int idx, const char **out_text);
+
+    static VkPipelineVertexInputStateCreateInfo GetVertexInputStateInfo();
 	static VkPipelineInputAssemblyStateCreateInfo GetInputAssemblyStateInfo();
 private:
 	class ShaderBuilder final

@@ -1,15 +1,12 @@
 #pragma once
-#include <glm/mat4x4.hpp>
-#include <glm/vec4.hpp>
 #include <string>
 #include <unordered_map>
-#include <vector>
 #include <vulkan/vulkan.h>
-
 #include "Descriptor.h"
+#include "DynamicUniformBuffer.h"
+#include "Image/ImageLoader.h"
 
-class DynamicBuffer;
-class Texture;
+
 class VulkanContext;
 
 //For now we will assume ubo's will only bind to the vertex shader and textures will only bind to the fragment shader
