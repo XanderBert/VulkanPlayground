@@ -2,12 +2,14 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
+#include <ImGuiFileDialog.h>
 
 #include "Core/Buffer.h"
 #include "Core/CommandBuffer.h"
 #include "Core/Descriptor.h"
 #include "Core/Logger.h"
 #include "vulkanbase/VulkanBase.h"
+
 
 namespace ImageLoader
 {
@@ -174,11 +176,7 @@ namespace Image
 
 Texture::Texture(const std::string &path, VulkanContext *vulkanContext)
 {
-    ImageLoader::CreateTexture(path, vulkanContext, m_Image, m_ImageMemory, m_ImageSize);
-    Image::CreateImageView(vulkanContext->device, m_Image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT,m_ImageView);
-    Image::CreateSampler(vulkanContext, m_Sampler);
-
-    m_ImTexture = std::make_unique<ImGuiTexture>(m_Sampler, m_ImageView);
+    CreateTexture(path, vulkanContext);
 }
 
 Texture::Texture(Texture &&other) noexcept
@@ -205,7 +203,50 @@ void Texture::Cleanup(VkDevice device) const
     vkFreeMemory(device, m_ImageMemory, nullptr);
     vkDestroyImage(device, m_Image, nullptr);
 }
-void Texture::OnImGui() const
+
+void Texture::OnImGui() {
+    // Try to reload the texture
+    const std::string labelAddition = "##" + std::to_string(reinterpret_cast<uintptr_t>(this));
+    const std::string dialogLabel = "Choose Texture" + labelAddition;
+    const std::string label = "Change Texture" + labelAddition;
+    if (ImGui::Button(label.c_str()))
+    {
+        IGFD::FileDialogConfig config;
+        config.path = ".";
+        config.countSelectionMax = 1;
+        config.flags = ImGuiFileDialogFlags_Modal;
+
+
+        ImGuiFileDialog::Instance()->OpenDialog(dialogLabel.c_str(), "Choose Texture", ".png", config);
+        ImGui::SetNextWindowSize({300,200});
+    }
+
+
+
+    if (ImGuiFileDialog::Instance()->Display(dialogLabel.c_str()))
+    {
+        if (ImGuiFileDialog::Instance()->IsOk())
+        {
+            auto vulkanContext = ServiceLocator::GetService<VulkanContext>();
+
+            std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+            std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
+            std::string fullPath = filePath + "\\" + filePathName;
+
+            Cleanup(vulkanContext->device);
+            CreateTexture(fullPath, vulkanContext);
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
+
+
+    ImGui::SameLine();
+    m_ImTexture->Render(ImVec2(m_ImageSize.x / 5.0f, m_ImageSize.y / 5.0f));
+}
+void Texture::CreateTexture(const std::string &path, VulkanContext *vulkanContext)
 {
-    m_ImTexture->Render(ImVec2(m_ImageSize.x / 5.0f , m_ImageSize.y  / 5.0f));
+    ImageLoader::CreateTexture(path, vulkanContext, m_Image, m_ImageMemory, m_ImageSize);
+    Image::CreateImageView(vulkanContext->device, m_Image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT,m_ImageView);
+    Image::CreateSampler(vulkanContext, m_Sampler);
+    m_ImTexture = std::make_unique<ImGuiTexture>(m_Sampler, m_ImageView);
 }

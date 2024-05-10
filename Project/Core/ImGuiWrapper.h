@@ -57,7 +57,7 @@ public:
     }
 
     void Cleanup();
-    void Render(ImVec2 size) const;
+    void Render(ImVec2 size);
 
 private:
     VkDescriptorSet ImGuiDescriptorSet;

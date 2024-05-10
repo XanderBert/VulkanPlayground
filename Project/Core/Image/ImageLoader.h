@@ -43,14 +43,18 @@ public:
 	Texture(const Texture&) = delete;
 	Texture& operator=(const Texture&) = delete;
 	Texture(Texture &&other) noexcept;
-    ;
+
 	Texture& operator=(Texture&&) = delete;
 
     void ProperBind(int bindingNumber, Descriptor::DescriptorWriter& descriptorWriter);
+
     void Cleanup(VkDevice device) const;
 
-    void OnImGui() const;
+    void OnImGui();
 private:
+
+    void CreateTexture(const std::string& path, VulkanContext* vulkanContext);
+
     std::unique_ptr<ImGuiTexture> m_ImTexture;
 
     glm::ivec2 m_ImageSize{};
