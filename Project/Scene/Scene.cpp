@@ -18,29 +18,29 @@
 
 Scene::Scene(VulkanContext* vulkanContext)
 {
-	const std::vector<Vertex> vertices2 = 
-{
-	{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-	{{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-	{{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-	{{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
-
-	{{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-	{{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-	{{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-	{{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
-	};
-
-	const std::vector<uint32_t> indices2 = {
-		0, 1, 2, 2, 3, 0,
-		4, 5, 6, 6, 7, 4
-	};
+// 	const std::vector<Vertex> vertices2 =
+// {
+// 	{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+// 	{{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+// 	{{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+// 	{{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
+//
+// 	{{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+// 	{{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+// 	{{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+// 	{{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
+// 	};
+//
+// 	const std::vector<uint32_t> indices2 = {
+// 		0, 1, 2, 2, 3, 0,
+// 		4, 5, 6, 6, 7, 4
+// 	};
     //
-    std::shared_ptr<Material> material01 = MaterialManager::CreateMaterial(vulkanContext, "shader.vert", "shader.frag", "MTI_Depth_Nap");
-    material01->GetDescriptorSet()->AddTexture(1, "nap_albedo.jpg", vulkanContext);
-    material01->GetDescriptorSet()->AddTexture(2, "nap_normal.jpg", vulkanContext);
-    material01->GetDescriptorSet()->AddTexture(3, "nap_metal.jpg", vulkanContext);
-    material01->GetDescriptorSet()->AddTexture(4, "nap_rough.jpg", vulkanContext);
+    // std::shared_ptr<Material> material01 = MaterialManager::CreateMaterial(vulkanContext, "shader.vert", "shader.frag", "MTI_Depth_Nap");
+    // material01->GetDescriptorSet()->AddTexture(1, "nap_albedo.jpg", vulkanContext);
+    // material01->GetDescriptorSet()->AddTexture(2, "nap_normal.jpg", vulkanContext);
+    // material01->GetDescriptorSet()->AddTexture(3, "nap_metal.jpg", vulkanContext);
+    // material01->GetDescriptorSet()->AddTexture(4, "nap_rough.jpg", vulkanContext);
 
 
 	std::shared_ptr<Material> material02 = MaterialManager::CreateMaterial(vulkanContext, "shader.vert", "shader.frag", "MTI_Depth_Veh");

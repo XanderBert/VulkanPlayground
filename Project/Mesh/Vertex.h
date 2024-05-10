@@ -8,6 +8,7 @@ struct Vertex
 {
     glm::vec3 pos;
     glm::vec3 normal;
+    glm::vec3 tangent;
 	glm::vec2 texCoord;
 
 	bool operator==(const Vertex& other) const
@@ -28,9 +29,9 @@ struct Vertex
 	}
 
 
-	static std::array<VkVertexInputAttributeDescription, 3> GetAttributeDescriptions()
+	static std::array<VkVertexInputAttributeDescription, 4> GetAttributeDescriptions()
 	{
-		std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions{};
+		std::array<VkVertexInputAttributeDescription, 4> attributeDescriptions{};
 
 		//position
 		attributeDescriptions[0].binding = 0;
@@ -44,11 +45,17 @@ struct Vertex
 		attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
 		attributeDescriptions[1].offset = offsetof(Vertex, normal);
 
+	    //texture coordinates
+	    attributeDescriptions[2].binding = 0;
+	    attributeDescriptions[2].location = 2;
+	    attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
+	    attributeDescriptions[2].offset = offsetof(Vertex, tangent);
+
 		//texture coordinates
-		attributeDescriptions[2].binding = 0;
-		attributeDescriptions[2].location = 2;
-		attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
-		attributeDescriptions[2].offset = offsetof(Vertex, texCoord);
+		attributeDescriptions[3].binding = 0;
+		attributeDescriptions[3].location = 3;
+		attributeDescriptions[3].format = VK_FORMAT_R32G32_SFLOAT;
+		attributeDescriptions[3].offset = offsetof(Vertex, texCoord);
 
 
 		return attributeDescriptions;

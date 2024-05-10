@@ -62,6 +62,9 @@ namespace ObjLoader
 					};
 				}
 
+                glm::vec3 tangent{};
+			    tangent = glm::cross(position, normal);
+
 
 				glm::vec2 texCoord{};
 				if(i.texcoord_index != -1)
@@ -75,9 +78,9 @@ namespace ObjLoader
 	
 
 
-				const Vertex vertex = { position, normal, texCoord };
+				const Vertex vertex = { position, normal, tangent, texCoord };
 
-				if (uniqueVertices.count(vertex) == 0) 
+				if (!uniqueVertices.contains(vertex))
 				{
 					uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
 					vertices.push_back(vertex);

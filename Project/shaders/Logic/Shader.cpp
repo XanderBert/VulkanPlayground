@@ -85,7 +85,7 @@ VkPipelineShaderStageCreateInfo ShaderManager::ShaderBuilder::CreateShaderInfo(c
 	const std::string fileLocation = "shaders/" + fileName + ".spv";
 	const std::vector<char> shaderCode = tools::readFile(fileLocation);
 
-	LogAssert(!shaderCode.empty(), "Failed find the shader at the specified path", true)
+	LogAssert(!shaderCode.empty(), "Failed read shader: " + fileLocation, true)
 
 
 	VkPipelineShaderStageCreateInfo shaderStageInfo{};

@@ -28,7 +28,7 @@ namespace tools
 	{
 		std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
-		LogAssert(file.is_open(), "failed to open file | std::vector<char> readFile", true)
+		LogAssert(file.is_open(), "failed to open file: " + filename + " | std::vector<char> readFile", true)
 
 		//Get the size of the file and use it to allocate a buffer
 		const size_t fileSize = (size_t)file.tellg();
