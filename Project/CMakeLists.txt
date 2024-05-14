@@ -102,6 +102,12 @@ set(SOURCES
     "Core/DescriptorSet.h"
         Scene/SceneManager.cpp
         Scene/SceneManager.h
+        Core/Image/CubeMap.cpp
+        Core/Image/CubeMap.h
+        Core/Image/Texture.cpp
+        Core/Image/Texture.h
+        Core/Image/Texture2D.cpp
+        Core/Image/Texture2D.h
 )
 
 
@@ -150,6 +156,9 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(tinyObj)
 set(TINYOBJ_DIR ${tinyObj_SOURCE_DIR})
+
+
+
 
 FetchContent_Declare(
     glm
@@ -203,6 +212,27 @@ set (IMGUIFILEDIALOG_SOURCE_FILES
 
 set(EXTERNALS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../includes)
 set(STB_SOURCES ${EXTERNALS_DIR}/stb/stb_image.h)
+#set(GLFT_SOURCES
+#        ${EXTERNALS_DIR}/GLTF/tiny_gltf.h
+#        ${EXTERNALS_DIR}/GLTF/json.hpp
+#)
+
+set(KTX_DIR ${EXTERNALS_DIR}/ktx)
+set(KTX_SOURCES
+        ${KTX_DIR}/lib/texture.c
+        ${KTX_DIR}/lib/hashlist.c
+        ${KTX_DIR}/lib/checkheader.c
+        ${KTX_DIR}/lib/swap.c
+        ${KTX_DIR}/lib/memstream.c
+        ${KTX_DIR}/lib/filestream.c)
+
+include_directories( ${KTX_DIR}/include)
+include_directories( ${KTX_DIR}/other_include)
+
+
+
+
+
 
 # Create the executable
 add_executable(
@@ -215,6 +245,8 @@ add_executable(
     ${IMGUIFILEDIALOG_SOURCE_FILES}
     ${LUA_SCRIPTS} 
     ${STB_SOURCES}
+    ${KTX_SOURCES}
+#    ${GLFT_SOURCES}
 )
 
 
@@ -229,6 +261,7 @@ target_include_directories(
     PRIVATE ${EXTERNALS_DIR}
     PRIVATE ${LUA_DIR}
     PRIVATE ${TINY_OBJ_DIR}
+    #PRIVATE ${GLI_DIR}
     PRIVATE ${IMGUI_DIR}
     PRIVATE ${imguizmo_SOURCE_DIR}
     PRIVATE ${implot_SOURCE_DIR}
@@ -244,5 +277,5 @@ target_link_libraries(${PROJECT_NAME}
     PRIVATE efsw-static
     PRIVATE glm
     PRIVATE tinyobjloader
-    #PRIVATE ImGuiFileDialog
+    #PRIVATE gli
 )

@@ -12,69 +12,47 @@
 #include "Input/Input.h"
 #include <Mesh/MaterialManager.h>
 
-#include "implot.h"
+#include "Core/Image/CubeMap.h"
+#include "Core/Image/Texture2D.h"
 #include "Patterns/ServiceLocator.h"
+#include "implot.h"
 
 
 Scene::Scene(VulkanContext* vulkanContext)
 {
-// 	const std::vector<Vertex> vertices2 =
-// {
-// 	{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-// 	{{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-// 	{{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-// 	{{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
-//
-// 	{{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-// 	{{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-// 	{{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-// 	{{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
-// 	};
-//
-// 	const std::vector<uint32_t> indices2 = {
-// 		0, 1, 2, 2, 3, 0,
-// 		4, 5, 6, 6, 7, 4
-// 	};
     //
-    // std::shared_ptr<Material> material01 = MaterialManager::CreateMaterial(vulkanContext, "shader.vert", "shader.frag", "MTI_Depth_Nap");
-    // material01->GetDescriptorSet()->AddTexture(1, "nap_albedo.jpg", vulkanContext);
-    // material01->GetDescriptorSet()->AddTexture(2, "nap_normal.jpg", vulkanContext);
-    // material01->GetDescriptorSet()->AddTexture(3, "nap_metal.jpg", vulkanContext);
-    // material01->GetDescriptorSet()->AddTexture(4, "nap_rough.jpg", vulkanContext);
+    //Create Materials
+    //
+    std::shared_ptr<Material> PBR_Material = MaterialManager::CreateMaterial(vulkanContext, "shader.vert", "shader.frag", "BPR_Material");
+    auto* ubo = PBR_Material->GetDescriptorSet()->AddUniformBuffer(0);
+    ubo->AddVariable(glm::vec4{1});
+    ubo->AddVariable(glm::vec4{1});
+    PBR_Material->GetDescriptorSet()->AddTexture<Texture2D>(1, "vehicle_diffuse.png", vulkanContext);
+    PBR_Material->GetDescriptorSet()->AddTexture<Texture2D>(2, "vehicle_normal.png", vulkanContext);
+    PBR_Material->GetDescriptorSet()->AddTexture<Texture2D>(3, "vehicle_specular.png", vulkanContext);
+    PBR_Material->GetDescriptorSet()->AddTexture<Texture2D>(4, "vehicle_gloss.png", vulkanContext);
 
+    std::shared_ptr<Material> skyboxMaterial = MaterialManager::CreateMaterial(vulkanContext, "skybox.vert", "skybox.frag", "Skybox_Material");
+    skyboxMaterial->GetDescriptorSet()->AddTexture<CubeMap>(1, "cubemap_yokohama_rgba.ktx", vulkanContext);
+    skyboxMaterial->SetCullMode(VK_CULL_MODE_FRONT_BIT);
 
-	std::shared_ptr<Material> material02 = MaterialManager::CreateMaterial(vulkanContext, "shader.vert", "shader.frag", "MTI_Depth_Veh");
-    material02->GetDescriptorSet()->AddTexture(1, "vehicle_diffuse.png", vulkanContext);
-    material02->GetDescriptorSet()->AddTexture(2, "vehicle_normal.png", vulkanContext);
-    material02->GetDescriptorSet()->AddTexture(3, "vehicle_specular.png", vulkanContext);
-    material02->GetDescriptorSet()->AddTexture(4, "vehicle_gloss.png", vulkanContext);
-
-
-
-
-
-    //material01->GetDescriptorSet()->AddTexture(1, "texture.jpg", vulkanContext);
-
-
- //    m_Meshes.push_back(std::make_unique<Mesh>(vertices2, indices2, material01, "Simple Rectangle"));
-	// m_Meshes.back()->SetPosition(glm::vec3(-0.5f, 0.5f, 0.0f));
-	// m_Meshes.back()->SetScale(glm::vec3(0.6f));
 
     //
-	// m_Meshes.push_back(std::make_unique<Mesh>("ball.obj", material01));
-	// m_Meshes.back()->SetPosition(glm::vec3(-0.8f, -0.8f, 0.0f));
-	// m_Meshes.back()->SetScale(glm::vec3(0.1f, 0.2f, 0.1f));
-
-
-	//m_Meshes.push_back(std::make_unique<Mesh>("vehicle.obj", material01));
-	//m_Meshes.push_back(std::make_unique<Mesh>("viking.obj", material02));
-	m_Meshes.push_back(std::make_unique<Mesh>("vehicle.obj", material02, "veh02"));
+    // Create Meshes
+    //
+	m_Meshes.push_back(std::make_unique<Mesh>("vehicle.obj", PBR_Material, "veh02"));
 	m_Meshes.back()->SetPosition(glm::vec3{ -1.0f, 2.6f,0.f });
 	m_Meshes.back()->SetRotation(glm::vec3{ 90.f, 0.f, 0.f });
 	m_Meshes.back()->SetScale(glm::vec3(0.1f));
 
+    m_Meshes.push_back(std::make_unique<Mesh>("Cube.obj", skyboxMaterial, "CubeMap"));
+    m_Meshes.back()->SetRotation(glm::vec3{-90,0,0});
+    m_Meshes.back()->SetScale(glm::vec3(30.0f));
 
 
+    //
+    // Setup Input
+    //
 	Input::BindFunction({ GLFW_KEY_W, Input::KeyType::Hold }, Camera::MoveForward);
 	Input::BindFunction({ GLFW_KEY_S, Input::KeyType::Hold }, Camera::MoveBackward);
 	Input::BindFunction({ GLFW_KEY_A, Input::KeyType::Hold }, Camera::MoveRight);
@@ -85,6 +63,7 @@ Scene::Scene(VulkanContext* vulkanContext)
     Input::BindFunction({GLFW_KEY_R, Input::KeyType::Press}, ImGuizmoHandler::TranslateOperation);
     Input::BindFunction({GLFW_KEY_T, Input::KeyType::Press}, ImGuizmoHandler::RotateOperation);
     Input::BindFunction({GLFW_KEY_Y, Input::KeyType::Press}, ImGuizmoHandler::ScaleOperation);
+
 
     LogInfo("Scene Made");
 }

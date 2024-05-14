@@ -39,10 +39,15 @@ struct ImGuizmoHandler
     static void ScaleOperation() { GizmoOperation = ImGuizmo::SCALE; }
 };
 
+class IImGuiRenderable {
+public:
+    virtual void OnImGui() = 0;
+};
+
 class ImGuiTexture final
 {
 public:
-    ImGuiTexture(VkSampler sampler, VkImageView imageView);
+    ImGuiTexture(VkSampler sampler, VkImageView imageView, ImVec2 size);
     ImGuiTexture(const ImGuiTexture&) = delete;
     ImGuiTexture& operator=(const ImGuiTexture&) = delete;
     ImGuiTexture(ImGuiTexture&&) = delete;
@@ -57,10 +62,12 @@ public:
     }
 
     void Cleanup();
-    void Render(ImVec2 size);
-
+    void SetNewSize(ImVec2 newSize);
+    void OnImGui();
 private:
     VkDescriptorSet ImGuiDescriptorSet;
+    ImVec2 m_Size;
+
 };
 
 

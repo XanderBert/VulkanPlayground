@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include <vector>
+#include "Core/Image/Texture2D.h"
 #include "Material.h"
 #include "Patterns/ServiceLocator.h"
 #include "shaders/Logic/Shader.h"
@@ -31,7 +32,10 @@ public:
 	            //A texture will for now just be grey. But textures would need to be switched out when clicked on it.
 
 	            //Add the needed bindings for the descriptorset
-	            material->GetDescriptorSet()->AddTexture(1, "vehicle_normal.png", pContext);
+	            material->GetDescriptorSet()->AddTexture<Texture2D>(1, "vehicle_normal.png", pContext);
+	            material->GetDescriptorSet()->AddTexture<Texture2D>(2, "vehicle_normal.png", pContext);
+	            material->GetDescriptorSet()->AddTexture<Texture2D>(3, "vehicle_normal.png", pContext);
+	            material->GetDescriptorSet()->AddTexture<Texture2D>(4, "vehicle_normal.png", pContext);
 
 	            //Create Pipeline
                 material->CreatePipeline();

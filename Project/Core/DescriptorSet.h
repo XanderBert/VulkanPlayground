@@ -4,7 +4,10 @@
 #include <vulkan/vulkan.h>
 #include "Descriptor.h"
 #include "DynamicUniformBuffer.h"
+#include "Image/CubeMap.h"
 #include "Image/ImageLoader.h"
+#include "Image/Texture.h"
+#include "Image/Texture2D.h"
 
 
 class VulkanContext;
@@ -24,7 +27,27 @@ public:
     DynamicBuffer* AddUniformBuffer(int binding);
     DynamicBuffer* GetUniformBuffer(int binding);
 
-    void AddTexture(int binding, const std::string& path, VulkanContext* pContext);
+    template<typename TextureType>
+    void AddTexture(int binding, const std::string& path, VulkanContext* pContext)
+    requires TextureConcept<TextureType>
+    {
+        // Check if the binding already exists in the uniform buffer map
+        if (const auto it = m_UniformBuffers.find(binding); it != m_UniformBuffers.end())
+        {
+            LogError("Binding at: " + std::to_string(binding) + " is allready used for a UniformBuffer");
+            return;
+        }
+
+        //Create and add a new texture at binding x
+        const auto [iterator, isEmplaced] = m_Textures.try_emplace(binding, std::make_unique<TextureType>(path, pContext));
+        if (!isEmplaced)
+        {
+            LogError("Binding at:" + std::to_string(binding) + " is allready used for a Texture");
+            return;
+        }
+
+        m_DescriptorBuilder.AddBinding(binding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    }
 
     void Initialize(VulkanContext* pContext);
     void Bind(VulkanContext *pContext, const VkCommandBuffer& commandBuffer, const VkPipelineLayout & pipelineLayout, int descriptorSetIndex);
@@ -37,7 +60,7 @@ public:
     void OnImGui();
 private:
     std::unordered_map<int, DynamicBuffer> m_UniformBuffers{};
-    std::unordered_map<int, Texture> m_Textures{};
+    std::unordered_map<int, std::unique_ptr<Texture>> m_Textures{};
 
     VkDescriptorSetLayout m_DescriptorSetLayout{};
     VkDescriptorSet m_DescriptorSet{};

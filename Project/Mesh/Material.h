@@ -42,6 +42,9 @@ public:
     [[nodiscard]] std::string GetMaterialName() const;
     [[nodiscard]] DescriptorSet* GetDescriptorSet();
 
+    [[nodiscard]] VkCullModeFlags GetCullModeBit() const;
+    void SetCullMode(VkCullModeFlags cullMode);
+
 private:
 	friend class MaterialManager;
 
@@ -55,4 +58,7 @@ private:
 
     DescriptorSet m_DescriptorSet{};
     std::vector<VkDescriptorSetLayout> m_SetLayouts{};
+
+
+    VkCullModeFlags m_CullMode = VK_CULL_MODE_BACK_BIT;
 };

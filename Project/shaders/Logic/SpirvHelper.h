@@ -75,18 +75,16 @@ struct SpirvHelper
         const shaderc::PreprocessedSourceCompilationResult preprocessed = compiler.PreprocessGlsl(shaderString, kind, sourceName.c_str(), options);
 
 		LogAssert(preprocessed.GetCompilationStatus() == shaderc_compilation_status_success, preprocessed.GetErrorMessage(), false)
-        LogAssert(preprocessed.cend() - preprocessed.cbegin() > 0, "Preprocessed module is empty", true)
+        LogAssert(preprocessed.cend() - preprocessed.cbegin() > 0, "Preprocessed module is empty", false)
 
         shaderString = { preprocessed.cbegin(), preprocessed.cend() };
-
-        LogInfo(shaderString);
 
         //Compile the shader
         const shaderc::SpvCompilationResult module = compiler.CompileGlslToSpv(shaderString, kind, sourceName.c_str(), options);
 
         //Check for compilation errors
 		LogAssert(module.GetCompilationStatus() == shaderc_compilation_status_success, module.GetErrorMessage(), false)
-        LogAssert(module.cend() - module.cbegin() > 0, "Compiled module is empty", true)
+        LogAssert(module.cend() - module.cbegin() > 0, "Compiled module is empty", false)
 
         //Return the compiled binary
         return { module.cbegin(), module.cend() };

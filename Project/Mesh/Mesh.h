@@ -36,7 +36,6 @@ public:
 	void SetScale(const glm::vec3& scale);
 	void SetRotation(const glm::vec3& rotation);
 
-    //void AddTexture(int binding, const std::string& texturePath);
 
 private:
 	void CreateVertexBuffer(const std::vector<Vertex>& vertices);

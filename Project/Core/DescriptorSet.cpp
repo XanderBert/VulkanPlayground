@@ -1,6 +1,10 @@
 #include "DescriptorSet.h"
+
+#include <algorithm>
+
 #include "DynamicUniformBuffer.h"
 #include "Image/ImageLoader.h"
+#include "Image/Texture2D.h"
 
 DynamicBuffer *DescriptorSet::AddUniformBuffer(int binding) {
     // check if the binding already exists in the texture map
@@ -39,25 +43,6 @@ DynamicBuffer *DescriptorSet::GetUniformBuffer(int binding)
 }
 
 
-void DescriptorSet::AddTexture(int binding, const std::string &path, VulkanContext *pContext)
-{
-    // Check if the binding already exists in the uniform buffer map
-    if (const auto it = m_UniformBuffers.find(binding); it != m_UniformBuffers.end())
-    {
-        LogError("Binding at: " + std::to_string(binding) + " is allready used for a UniformBuffer");
-        return;
-    }
-
-    // Add a new texture at binding x
-    const auto [iterator, isEmplaced] = m_Textures.try_emplace(binding, Texture(path, pContext));
-    if (!isEmplaced)
-    {
-        LogError("Binding at:" + std::to_string(binding) + " is allready used for a Texture");
-        return;
-    }
-
-    m_DescriptorBuilder.AddBinding(binding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-}
 
 void DescriptorSet::Initialize(VulkanContext *pContext)
 {
@@ -82,7 +67,7 @@ void DescriptorSet::Bind(VulkanContext *pContext, const VkCommandBuffer &command
     }
 
     for (auto &[binding, texture]: m_Textures) {
-        texture.ProperBind(binding, m_DescriptorWriter);
+        texture->ProperBind(binding, m_DescriptorWriter);
     }
 
     m_DescriptorWriter.UpdateSet(pContext->device, m_DescriptorSet);
@@ -112,7 +97,7 @@ void DescriptorSet::CleanUp(VkDevice device) {
 
     // Cleanup the textures
     for (auto &[binding, texture]: m_Textures) {
-        texture.Cleanup(device);
+        texture->Cleanup(device);
     }
 
     // Cleanup the layout
@@ -120,18 +105,27 @@ void DescriptorSet::CleanUp(VkDevice device) {
 }
 void DescriptorSet::OnImGui()
 {
+    //Check if any texture implement the IImGuiRenderable interface
+    bool IsAnyTextureRenderable = std::ranges::any_of(
+            m_Textures, [](const auto& texture) {
+        return dynamic_cast<IImGuiRenderable*>(texture.second.get());
+    });
 
-    ImGui::Separator();
-    ImGui::Text("Textures:");
-    for(auto& [binding, texture] : m_Textures)
-    {
-        texture.OnImGui();
+    if(!m_Textures.empty() && IsAnyTextureRenderable) {
+        ImGui::Separator();
+        ImGui::Text("Textures:");
+        for(auto& [binding, texture] : m_Textures)
+        {
+            if(auto renderable = dynamic_cast<IImGuiRenderable*>(texture.get())) renderable->OnImGui();
+        }
     }
 
-    ImGui::Separator();
-    ImGui::Text("Uniform Buffers:");
-    for(auto& [binding, ubo] : m_UniformBuffers)
-    {
-        ubo.OnImGui();
+    if(!m_UniformBuffers.empty()) {
+        ImGui::Separator();
+        ImGui::Text("Uniform Buffers:");
+        for(auto& [binding, ubo] : m_UniformBuffers)
+        {
+            ubo.OnImGui();
+        }
     }
 }

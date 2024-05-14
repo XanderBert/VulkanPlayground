@@ -233,18 +233,18 @@ void ImGuiWrapper::SetDarkStyle()
 }
 
 
-ImGuiTexture::ImGuiTexture(VkSampler sampler, VkImageView imageView)
+ImGuiTexture::ImGuiTexture(VkSampler sampler, VkImageView imageView, ImVec2 size)
 {
     ImGuiDescriptorSet = ImGui_ImplVulkan_AddTexture(sampler, imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    m_Size = size;
 }
 
-void ImGuiTexture::Cleanup()
-{
-    ImGui_ImplVulkan_RemoveTexture(ImGuiDescriptorSet);
-}
 
-void ImGuiTexture::Render(ImVec2 size)
+void ImGuiTexture::Cleanup() { ImGui_ImplVulkan_RemoveTexture(ImGuiDescriptorSet); }
+void ImGuiTexture::SetNewSize(ImVec2 newSize) { m_Size = newSize;}
+
+void ImGuiTexture::OnImGui()
 {
-    ImGui::Image(static_cast<void *>(ImGuiDescriptorSet), size);
+    ImGui::Image(static_cast<void *>(ImGuiDescriptorSet), m_Size);
 }
 

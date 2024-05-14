@@ -21,10 +21,6 @@ Material::Material(VulkanContext *vulkanContext, std::string materialName)
     m_pGraphicsPipeline = std::make_unique<GraphicsPipeline>();
 
     m_pContext = vulkanContext;
-
-    const auto ubo = m_DescriptorSet.AddUniformBuffer(0);
-    ubo->AddVariable(glm::vec4{1});
-    ubo->AddVariable(glm::vec4{0});
 }
 
 void Material::OnImGui()
@@ -117,6 +113,12 @@ VkPipelineLayoutCreateInfo Material::GetPipelineLayoutCreateInfo() {
 }
 std::string Material::GetMaterialName() const { return m_MaterialName; }
 DescriptorSet *Material::GetDescriptorSet() { return &m_DescriptorSet; }
+VkCullModeFlags Material::GetCullModeBit() const {
+    return m_CullMode;
+}
+void Material::SetCullMode(VkCullModeFlags cullMode) {
+    m_CullMode = cullMode;
+}
 
 void Material::CreatePipeline()
 {
