@@ -12,6 +12,7 @@
 #include "Input/Input.h"
 #include <Mesh/MaterialManager.h>
 
+#include "Core/GlobalDescriptor.h"
 #include "Core/Image/CubeMap.h"
 #include "Core/Image/Texture2D.h"
 #include "Patterns/ServiceLocator.h"
@@ -23,32 +24,45 @@ Scene::Scene(VulkanContext* vulkanContext)
     //
     //Create Materials
     //
-    std::shared_ptr<Material> PBR_Material = MaterialManager::CreateMaterial(vulkanContext, "shader.vert", "shader.frag", "BPR_Material");
+    std::shared_ptr<Material> PBR_Material = MaterialManager::CreateMaterial(vulkanContext, "shader.vert", "shader.frag", "PBR_Material");
     auto* ubo = PBR_Material->GetDescriptorSet()->AddUniformBuffer(0);
     ubo->AddVariable(glm::vec4{1});
     ubo->AddVariable(glm::vec4{1});
-    PBR_Material->GetDescriptorSet()->AddTexture<Texture2D>(1, "vehicle_diffuse.png", vulkanContext);
-    PBR_Material->GetDescriptorSet()->AddTexture<Texture2D>(2, "vehicle_normal.png", vulkanContext);
-    PBR_Material->GetDescriptorSet()->AddTexture<Texture2D>(3, "vehicle_specular.png", vulkanContext);
-    PBR_Material->GetDescriptorSet()->AddTexture<Texture2D>(4, "vehicle_gloss.png", vulkanContext);
+    PBR_Material->GetDescriptorSet()->AddTexture<Texture2D>(1, "Robot_Albedo.jpg", vulkanContext, ColorType::SRGB);
+    PBR_Material->GetDescriptorSet()->AddTexture<Texture2D>(2, "Robot_Normal.jpg", vulkanContext, ColorType::LINEAR);
+    PBR_Material->GetDescriptorSet()->AddTexture<Texture2D>(3, "Robot_Roughness.jpg", vulkanContext, ColorType::LINEAR);
+    PBR_Material->GetDescriptorSet()->AddTexture<Texture2D>(4, "Robot_Metal.jpg", vulkanContext, ColorType::LINEAR);
+    PBR_Material->GetDescriptorSet()->AddTexture<CubeMap>(5, "cubemap_vulkan.ktx", vulkanContext, ColorType::SRGB);
 
     std::shared_ptr<Material> skyboxMaterial = MaterialManager::CreateMaterial(vulkanContext, "skybox.vert", "skybox.frag", "Skybox_Material");
-    skyboxMaterial->GetDescriptorSet()->AddTexture<CubeMap>(1, "cubemap_yokohama_rgba.ktx", vulkanContext);
+    skyboxMaterial->GetDescriptorSet()->AddTexture<CubeMap>(1, "cubemap_vulkan.ktx", vulkanContext, ColorType::SRGB);
     skyboxMaterial->SetCullMode(VK_CULL_MODE_FRONT_BIT);
+
+
+
+
+
+   GLTFLoader::LoadGLTF("FlightHelmet.gltf", this, vulkanContext);
+   //GLTFLoader::LoadGLTF("Assets/CesiumMan.gltf", this, vulkanContext);
+   //GLTFLoader::LoadGLTF("Assets/sponza.gltf", this, vulkanContext);
+
+
 
 
     //
     // Create Meshes
     //
-	m_Meshes.push_back(std::make_unique<Mesh>("vehicle.obj", PBR_Material, "veh02"));
+	m_Meshes.push_back(std::make_unique<Mesh>("Robot.obj", PBR_Material, "Robot"));
 	m_Meshes.back()->SetPosition(glm::vec3{ -1.0f, 2.6f,0.f });
 	m_Meshes.back()->SetRotation(glm::vec3{ 90.f, 0.f, 0.f });
 	m_Meshes.back()->SetScale(glm::vec3(0.1f));
 
+
+
+    //Create the cubmap last so its rendered last
+    //with a simple shader & depthmap trick we can make it only over the fragments that are not yet written to
     m_Meshes.push_back(std::make_unique<Mesh>("Cube.obj", skyboxMaterial, "CubeMap"));
     m_Meshes.back()->SetRotation(glm::vec3{-90,0,0});
-    m_Meshes.back()->SetScale(glm::vec3(30.0f));
-
 
     //
     // Setup Input
@@ -99,7 +113,10 @@ void Scene::Render(VkCommandBuffer commandBuffer) const
 	ShaderFactory::Render();
 	VulkanLogger::Log.Render("Vulkan Log: ");
 	MaterialManager::OnImGui();
+
+    Camera::Update();
 	Camera::OnImGui();
+
 
 	for (const auto& mesh : m_Meshes)
 	{
@@ -111,11 +128,12 @@ void Scene::Render(VkCommandBuffer commandBuffer) const
 			mesh->OnImGui();
 		}
 		ImGui::End();
-
 		mesh->Render(commandBuffer);
 	}
 
-	ImGui::Render();
+    //GlobalDescriptor::OnImGui();
+    ImGui::Render();
+
 }
 
 void Scene::CleanUp() const

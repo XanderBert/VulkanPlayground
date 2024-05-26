@@ -54,16 +54,23 @@ void DescriptorSet::Initialize(VulkanContext *pContext)
     m_DescriptorSetLayout = m_DescriptorBuilder.Build(pContext->device, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
 }
 
-void DescriptorSet::Bind(VulkanContext *pContext, const VkCommandBuffer &commandBuffer, const VkPipelineLayout &pipelineLayout, int descriptorSetIndex)
+void DescriptorSet::Bind(VulkanContext *pContext, const VkCommandBuffer &commandBuffer, const VkPipelineLayout &pipelineLayout, int descriptorSetIndex, bool fullRebind )
 {
 
     m_DescriptorSet = Descriptor::DescriptorManager::Allocate(pContext->device, m_DescriptorSetLayout, 0);
-
     m_DescriptorWriter.Cleanup();
 
     // Update the data of all the ubo's
-    for (auto &[binding, ubo]: m_UniformBuffers) {
-        ubo.ProperBind(binding, m_DescriptorWriter);
+    for (auto &[binding, ubo]: m_UniformBuffers)
+    {
+        if(fullRebind)
+        {
+            ubo.FullRebind(binding, m_DescriptorSet, m_DescriptorWriter, pContext);
+        }
+        else
+        {
+            ubo.ProperBind(binding, m_DescriptorWriter);
+        }
     }
 
     for (auto &[binding, texture]: m_Textures) {
@@ -99,6 +106,8 @@ void DescriptorSet::CleanUp(VkDevice device) {
     for (auto &[binding, texture]: m_Textures) {
         texture->Cleanup(device);
     }
+
+
 
     // Cleanup the layout
     vkDestroyDescriptorSetLayout(device, m_DescriptorSetLayout, nullptr);

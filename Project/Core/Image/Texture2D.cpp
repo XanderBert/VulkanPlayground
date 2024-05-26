@@ -1,17 +1,25 @@
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb/stb_image.h>
+
 
 #include "Core/CommandBuffer.h"
 #include "ImageLoader.h"
 #include "Texture2D.h"
 
+#include <filesystem>
+
 #include "Patterns/ServiceLocator.h"
 #include "cmake-build-release-visual-studio/_deps/imguifiledialog-src/ImGuiFileDialog.h"
 
 
-Texture2D::Texture2D(const std::string &path, ::VulkanContext *vulkanContext) : Texture(path, vulkanContext)
+Texture2D::Texture2D(const std::filesystem::path &path, ::VulkanContext *vulkanContext, ColorType colorType) :
+    Texture(path, vulkanContext, colorType)
+
 {
-    InitTexture();
+    InitTexture(std::nullopt);
+}
+Texture2D::Texture2D(const LoadedImage &loadedImage, ::VulkanContext *vulkanContext, ColorType colorType) :
+    Texture(loadedImage, vulkanContext, colorType)
+{
+    InitTexture(loadedImage);
 }
 
 Texture2D::Texture2D(Texture2D &&other) noexcept
@@ -96,12 +104,12 @@ void Texture2D::OnImGui()
     {
         if (ImGuiFileDialog::Instance()->IsOk())
         {
-            std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+            std::string filePathName = ImGuiFileDialog::Instance()->GetCurrentFileName();
             std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
             m_Path = filePath + "\\" + filePathName;
 
             Cleanup(VulkanContext->device);
-            InitTexture();
+            InitTexture(std::nullopt);
         }
         ImGuiFileDialog::Instance()->Close();
     }
@@ -112,36 +120,42 @@ void Texture2D::OnImGui()
 }
 
 
-void Texture2D::InitTexture()
+void Texture2D::InitTexture(std::optional<LoadedImage> loadedImage)
 {
-    int texChannels;
-    int width;
-    int height;
-    stbi_uc* pixels = stbi_load(m_Path.c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
-    LogAssert(pixels, "failed to load texture image!", true)
+    std::pair<VkBuffer, VkDeviceMemory> stagingSources;
 
-    m_MipLevels = 1;
-    m_ImageSize = {width, height};
-
-    const VkDeviceSize deviceImageSize = static_cast<VkDeviceSize>(width) * height * 4;
-    VkBuffer stagingBuffer;
-    VkDeviceMemory stagingBufferMemory;
-    Core::Buffer::CreateStagingBuffer<stbi_uc>(VulkanContext, deviceImageSize, stagingBuffer, stagingBufferMemory, pixels);
-
-    stbi_image_free(pixels);
-
-
-    Image::CreateImage(VulkanContext, width, height, m_MipLevels, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_Image, m_ImageMemory);
-
-    TransitionAndCopyImageBuffer(stagingBuffer);
-
-    vkDestroyBuffer(VulkanContext->device, stagingBuffer, nullptr);
-    vkFreeMemory(VulkanContext->device, stagingBufferMemory, nullptr);
+    if(!loadedImage.has_value())
+    {
+        //Check if is .ktx file
+        if (m_Path.extension() == ".ktx")
+        {
+            ktxTexture* texture{};
+            stagingSources = ktx::CreateImage(VulkanContext, m_Path, m_ImageSize, m_MipLevels, &texture);
+            ktxTexture_Destroy(texture);
+        }
+        else
+        {
+            stagingSources = stbi::CreateImage(VulkanContext, m_Path, m_ImageSize, m_MipLevels);
+        }
+    }
+    else
+    {
+        stagingSources.first = loadedImage->staginBuffer;
+        stagingSources.second = loadedImage->stagingBufferMemory;
+    }
 
 
-    Image::CreateImageView(VulkanContext->device, m_Image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT,m_ImageView);
+    Image::CreateImage(VulkanContext, m_ImageSize.x, m_ImageSize.y, m_MipLevels, VK_SAMPLE_COUNT_1_BIT, static_cast<VkFormat>(m_ColorType), VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_Image, m_ImageMemory);
+
+    TransitionAndCopyImageBuffer(stagingSources.first);
+    vkDestroyBuffer(VulkanContext->device, stagingSources.first, nullptr);
+    vkFreeMemory(VulkanContext->device, stagingSources.second, nullptr);
+
+    Image::CreateImageView(VulkanContext->device, m_Image, static_cast<VkFormat>(m_ColorType), VK_IMAGE_ASPECT_COLOR_BIT,m_ImageView);
     Image::CreateSampler(VulkanContext, m_Sampler, m_MipLevels);
 
+
+    //Setup ImGui Texture Rendering
     ImVec2 imageSize = ImVec2(m_ImageSize.x / 5.0f, m_ImageSize.y / 5.0f);
     m_ImTexture = std::make_unique<ImGuiTexture>(m_Sampler, m_ImageView, imageSize);
 }

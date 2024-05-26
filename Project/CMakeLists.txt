@@ -1,7 +1,7 @@
 #Copy obj files to the binary directory
 set(MODEL_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../Assets")
 file(GLOB_RECURSE MODELS "${MODEL_SOURCE_DIR}/*")
-file(COPY ${MODELS} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ${MODELS} DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/Assets")
 
 #Copy the imgui.ini file to the binary directory
 set(IMGUI_INI_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/imgui.ini")
@@ -108,6 +108,10 @@ set(SOURCES
         Core/Image/Texture.h
         Core/Image/Texture2D.cpp
         Core/Image/Texture2D.h
+        Core/Lights/Light.cpp
+        Core/Lights/Light.h
+        Core/Lights/LightManager.cpp
+        Core/Lights/LightManager.h
 )
 
 
@@ -165,6 +169,11 @@ FetchContent_Declare(
     GIT_REPOSITORY  https://github.com/g-truc/glm.git
     GIT_TAG         1.0.1
 )
+option(GLM_TEST_ENABLE OFF)
+option(GLM_FORCE_RADIANS ON)
+option(GLM_FORCE_DEPTH_ZERO_TO_ONE ON)
+option(GLM_ENABLE_CXX_20 ON)
+option(GLM_ENABLE_SIMD_SSE4_2 ON)
 FetchContent_MakeAvailable(glm)
 
 FetchContent_Declare(
@@ -209,13 +218,21 @@ set (IMGUIFILEDIALOG_SOURCE_FILES
         ${imguifiledialog_SOURCE_DIR}/ImGuiFileDialogConfig.h
 )
 
+#FetchContent_Declare(
+#        FastGLTF
+#        GIT_REPOSITORY  https://github.com/spnda/fastgltf.git
+#        GIT_TAG v0.7.1
+#)
+#FetchContent_MakeAvailable(FastGLTF)
+#set(FAST_GLTF_DIR ${fastgltf_SOURCE_DIR})
+
+
+
+
 
 set(EXTERNALS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../includes)
 set(STB_SOURCES ${EXTERNALS_DIR}/stb/stb_image.h)
-#set(GLFT_SOURCES
-#        ${EXTERNALS_DIR}/GLTF/tiny_gltf.h
-#        ${EXTERNALS_DIR}/GLTF/json.hpp
-#)
+include_directories(${EXTERNALS_DIR}/stb)
 
 set(KTX_DIR ${EXTERNALS_DIR}/ktx)
 set(KTX_SOURCES
@@ -224,7 +241,8 @@ set(KTX_SOURCES
         ${KTX_DIR}/lib/checkheader.c
         ${KTX_DIR}/lib/swap.c
         ${KTX_DIR}/lib/memstream.c
-        ${KTX_DIR}/lib/filestream.c)
+        ${KTX_DIR}/lib/filestream.c
+)
 
 include_directories( ${KTX_DIR}/include)
 include_directories( ${KTX_DIR}/other_include)
@@ -246,7 +264,6 @@ add_executable(
     ${LUA_SCRIPTS} 
     ${STB_SOURCES}
     ${KTX_SOURCES}
-#    ${GLFT_SOURCES}
 )
 
 
@@ -261,7 +278,6 @@ target_include_directories(
     PRIVATE ${EXTERNALS_DIR}
     PRIVATE ${LUA_DIR}
     PRIVATE ${TINY_OBJ_DIR}
-    #PRIVATE ${GLI_DIR}
     PRIVATE ${IMGUI_DIR}
     PRIVATE ${imguizmo_SOURCE_DIR}
     PRIVATE ${implot_SOURCE_DIR}
@@ -274,8 +290,8 @@ target_link_libraries(${PROJECT_NAME}
     PUBLIC glfw
     PUBLIC debug ${SHADERC_DEBUG} optimized ${Vulkan_shaderc_combined_LIBRARY}
     PRIVATE lua::lua
-    PRIVATE efsw-static
+    PRIVATE efsw
     PRIVATE glm
     PRIVATE tinyobjloader
-    #PRIVATE gli
+    PRIVATE fastgltf::fastgltf
 )

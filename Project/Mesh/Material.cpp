@@ -1,6 +1,6 @@
 #include "Material.h"
-#include "Core/DynamicUniformBuffer.h"
 #include "Core/GlobalDescriptor.h"
+#include "Core/SwapChain.h"
 
 #include "Timer/GameTimer.h"
 #include "shaders/Logic/Shader.h"
@@ -39,7 +39,6 @@ void Material::Bind(const VkCommandBuffer commandBuffer, const glm::mat4x4 &push
     // Update model matrix
     m_pGraphicsPipeline->BindPushConstant(commandBuffer, pushConstantMatrix);
     m_pGraphicsPipeline->BindPipeline(commandBuffer);
-    GlobalDescriptor::Bind(m_pContext, commandBuffer, m_pGraphicsPipeline->GetPipelineLayout());
     m_DescriptorSet.Bind(m_pContext, commandBuffer, m_pGraphicsPipeline->GetPipelineLayout(), 1);
 
     // TODO: This is a temporary solution to avoid binding the same pipeline multiple times
@@ -95,9 +94,10 @@ VkPipelineLayoutCreateInfo Material::GetPipelineLayoutCreateInfo() {
     static VkPushConstantRange pushConstantRange{};
     pushConstantRange.offset = 0;
     pushConstantRange.size = sizeof(glm::mat4x4);
-    pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 
-    m_SetLayouts = {
+    m_SetLayouts =
+    {
             GlobalDescriptor::GetLayout(),
             m_DescriptorSet.GetLayout(m_pContext),
     };

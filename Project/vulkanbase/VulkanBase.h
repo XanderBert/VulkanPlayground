@@ -29,6 +29,8 @@
 
 #include "Scene/SceneManager.h"
 
+#include "Core/GlobalDescriptor.h"
+
 
 struct ImGui_ImplVulkan_InitInfo;
 const std::vector validationLayers = { "VK_LAYER_KHRONOS_validation" };
@@ -160,6 +162,8 @@ private:
 
 	void drawFrame(uint32_t imageIndex) const
 	{
+        VkExtent2D& swapChainExtent = SwapChain::Extends();
+
 		VkRenderingAttachmentInfoKHR colorAttachmentInfo{};
 		colorAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
 		colorAttachmentInfo.pNext = VK_NULL_HANDLE;
@@ -177,19 +181,18 @@ private:
 		depthAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 		depthAttachmentInfo.resolveMode = VK_RESOLVE_MODE_NONE;
 		depthAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		depthAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		depthAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 		depthAttachmentInfo.clearValue = {{1.0f, 0.0f}};
 
 
-		VkExtent2D& swapChainExtent = SwapChain::Extends();
-
+	    VkRenderingAttachmentInfoKHR depthAttatchements[1] = { depthAttachmentInfo};
 		VkRenderingInfoKHR renderInfo{};
 		renderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
 		renderInfo.renderArea = { 0, 0, swapChainExtent };
 		renderInfo.layerCount = 1;
 		renderInfo.colorAttachmentCount = 1;
 		renderInfo.pColorAttachments = &colorAttachmentInfo;
-		renderInfo.pDepthAttachment = &depthAttachmentInfo;
+		renderInfo.pDepthAttachment = depthAttatchements;
 		renderInfo.pStencilAttachment = VK_NULL_HANDLE;
 
 

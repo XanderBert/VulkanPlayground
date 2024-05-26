@@ -1,7 +1,10 @@
 #version 450
-//#extension GL_GOOGLE_include_directive : enable
-
 #include "PBR.glsl"
+
+layout(push_constant) uniform constants
+{
+	mat4 model;
+} push;
 
 layout(set = 0, binding = 0) uniform UniformBufferObject
 {
@@ -17,8 +20,9 @@ layout(set = 1, binding = 0) uniform uniformMaterial
 
 layout(set = 1, binding = 1) uniform sampler2D albedoMap;
 layout(set = 1, binding = 2) uniform sampler2D normalMap;
-layout(set = 1, binding = 3) uniform sampler2D specularMap;
-layout(set = 1, binding = 4) uniform sampler2D glossMap;
+layout(set = 1, binding = 3) uniform sampler2D roughnessMap;
+layout(set = 1, binding = 4) uniform sampler2D metalnessMap;
+layout(set = 1, binding = 5) uniform samplerCube skyBox;
 
 
 layout (location = 0) in vec3 inWorldPos;
@@ -40,8 +44,8 @@ void main()
 	vec3 N = calculateNormal(normalMap, inNormal, inTangent.xyz, inUV);
 	vec3 V = normalize(ubo.viewPos.xyz - inWorldPos);
 	vec3 R = reflect(-V, N);
-	float metallic = texture(glossMap, inUV).r;
-	float roughness = texture(specularMap, inUV).r;
+	float metallic = texture(metalnessMap, inUV).r;
+	float roughness = texture(roughnessMap, inUV).r;
 
 	vec3 albedo = texture(albedoMap, inUV).rgb;
 
@@ -82,7 +86,10 @@ void main()
 	// Ambient part
 	vec3 kD = 1.0 - F;
 	kD *= 1.0 - metallic;
-	vec3 ambient = (kD * diffuse + specular);
+
+	mat4 inverseModel = inverse(mat4(push.model));
+	vec4 skyboxReflection = SkyboxReflection(inWorldPos, inNormal, inverseModel, skyBox);
+	vec3 ambient = skyboxReflection.rgb * 0.2 +  (kD * diffuse + specular);
 
 	vec3 color = ambient + Lo;
 

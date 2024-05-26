@@ -6,6 +6,8 @@
 #include <GLFW/glfw3.h>
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
+#include <__msvc_filebuf.hpp>
+#include <filesystem>
 #include <iostream>
 #include <vector>
 #include "Core/Logger.h"
@@ -89,6 +91,12 @@ public:
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
     VkDevice device = VK_NULL_HANDLE;
 	Window window{};
+
+
+    static std::filesystem::path GetAssetPath(const std::string& path)
+    {
+        return std::filesystem::current_path().parent_path().parent_path() / "Assets" / path;
+    }
 
 
     inline void CleanUp() const

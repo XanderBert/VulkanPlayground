@@ -1,10 +1,11 @@
 #include "GraphicsPipeline.h"
 
 #include "DepthResource.h"
-#include "shaders/Logic/Shader.h"
 #include "Descriptor.h"
-#include "SwapChain.h"
+#include "GlobalDescriptor.h"
 #include "Mesh/Material.h"
+#include "SwapChain.h"
+#include "shaders/Logic/Shader.h"
 
 void GraphicsPipeline::CreatePipeline(const VulkanContext* vulkanContext,Material* material)
 {
@@ -13,7 +14,8 @@ void GraphicsPipeline::CreatePipeline(const VulkanContext* vulkanContext,Materia
 
 void GraphicsPipeline::BindPushConstant(const VkCommandBuffer commandBuffer, const glm::mat4x4& matrix) const
 {
-	vkCmdPushConstants(commandBuffer, m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4x4), &matrix);
+    //vertex and fragment
+	vkCmdPushConstants(commandBuffer, m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT , 0, sizeof(glm::mat4x4), &matrix);
 }
 
 void GraphicsPipeline::BindPipeline(const VkCommandBuffer& commandBuffer) const
@@ -99,7 +101,7 @@ void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline,
     };
 
     const auto inputAssemblyState = ShaderManager::GetInputAssemblyStateInfo();
-    const auto depthStencilState = DepthResource::GetDepthPipelineInfo(VK_TRUE, VK_TRUE);
+    const VkPipelineDepthStencilStateCreateInfo depthStencilState = DepthResource::GetDepthPipelineInfo(VK_TRUE, VK_TRUE);
     const auto vertexInputState = ShaderManager::GetVertexInputStateInfo();
 
 	std::vector<VkPipelineShaderStageCreateInfo> shaderStages;

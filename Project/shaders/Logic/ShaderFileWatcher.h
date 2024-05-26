@@ -1,8 +1,9 @@
 #pragma once
-#include "efsw/include/efsw/efsw.hpp"
+#include <efsw/include/efsw/efsw.hpp>
+#include <efsw/System.hpp>
+
 #include "SpirvHelper.h"
-#include "efsw/System.hpp"
-#include "Core/GraphicsPipeline.h"
+
 
 class ShaderListener : public efsw::FileWatchListener
 {

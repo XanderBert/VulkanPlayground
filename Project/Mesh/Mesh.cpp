@@ -5,6 +5,7 @@
 #include <utility>
 
 #include "Camera/Camera.h"
+#include "Core/GlobalDescriptor.h"
 #include "Core/ImGuiWrapper.h"
 #include "ImGuizmo.h"
 #include "MaterialManager.h"
@@ -16,9 +17,11 @@
 
 
 Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices,
-           const std::shared_ptr<Material> &material, std::string  meshName)
-	:m_pMaterial(material)
-	, m_MeshName(std::move(meshName))
+           const std::shared_ptr<Material> &material, std::string  meshName, uint32_t firstDrawIndex, int32_t vertexOffset)
+	: m_FirstDrawIndex(firstDrawIndex)
+    , m_VertexOffset(vertexOffset)
+	, m_pMaterial(material)
+    , m_MeshName(std::move(meshName))
 {
 	m_pContext = ServiceLocator::GetService<VulkanContext>();
 	CreateVertexBuffer(vertices);
@@ -50,6 +53,7 @@ void Mesh::Bind(VkCommandBuffer commandBuffer)
 	m_Visible = m_VisibleBuffer;
 	if (!m_Visible) return;
 
+    GlobalDescriptor::Bind(m_pContext, commandBuffer, m_pMaterial->GetPipelineLayout());
 	m_pMaterial->Bind(commandBuffer, m_ModelMatrix);
 
 	const VkBuffer vertexBuffers[] = { m_VertexBuffer };
@@ -117,14 +121,12 @@ void Mesh::OnImGui()
 void Mesh::Render(VkCommandBuffer commandBuffer)
 {
 	if (!m_Visible) return;
-	vkCmdDrawIndexed(commandBuffer, m_IndexCount, 1, 0, 0, 0);
+	vkCmdDrawIndexed(commandBuffer, m_IndexCount, 1, m_FirstDrawIndex, m_VertexOffset, 0);
 }
 
 void Mesh::CleanUp()
 {
-    //m_MeshDescriptorSet.CleanUp(m_pContext->device);
-
-	vkDestroyBuffer(m_pContext->device, m_VertexBuffer, nullptr);
+   	vkDestroyBuffer(m_pContext->device, m_VertexBuffer, nullptr);
 	vkFreeMemory(m_pContext->device, m_VertexBufferMemory, nullptr);
 
 	vkDestroyBuffer(m_pContext->device, m_IndexBuffer, nullptr);
@@ -151,14 +153,14 @@ void Mesh::SetRotation(const glm::vec3 &rotation) {
 void Mesh::CreateVertexBuffer(const std::vector<Vertex>& vertices)
 {
 	//Store the vertex count
-	m_VertexCount = static_cast<uint16_t>(vertices.size());
+	m_VertexCount = static_cast<uint32_t>(vertices.size());
 
 	//Check if the mesh has at least 3 vertices
 	LogAssert(m_VertexCount >= 3,"Mesh has less then 3 vertices", false);
 
 	//Get the device and the buffer size
 	const VkDevice device = m_pContext->device;
-	const VkDeviceSize bufferSize = sizeof(vertices[0]) * m_VertexCount;
+	const VkDeviceSize bufferSize = sizeof(vertices[0]) * (m_VertexCount);
 
 	//Create a staging buffer
 	VkBuffer stagingBuffer;
@@ -182,12 +184,12 @@ void Mesh::CreateVertexBuffer(const std::vector<Vertex>& vertices)
 
 void Mesh::CreateIndexBuffer(const std::vector<uint32_t>& indices)
 {
-	m_IndexCount = static_cast<uint16_t>(indices.size());
+	m_IndexCount = indices.size();
 	LogAssert(m_IndexCount >= 3, "Mesh has less then 3 indices", false);
 
 	//Get the device and the buffer size
 	const VkDevice device = m_pContext->device;
-	const VkDeviceSize bufferSize = sizeof(indices[0]) * m_IndexCount;
+	const VkDeviceSize bufferSize = sizeof(indices[0]) * (m_IndexCount);
 
 	//Create a staging buffer
 	VkBuffer stagingBuffer;

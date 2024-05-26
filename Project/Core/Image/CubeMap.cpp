@@ -1,35 +1,35 @@
 #include "CubeMap.h"
-#include <ktx/include/ktx.h>
+
 
 #include "Core/CommandBuffer.h"
 #include "ImageLoader.h"
 
-CubeMap::CubeMap(const std::string &path, ::VulkanContext *vulkanContext)
-    : Texture(path, vulkanContext)
+CubeMap::CubeMap(const std::filesystem::path &path, ::VulkanContext *vulkanContext, ColorType colorType) :
+    Texture(path, vulkanContext, colorType) {
+    InitTexture(std::nullopt);
+}
+CubeMap::CubeMap(const LoadedImage &loadedImage, ::VulkanContext *vulkanContext, ColorType colorType)
+    :Texture(loadedImage, vulkanContext, colorType)
 {
-    //Check if its a .ktx file
-    const std::string extension = path.substr(path.find_last_of('.') + 1);
-    LogAssert(extension == "ktx", "cannot make a cubemap of a file that is not a .ktx file", true)
-
-    InitTexture();
+    InitTexture(loadedImage);
 }
 
-void CubeMap::TransitionAndCopyImageBuffer(VkBuffer srcBuffer)
+void CubeMap::TransitionAndCopyImageBuffer(VkBuffer srcBuffer, ktxTexture* texture)
 {
+    LogAssert(texture != nullptr, "The KTX Texture was allready destroyed", true)
+
     //Create Command Buffer
 	CommandBuffer commandBuffer{};
 	CommandBufferManager::CreateCommandBufferSingleUse(VulkanContext, commandBuffer);
 
     std::vector<VkBufferImageCopy> bufferCopyRegions;
 
-    LogAssert(m_LoadingTexture != nullptr, "The KTX Texture was allready destroyed", true)
-
     for (uint32_t face{}; face < 6; ++face)
     {
         for(uint32_t mipLevel{}; mipLevel < m_MipLevels; ++mipLevel)
         {
             ktx_size_t offset;
-            KTX_error_code ret = ktxTexture_GetImageOffset(m_LoadingTexture, mipLevel, 0, face, &offset);
+            KTX_error_code ret = ktxTexture_GetImageOffset(texture, mipLevel, 0, face, &offset);
             LogAssert(ret == KTX_SUCCESS, "Failed to get image offset",true );
 
             VkBufferImageCopy region{};
@@ -76,31 +76,31 @@ void CubeMap::TransitionAndCopyImageBuffer(VkBuffer srcBuffer)
     CommandBufferManager::EndCommandBufferSingleUse(VulkanContext, commandBuffer);
 }
 
-void CubeMap::InitTexture()
+void CubeMap::InitTexture(std::optional<LoadedImage> loadedImage)
 {
-    auto errorCode = ktxTexture_CreateFromNamedFile(m_Path.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &m_LoadingTexture);
-    LogAssert(errorCode == KTX_SUCCESS, "Failed to load texture image!", true)
+    std::pair<VkBuffer, VkDeviceMemory> stagingSources;
+    ktxTexture* texture{};
 
-    // Get properties required for using and upload texture data from the ktx texture object
-    m_ImageSize = {m_LoadingTexture->baseWidth, m_LoadingTexture->baseHeight};
-    m_MipLevels = m_LoadingTexture->numLevels;
-
-    ktx_uint8_t *ktxTextureData = ktxTexture_GetData(m_LoadingTexture);
-    ktx_size_t ktxTextureSize = ktxTexture_GetSize(m_LoadingTexture);
-
-    VkBuffer stagingBuffer;
-    VkDeviceMemory stagingBufferMemory;
-
-    Core::Buffer::CreateStagingBuffer<ktx_uint8_t>(VulkanContext, ktxTextureSize, stagingBuffer, stagingBufferMemory, ktxTextureData);
-
-    Image::CreateImage(VulkanContext, m_ImageSize.x, m_ImageSize.y, m_MipLevels, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_Image, m_ImageMemory, true);
-    TransitionAndCopyImageBuffer(stagingBuffer);
-
-    vkDestroyBuffer(VulkanContext->device, stagingBuffer, nullptr);
-    vkFreeMemory(VulkanContext->device, stagingBufferMemory, nullptr);
-    ktxTexture_Destroy(m_LoadingTexture);
+    if(!loadedImage.has_value())
+    {
+        stagingSources = ktx::CreateImage(VulkanContext, m_Path, m_ImageSize, m_MipLevels, &texture);
+    }else
+    {
+        stagingSources.first = loadedImage->staginBuffer;
+        stagingSources.second = loadedImage->stagingBufferMemory;
+        texture = loadedImage->texture.value();
+    }
 
 
-    Image::CreateCubeImageView(VulkanContext->device, m_Image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, m_ImageView);
+    Image::CreateImage(VulkanContext, m_ImageSize.x, m_ImageSize.y, m_MipLevels, VK_SAMPLE_COUNT_1_BIT, static_cast<VkFormat>(m_ColorType), VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_Image, m_ImageMemory, true);
+
+    TransitionAndCopyImageBuffer(stagingSources.first, texture);
+    ktxTexture_Destroy(texture);
+
+
+    vkDestroyBuffer(VulkanContext->device, stagingSources.first, nullptr);
+    vkFreeMemory(VulkanContext->device, stagingSources.second, nullptr);
+
+    Image::CreateCubeImageView(VulkanContext->device, m_Image, static_cast<VkFormat>(m_ColorType), VK_IMAGE_ASPECT_COLOR_BIT, m_ImageView);
     Image::CreateSampler(VulkanContext, m_Sampler, m_MipLevels);
 }

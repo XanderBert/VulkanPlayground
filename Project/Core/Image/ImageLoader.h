@@ -1,4 +1,5 @@
 #pragma once
+#include <optional>
 #include <vulkan/vulkan_core.h>
 #include "vulkanbase/VulkanTypes.h"
 
@@ -20,7 +21,8 @@ namespace Image {
 
     void CreateImageView(VkDevice device, VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, VkImageView& imageView);
     void CreateCubeImageView(VkDevice device, VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, VkImageView& imageView);
-    void CreateSampler(VulkanContext* vulkanContext, VkSampler& sampler, uint32_t mipLevels);
+    void CreateSampler(const VulkanContext * vulkanContext, VkSampler& sampler, uint32_t mipLevels,const std::optional<VkSamplerCreateInfo> &overridenSamplerInfo = std::nullopt);
+
     bool HasStencilComponent(VkFormat format);
 }
 

@@ -1,7 +1,7 @@
 #pragma once
 #include <iostream>
 #include <string>
-#include <signal.h>
+#include <csignal>
 #include "imgui.h"
 
 

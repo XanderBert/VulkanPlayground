@@ -1,4 +1,9 @@
 #version 450
+layout(push_constant) uniform constants
+{
+	mat4 model;
+} push;
+
 
 layout(set = 1, binding = 1) uniform samplerCube samplerCubeMap;
 

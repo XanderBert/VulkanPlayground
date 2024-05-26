@@ -41,6 +41,7 @@ struct ImGuizmoHandler
 
 class IImGuiRenderable {
 public:
+    virtual ~IImGuiRenderable() = default;
     virtual void OnImGui() = 0;
 };
 

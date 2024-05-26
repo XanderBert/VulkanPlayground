@@ -41,29 +41,27 @@ vec3 F_SchlickR(float cosTheta, vec3 F0, float roughness)
     return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
-//layout (binding = 4) uniform samplerCube prefilteredMap;
-//vec3 prefilteredReflection(vec3 R, float roughness)
-//{
-//    const float MAX_REFLECTION_LOD = 9.0;
-//    float lod = roughness * MAX_REFLECTION_LOD;
-//    float lodf = floor(lod);
-//    float lodc = ceil(lod);
-//    vec3 a = textureLod(prefilteredMap, R, lodf).rgb;
-//    vec3 b = textureLod(prefilteredMap, R, lodc).rgb;
-//    return mix(a, b, lod - lodf);
-//}
+vec4 SkyboxReflection(vec3 pos, vec3 normal, mat4 invModel, samplerCube skyboxSampler)
+{
+    vec3 cI = normalize (pos);
+    vec3 cR = reflect (cI, normalize(normal));
+
+    // Convert cubemap coordinates into Vulkan coordinate space
+    cR.xy *= -1.0;
+
+    return texture(skyboxSampler, cR);
+}
+
 
 vec3 specularContribution(vec3 L, vec3 V, vec3 N, vec3 F0, float metallic, float roughness, vec2 uv, vec3 albedo)
 {
-    // Precalculate vectors and dot products
     vec3 H = normalize (V + L);
     float dotNH = clamp(dot(N, H), 0.0, 1.0);
     float dotNV = clamp(dot(N, V), 0.0, 1.0);
     float dotNL = clamp(dot(N, L), 0.0, 1.0);
 
-    // Light color fixed
+    //TODO Light colors are fixed
     vec3 lightColor = vec3(1.0);
-
     vec3 color = vec3(0.0);
 
     if (dotNL > 0.0)

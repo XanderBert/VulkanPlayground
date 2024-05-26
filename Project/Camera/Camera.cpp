@@ -1,13 +1,16 @@
 #include "Camera.h"
-#include "Input/Input.h"
-#include "Timer/GameTimer.h"
-#include "Core/Logger.h"
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "Core/Logger.h"
+#include "Input/Input.h"
+#include "Timer/GameTimer.h"
+#include "glm/gtx/optimum_pow.hpp"
 
 
+float Camera::GetNearPlane() { return m_NearPlane; }
+float Camera::GetFarPlane() { return m_FarPlane; }
 glm::mat4 Camera::GetViewMatrix()
 {
     return glm::lookAt(m_Origin, m_Origin + m_Forward, m_Up);
@@ -39,26 +42,26 @@ glm::mat4 Camera::GetViewProjectionMatrix()
 
 void Camera::MoveForward()
 {
-	const glm::vec3 moveDirection = m_Forward * m_KeyboardMovementSpeed * GameTimer::GetDeltaTime();
-	m_Origin += moveDirection;
+	const glm::vec3 moveDirection = m_Forward * m_KeyboardMovementSpeed;
+    m_Target += moveDirection;
 }
 
 void Camera::MoveBackward()
 {
-	const glm::vec3 moveDirection = -m_Forward * m_KeyboardMovementSpeed * GameTimer::GetDeltaTime();
-	m_Origin += moveDirection;
+	const glm::vec3 moveDirection = -m_Forward * m_KeyboardMovementSpeed;
+    m_Target += moveDirection;
 }
 
 void Camera::MoveRight()
 {
-	const glm::vec3 moveDirection = m_Right * m_KeyboardMovementSpeed * GameTimer::GetDeltaTime();
-	m_Origin += moveDirection;
+	const glm::vec3 moveDirection = m_Right * m_KeyboardMovementSpeed;
+    m_Target += moveDirection;
 }
 
 void Camera::MoveLeft()
 {
-	const glm::vec3 moveDirection = -m_Right * m_KeyboardMovementSpeed * GameTimer::GetDeltaTime();
-	m_Origin += moveDirection;
+	const glm::vec3 moveDirection = -m_Right * m_KeyboardMovementSpeed;
+    m_Target += moveDirection;
 }
 
 void Camera::OnRightPressed()
@@ -112,19 +115,32 @@ float Camera::GetFOV()
 
 void Camera::OnImGui()
 {
-	ImGui::Begin("Camera Settings");
-	ImGui::Text("Camera");
+    ImGui::Begin("Camera Settings");
+    ImGui::Text("Camera");
 
-	if(ImGui::DragFloat("FOV", &m_Fov, 0.1f))
-	{
-		m_Fov = std::clamp(m_Fov / MathConstants::TO_HALFRADIANS, 40.f, 220.f) * MathConstants::TO_HALFRADIANS;
-	}
+    if (ImGui::DragFloat("FOV", &m_Fov, 0.1f))
+    {
+        m_Fov = std::clamp(m_Fov / MathConstants::TO_HALFRADIANS, 40.f, 220.f) * MathConstants::TO_HALFRADIANS;
+    }
 
-	ImGui::DragFloat3("Position", glm::value_ptr(m_Origin), 0.1f);
-	ImGui::DragFloat("Movement Speed", &m_KeyboardMovementSpeed, 0.1f);
-	ImGui::DragFloat("Angular Speed", &m_AngularMovementSpeed, 0.1f);
-	ImGui::DragFloat("Near Plane", &m_NearPlane, 0.5f);
-	ImGui::DragFloat("Far Plane", &m_FarPlane, 0.5f);
+    if(ImGui::DragFloat3("Position", glm::value_ptr(m_Origin), 0.1f))
+    {
+        m_Target = m_Origin;
+    }
 
-	ImGui::End();
+    ImGui::DragFloat("Movement Speed", &m_KeyboardMovementSpeed, 0.1f);
+    ImGui::DragFloat("Angular Speed", &m_AngularMovementSpeed, 0.1f);
+    ImGui::DragFloat("Near Plane", &m_NearPlane, 0.5f);
+    ImGui::DragFloat("Far Plane", &m_FarPlane, 0.5f);
+    ImGui::DragFloat("Smoothing", &m_MovementSmoothness, 0.01f);
+
+    ImGui::End();
+}
+void Camera::Update()
+{
+    //Chekc if the camera needs to move
+    //if(glm::abs(glm::distance(m_Origin, m_Target)) < 0.01f) return;
+
+    //Smoothly move the camera to the target
+    m_Origin = m_Target +  (m_Origin - m_Target) * glm::pow3((-GameTimer::GetDeltaTime() / m_MovementSmoothness));
 }

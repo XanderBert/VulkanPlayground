@@ -29,6 +29,9 @@ public:
     Camera(Camera&&) = delete;
     Camera& operator=(Camera&&) = delete;
 
+    static float GetNearPlane();
+    static float GetFarPlane();
+
     static glm::mat4 GetViewMatrix();
     static glm::mat4 GetInvertedYProjectionMatrix();
     static glm::mat4 GetProjectionMatrix();
@@ -49,13 +52,18 @@ public:
     static float GetFOV();
 
 	static void OnImGui();
+    static void Update();
+
 private:
     inline static glm::vec2 m_DragStartPos = { 0.f, 0.f };
 
     inline static float m_Fov = 100.f * MathConstants::TO_HALFRADIANS;
     inline static float m_Width = 16.f;
     inline static float m_Height = 9.f;
+
     inline static  glm::vec3 m_Origin = { 0.f, -2.f, 0.0f };
+    inline static glm::vec3 m_Target = { 0.f, -2.f, 0.f };
+    inline static float m_MovementSmoothness = 0.02f;
 
     inline static float m_NearPlane = 0.1f;
     inline static float m_FarPlane = 1000.f;
@@ -64,6 +72,6 @@ private:
     inline static glm::vec3 m_Right = MathConstants::RIGHT;
     inline static glm::vec3 m_Up = MathConstants::UP;
 
-    inline static float m_KeyboardMovementSpeed = 50.f;
+    inline static float m_KeyboardMovementSpeed = 0.1f;
     inline static float m_AngularMovementSpeed = 3.0f;
 };

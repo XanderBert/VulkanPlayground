@@ -25,13 +25,13 @@ void ImGuiWrapper::Initialize(VkQueue graphicsQueue)
 	{
         constexpr VkDescriptorPoolSize pool_sizes[] =
 		{
-			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 100 },
+			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
 		};
 
 		VkDescriptorPoolCreateInfo pool_info = {};
 		pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 		pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-		pool_info.maxSets = 10 * IM_ARRAYSIZE(pool_sizes);
+		pool_info.maxSets = 100 * IM_ARRAYSIZE(pool_sizes);
 		pool_info.poolSizeCount = (uint32_t)IM_ARRAYSIZE(pool_sizes);
 		pool_info.pPoolSizes = pool_sizes;
 		VulkanCheck(vkCreateDescriptorPool(m_pContext->device, &pool_info, nullptr, &descriptorPool), "Failed To Create ImGui DescriptorPool");
@@ -132,11 +132,8 @@ void ImGuiWrapper::NewFrame()
         if (ImGuiFileDialog::Instance()->IsOk())
         {
             std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
-            std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
-            std::string fullPath = filePath + "\\" + filePathName;
-
             std::shared_ptr<Material> baseMaterial = MaterialManager::GetMaterials()[0];
-            std::unique_ptr<Mesh> newMesh = std::make_unique<Mesh>(fullPath, baseMaterial, filePathName);
+            std::unique_ptr<Mesh> newMesh = std::make_unique<Mesh>(filePathName, baseMaterial, filePathName);
             SceneManager::GetActiveScene()->AddMesh(std::move(newMesh));
         }
         ImGuiFileDialog::Instance()->Close();
