@@ -1,12 +1,17 @@
 # VulkanPlayground
 
-![Skybox](PBR_SkyBox.png)
+![Skybox](gltf.gif)
+
 
 ## Some Features
 - Lua Script Support
 - Runtime Shader Creation
 - Runtime Shader Compiling
-- Runtime Shader Changes watcher thread -> automaticlly compiles the chaged shader in runtime
+- Runtime Shader Changes watcher thread -> automatically compiles the changed shader in runtime
+- PBR Material System (Channel and non channel packed)
+- Runtime GLTF/Obj Model Loading
+- Runtime Texture Loading/Swapping
+- .ktx Texture Loading
 
 ## What do i want to get out of this project?
 First of all i want to setup a working runtime shader editor and abstract vulkan.
@@ -20,7 +25,6 @@ TODO:
 - Shadow Mapping
 - Deferred Rendering
 - Object Picking for Object Manipulation
-- PBR Material System
 - Scene Graph
 - Scene Serialization
 - Scene Deserialization
