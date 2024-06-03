@@ -1,27 +1,20 @@
 #pragma once
 #include <vulkan/vulkan.h>
-
-#include "ImGuiWrapper.h"
 #include "vulkanbase/VulkanTypes.h"
 
 class DepthResource
 {
 public:
 
-	static void Recreate(VulkanContext* vulkanContext);
+	static void Recreate(const VulkanContext* vulkanContext);
 	static void Init(const VulkanContext* vulkanContext);
-	static void Cleanup(VulkanContext* vulkanContext);
+	static void Cleanup(const VulkanContext* vulkanContext);
 
 	static  VkPipelineDepthStencilStateCreateInfo GetDepthPipelineInfo(VkBool32 depthTestEnable, VkBool32 depthWriteEnable);
 
 	static VkImageView GetImageView();
 	static VkFormat GetFormat();
 	static VkImage GetImage();
-
-    //Test for shadow mapping
-    // inline static VkSampler m_Sampler;
-    // static void OnImGui();
-    // inline static bool isSetup = false;
 
 private:
 	inline static VkImage m_Image;

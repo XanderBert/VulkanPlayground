@@ -7,16 +7,19 @@
 
 
 class VulkanContext;
-class Light final : public IImGuiRenderable {
+class Light final : public IImGuiRenderable
+{
 public:
-    Light() = default;
-    explicit Light(const VulkanContext *vulkanContext);
-    ~Light() = default;
 
-    // Light(const Light&) = delete;
-    // Light(Light&&) = delete;
-    // Light& operator=(const Light&) = delete;
-    // Light& operator=(Light&&) = delete;
+    Light() = default;
+    virtual ~Light() override = default;
+    //explicit Light(const VulkanContext *vulkanContext);
+
+
+    Light(const Light&) = delete;
+    Light(Light&&) = delete;
+    Light& operator=(const Light&) = delete;
+    Light& operator=(Light&&) = delete;
 
     virtual void OnImGui() override;
 
@@ -34,13 +37,12 @@ public:
 
     VkRenderingAttachmentInfoKHR GetAttachmentInfo() const;
 private:
-    glm::vec3 m_Position{};
-    glm::vec3 m_Color{};
+    glm::vec3 m_Color{1};
     glm::vec3 m_Direction{};
 
     float m_Intensity{};
 
-    glm::mat4 m_LightSpaceMatrix{};
+    glm::mat4 m_LightSpaceMatrix{1};
 
     VkSampler m_ShadowMapSampler{};
     VkImageView m_ShadowMapView{};

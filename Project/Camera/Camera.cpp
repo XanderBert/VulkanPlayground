@@ -4,10 +4,20 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "Core/Logger.h"
+#include "Core/SwapChain.h"
 #include "Input/Input.h"
 #include "Timer/GameTimer.h"
 #include "glm/gtx/optimum_pow.hpp"
 
+
+void Camera::Init()
+{
+    SwapChain::OnSwapChainRecreated.AddLambda([&](const VulkanContext* context)
+    {
+        const auto swapChainExtent = SwapChain::Extends();
+        SetAspectRatio(static_cast<float>(swapChainExtent.width), static_cast<float>(swapChainExtent.height));
+    });
+}
 
 float Camera::GetNearPlane() { return m_NearPlane; }
 float Camera::GetFarPlane() { return m_FarPlane; }
@@ -24,6 +34,7 @@ glm::mat4 Camera::GetInvertedYProjectionMatrix()
 glm::mat4 Camera::GetProjectionMatrix()
 {
     glm::mat4x4 projectionMatrix = glm::perspective(m_Fov, m_Width / m_Height, m_NearPlane, m_FarPlane);
+
     // Flip the Y axis
 	projectionMatrix[1][1] *= -1;
 
@@ -138,9 +149,12 @@ void Camera::OnImGui()
 }
 void Camera::Update()
 {
-    //Chekc if the camera needs to move
-    //if(glm::abs(glm::distance(m_Origin, m_Target)) < 0.01f) return;
-
     //Smoothly move the camera to the target
     m_Origin = m_Target +  (m_Origin - m_Target) * glm::pow3((-GameTimer::GetDeltaTime() / m_MovementSmoothness));
+}
+
+void Camera::SetAspectRatio(float width, float height)
+{
+    m_Width = width;
+    m_Height = height;
 }

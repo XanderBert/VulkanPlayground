@@ -45,25 +45,22 @@ vec4 SkyboxReflection(vec3 pos, vec3 normal, mat4 invModel, samplerCube skyboxSa
 {
     vec3 cI = normalize (pos);
     vec3 cR = reflect (cI, normalize(normal));
+    cR = vec3(invModel * vec4(cR, 0.0));
 
-    // Convert cubemap coordinates into Vulkan coordinate space
     cR.xy *= -1.0;
 
     return texture(skyboxSampler, cR);
 }
 
 
-vec3 specularContribution(vec3 L, vec3 V, vec3 N, vec3 F0, float metallic, float roughness, vec2 uv, vec3 albedo)
+vec3 specularContribution(vec3 L, vec3 V, vec3 N, vec3 F0, float metallic, float roughness, vec2 uv, vec3 albedo, vec3 lightColor)
 {
     vec3 H = normalize (V + L);
     float dotNH = clamp(dot(N, H), 0.0, 1.0);
     float dotNV = clamp(dot(N, V), 0.0, 1.0);
     float dotNL = clamp(dot(N, L), 0.0, 1.0);
 
-    //TODO Light colors are fixed
-    vec3 lightColor = vec3(1.0);
     vec3 color = vec3(0.0);
-
     if (dotNL > 0.0)
     {
         // D = Normal distribution (Distribution of the microfacets)
@@ -77,6 +74,8 @@ vec3 specularContribution(vec3 L, vec3 V, vec3 N, vec3 F0, float metallic, float
 
         color += (kD * albedo / PI + spec) * dotNL;
     }
+
+    color *= lightColor;
 
     return color;
 }

@@ -4,18 +4,22 @@
 #include "Logger.h"
 #include "SwapChain.h"
 
-void DepthResource::Recreate(VulkanContext* vulkanContext)
+void DepthResource::Recreate(const VulkanContext* vulkanContext)
 {
 	Cleanup(vulkanContext);
-	Init(vulkanContext);
+    DepthResourceBuilder::Build(vulkanContext, m_Image, m_ImageView, m_Memory, m_Format);
 }
 
 void DepthResource::Init(const VulkanContext* vulkanContext)
 {
 	DepthResourceBuilder::Build(vulkanContext, m_Image, m_ImageView, m_Memory, m_Format);
+    SwapChain::OnSwapChainRecreated.AddLambda([&](const VulkanContext* vulkanContext)
+    {
+        Recreate(vulkanContext);
+    });
 }
 
-void DepthResource::Cleanup(VulkanContext* vulkanContext)
+void DepthResource::Cleanup(const VulkanContext* vulkanContext)
 {
 	vkDestroyImageView(vulkanContext->device, m_ImageView, nullptr);
 	vkDestroyImage(vulkanContext->device, m_Image, nullptr);
@@ -46,24 +50,6 @@ VkFormat DepthResource::GetFormat()
 }
 
 VkImage DepthResource::GetImage() { return m_Image; }
-// void DepthResource::OnImGui()
-// {
-//     ImGui::Text("DepthResource");
-//     ImGui::Text("Format: %d", m_Format);
-//     ImGui::Text("Image: %d", m_Image);
-//     ImGui::Text("ImageView: %d", m_ImageView);
-//     ImGui::Text("Sampler: %d", m_Sampler);
-//
-//     static ImGuiTexture m_ImGuiTexture = {m_Sampler, m_ImageView, {200,200}};
-//
-//     if(isSetup)
-//        m_ImGuiTexture.Cleanup();
-//
-//     isSetup = true;
-//     m_ImGuiTexture = {m_Sampler, m_ImageView, {200,200}};
-//     m_ImGuiTexture.OnImGui();
-// }
-
 
 void DepthResourceBuilder::Build(const VulkanContext *vulkanContext, VkImage &image, VkImageView &imageView,
                                  VkDeviceMemory &memory, VkFormat &format) {

@@ -30,6 +30,7 @@
 #include "Scene/SceneManager.h"
 
 #include "Core/GlobalDescriptor.h"
+#include "shaders/Logic/ShaderEditor.h"
 
 
 struct ImGui_ImplVulkan_InitInfo;
@@ -52,10 +53,8 @@ public:
 		ServiceConfigurator::Configure();
 		initVulkan();
 		ImGuiWrapper::Initialize(m_pContext->graphicsQueue);
-
+        ShaderEditor::Init();
 	    SceneManager::AddScene(std::make_unique<Scene>(m_pContext));
-
-
 	    Input::SetupInput(m_pContext->window.Ptr());
 		MaterialManager::CreatePipelines();
 		mainLoop();
@@ -65,35 +64,26 @@ public:
 private:
 	void initVulkan()
 	{
-		// week 06
 		m_pContext = ServiceLocator::GetService<VulkanContext>();
  		createInstance();
 		setupDebugMessenger();
 
-		// week 05
-		
-		//Create Surface
 		SwapChain::CreateSurface(m_pContext);
 		pickPhysicalDevice();
 		createLogicalDevice();
 		SwapChain::Init(m_pContext);
-		// week 04 
-		
 		DepthResource::Init(m_pContext);
-
+        Camera::Init();
 
 		// Since we use an extension, we need to expliclity load the function pointers for extension related Vulkan commands
 		vkCmdBeginRenderingKHR = reinterpret_cast<PFN_vkCmdBeginRenderingKHR>(vkGetDeviceProcAddr(m_pContext->device, "vkCmdBeginRenderingKHR"));
 		vkCmdEndRenderingKHR = reinterpret_cast<PFN_vkCmdEndRenderingKHR>(vkGetDeviceProcAddr(m_pContext->device, "vkCmdEndRenderingKHR"));
 
-	
 		CommandPool::CreateCommandPool(m_pContext);
 		CommandBufferManager::CreateCommandBuffer(m_pContext, commandBuffer);
-
 		Descriptor::DescriptorManager::Init(m_pContext);
-
-		// week 06
 		createSyncObjects();
+	    ShaderManager::Setup();
 
 	    LogInfo("Vulkan Initialized");
 	}

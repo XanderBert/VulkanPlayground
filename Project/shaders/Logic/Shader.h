@@ -57,6 +57,10 @@ public:
 	ShaderManager(ShaderManager&&) = delete;
 	ShaderManager& operator=(ShaderManager&&) = delete;
 
+    static void Setup();
+
+    static void ReloadNeededShaders(const VulkanContext * vulkanContext);
+
 	static void ReloadShader(const VulkanContext * vulkanContext, const std::string& fileName, ShaderType shaderType);
 	static Shader* CreateShader(const VulkanContext * vulkanContext, const std::string& fileName, ShaderType shaderType, Material* material);
     static void RemoveMaterial(Shader* shader, Material* material);
@@ -88,6 +92,9 @@ private:
 	};
 
 	inline static std::map<std::string, std::unique_ptr<Shader>> m_ShaderInfo;
+
+    inline static std::vector<std::string> m_ShadersToReload;
+
 
 	//TODO: the lifetime of these variables are too long
 	inline static VkVertexInputBindingDescription m_VertexInputBindingDescription = Vertex::GetBindingDescription();

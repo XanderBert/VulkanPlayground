@@ -3,8 +3,10 @@
 #include <ranges>
 
 #include <vector>
+
 #include "Mesh/Material.h"
 #include "Patterns/ServiceLocator.h"
+#include "ShaderEditor.h"
 #include "SpirvHelper.h"
 #include "imgui.h"
 #include "vulkanbase/VulkanTypes.h"
@@ -27,21 +29,17 @@ void Shader::RemoveMaterial(Material *material)
 
 void Shader::OnImGui(const std::string& materialName)
 {
-	ImGui::Text(m_FileName.c_str());
-	ImGui::Separator();
-	const std::string label = "Reload##" + m_FileName + materialName;
-	const std::string openLabel = "Edit##" + m_FileName + materialName;
+    ImGui::Text(m_FileName.c_str());
+    ImGui::Separator();
+    const std::string label = "Reload##" + m_FileName + materialName;
+    const std::string openLabel = "Edit##" + m_FileName + materialName;
 
 
-	if(ImGui::Button(openLabel.c_str()))
-	{
-		tools::OpenFile("shaders\\" + m_FileName);
-	}
-	ImGui::SameLine();
-	if(ImGui::Button(label.c_str()))
-	{
-		ShaderManager::ReloadShader(ServiceLocator::GetService<VulkanContext>(), m_FileName, static_cast<ShaderType>(m_ShaderInfo.stage));
-	}
+    if(ImGui::Button(openLabel.c_str()))
+    {
+        ShaderEditor::OpenFileForEdit("shaders\\" + m_FileName);
+        //tools::OpenFile("shaders\\" + m_FileName);
+    }
 }
 
 std::string Shader::GetFileName() const
@@ -97,18 +95,50 @@ VkPipelineShaderStageCreateInfo ShaderManager::ShaderBuilder::CreateShaderInfo(c
 	return shaderStageInfo;
 }
 
-VkShaderModule ShaderManager::ShaderBuilder::CreateShaderModule(const VkDevice& device, const std::vector<char>& code)
+VkShaderModule ShaderManager::ShaderBuilder::CreateShaderModule(const VkDevice &device, const std::vector<char> &code)
 {
-	VkShaderModuleCreateInfo createInfo{};
-	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-	createInfo.codeSize = code.size();
-	createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
+    VkShaderModuleCreateInfo createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    createInfo.codeSize = code.size();
+    createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
 
-	VkShaderModule shaderModule;
-	VulkanCheck(vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule), "failed to create shader module!")
+    VkShaderModule shaderModule;
+    VulkanCheck(vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule), "failed to create shader module!")
 
-	return shaderModule;
+    return shaderModule;
 }
+
+void ShaderManager::Setup()
+{
+    SpirvHelper::OnCompilingFinished.AddLambda(
+            [](const std::string &fileName)
+            {
+                m_ShadersToReload.push_back(fileName);
+            });
+}
+
+
+void ShaderManager::ReloadNeededShaders(const VulkanContext *vulkanContext)
+{
+    if(m_ShadersToReload.empty()) return;
+
+    for(const auto& shaderName : m_ShadersToReload)
+    {
+        //Check if the shader exists
+        if(const auto it = m_ShaderInfo.find(shaderName); it == m_ShaderInfo.end())
+        {
+            LogError("Shader does not exist: " + shaderName);
+            continue;
+        }
+
+        const auto type = m_ShaderInfo[shaderName]->GetShaderType();
+        ReloadShader(vulkanContext, shaderName, type);
+    }
+
+    //Clear the list
+    m_ShadersToReload.clear();
+}
+
 
 void ShaderManager::ReloadShader(const VulkanContext * vulkanContext, const std::string& fileName, ShaderType shaderType)
 {
@@ -140,9 +170,7 @@ Shader *ShaderManager::CreateShader(const VulkanContext *vulkanContext, const st
         return shader;
     }
 
-    SpirvHelper::CompileAndSaveShader(fileName);
-    VkPipelineShaderStageCreateInfo shaderInfo = ShaderBuilder::CreateShaderInfo(
-            vulkanContext->device, static_cast<VkShaderStageFlagBits>(shaderType), fileName);
+    VkPipelineShaderStageCreateInfo shaderInfo = ShaderBuilder::CreateShaderInfo(vulkanContext->device, static_cast<VkShaderStageFlagBits>(shaderType), fileName);
 
 
     std::unique_ptr<Shader> shaderPtr = std::make_unique<Shader>(shaderInfo, material, fileName);

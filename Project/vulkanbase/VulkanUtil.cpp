@@ -49,6 +49,14 @@ namespace tools
 		return std::string{ fileData.begin(), fileData.end() };
 	}
 
+    void writeFileStr(const std::string& filename, const std::string& data)
+    {
+        std::ofstream file(filename);
+        LogAssert(file.is_open(), "failed to open file: " + filename + " | void writeFile", true)
+        file.write(data.c_str(), data.size());
+        file.close();
+    }
+
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties, VkPhysicalDevice physicalDevice)
 	{
 		//find info about the available memory types

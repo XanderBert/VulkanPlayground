@@ -65,7 +65,7 @@ void main()
 	for(int i = 0; i < lights.length(); i++)
 	{
 		vec3 L = normalize(lights[i].position - inWorldPos);
-		Lo += specularContribution(L, V, N, F0, metallic, roughness, inUV, albedo);
+		Lo += specularContribution(L, V, N, F0, metallic, roughness, inUV, albedo, lights[i].color);
 	}
 
 

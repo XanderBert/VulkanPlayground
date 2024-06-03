@@ -2,7 +2,6 @@
 #include <vulkan/vulkan.h>
 
 #include "Core/DepthResource.h"
-#include "Core/GlobalDescriptor.h"
 #include "vulkanbase/VulkanBase.h"
 
 
@@ -77,7 +76,6 @@ void VulkanBase::drawFrame()
 	if (nextImageResult == VK_ERROR_OUT_OF_DATE_KHR)
 	{
 		SwapChain::SetNeedsRecreation();
-		SwapChain::RecreateIfNeeded(m_pContext);
 		return;
 	}
 	else if (nextImageResult != VK_SUCCESS && nextImageResult != VK_SUBOPTIMAL_KHR)

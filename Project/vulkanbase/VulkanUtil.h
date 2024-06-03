@@ -23,6 +23,8 @@ namespace tools {
 
     std::string readFileStr(const std::string& filename);
 
+    void writeFileStr(const std::string& filename, const std::string& data);
+
     uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties, VkPhysicalDevice physicalDevice);
 
     VkAccessFlags GetAccessFlags(VkImageLayout layout);

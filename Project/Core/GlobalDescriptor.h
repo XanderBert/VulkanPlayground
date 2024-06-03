@@ -3,6 +3,7 @@
 #include "DynamicUniformBuffer.h"
 #include "Image/ImageLoader.h"
 #include "Lights/Light.h"
+#include "Lights/LightManager.h"
 #include "shaders/Logic/Shader.h"
 
 
@@ -25,10 +26,10 @@ struct GlobalDescriptor
 
     static inline void OnImGui()
     {
-        //m_Light.OnImGui();
+        ImGui::Begin("Global Descriptor");
+        LightManager::OnImGui();
+        ImGui::End();
     }
-    //Ligth Test
-    //static inline Light m_Light;
 
 private:
 	static inline VkDescriptorSetLayout m_GlobalDescriptorSetLayout{};
@@ -40,15 +41,8 @@ private:
 	static inline uint16_t cameraHandle = 0;
 	static inline uint16_t cameraPlaneHandle = 0;
 
-    // static inline uint16_t lightPositionHandle = 0;
-    // static inline uint16_t lightDirectionHandle = 0;
-    // static inline uint16_t lightColorHandle = 0;
-
-
-
+    static inline uint16_t lightPositionHandle = 0;
+    static inline uint16_t lightColorHandle = 0;
 
 	static inline Descriptor::DescriptorWriter m_Writer{};
-
-
-
 };

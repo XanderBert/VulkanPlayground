@@ -8,15 +8,17 @@
 #include "Core/ImGuiWrapper.h"
 #include "Core/Logger.h"
 
+#include <Mesh/MaterialManager.h>
 #include <Timer/GameTimer.h>
 #include "Input/Input.h"
-#include <Mesh/MaterialManager.h>
 
 #include "Core/GlobalDescriptor.h"
 #include "Core/Image/CubeMap.h"
 #include "Core/Image/Texture2D.h"
 #include "Patterns/ServiceLocator.h"
+
 #include "implot.h"
+#include "shaders/Logic/ShaderEditor.h"
 
 
 Scene::Scene(VulkanContext* vulkanContext)
@@ -52,10 +54,10 @@ Scene::Scene(VulkanContext* vulkanContext)
     //
     // Create Meshes
     //
-	m_Meshes.push_back(std::make_unique<Mesh>("Robot.obj", PBR_Material, "Robot"));
-	m_Meshes.back()->SetPosition(glm::vec3{ -1.0f, 2.6f,0.f });
-	m_Meshes.back()->SetRotation(glm::vec3{ 90.f, 0.f, 0.f });
-	m_Meshes.back()->SetScale(glm::vec3(0.1f));
+	// m_Meshes.push_back(std::make_unique<Mesh>("Robot.obj", PBR_Material, "Robot"));
+	// m_Meshes.back()->SetPosition(glm::vec3{ -1.0f, 2.6f,0.f });
+	// m_Meshes.back()->SetRotation(glm::vec3{ 90.f, 0.f, 0.f });
+	// m_Meshes.back()->SetScale(glm::vec3(0.1f));
 
 
 
@@ -78,7 +80,6 @@ Scene::Scene(VulkanContext* vulkanContext)
     Input::BindFunction({GLFW_KEY_T, Input::KeyType::Press}, ImGuizmoHandler::RotateOperation);
     Input::BindFunction({GLFW_KEY_Y, Input::KeyType::Press}, ImGuizmoHandler::ScaleOperation);
 
-
     LogInfo("Scene Made");
 }
 
@@ -86,6 +87,10 @@ Scene::Scene(VulkanContext* vulkanContext)
 void Scene::Render(VkCommandBuffer commandBuffer) const
 {
 	GameTimer::UpdateDelta();
+
+    //TODO: This check should only happen on events / not in the hot code path
+    ShaderManager::ReloadNeededShaders(ServiceLocator::GetService<VulkanContext>());
+    ShaderEditor::Render();
 
 	const ImGuiIO& io = ImGui::GetIO(); (void)io;
 	const float ms = 1000.0f / io.Framerate;
@@ -114,6 +119,9 @@ void Scene::Render(VkCommandBuffer commandBuffer) const
 	VulkanLogger::Log.Render("Vulkan Log: ");
 	MaterialManager::OnImGui();
 
+    GlobalDescriptor::OnImGui();
+
+
     Camera::Update();
 	Camera::OnImGui();
 
@@ -131,7 +139,7 @@ void Scene::Render(VkCommandBuffer commandBuffer) const
 		mesh->Render(commandBuffer);
 	}
 
-    //GlobalDescriptor::OnImGui();
+
     ImGui::Render();
 
 }

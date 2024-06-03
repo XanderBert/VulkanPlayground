@@ -6,6 +6,7 @@
 #include <algorithm>
 
 #include "DepthResource.h"
+#include "Camera/Camera.h"
 #include "Image/ImageLoader.h"
 
 class SwapChain final
@@ -19,12 +20,10 @@ public:
 	SwapChain& operator=(const SwapChain&) = delete;
 	SwapChain& operator=(SwapChain&&) = delete;
 
+    inline static Delegate<const VulkanContext*> OnSwapChainRecreated;
+
 	static VkSwapchainKHR GetSwapChain() { return m_SwapChain; }
 
-	//This would be ideal bout it would mean the swapchain would need to be in a singleton class or a ServiceLocator
-	//It seems to be possible with the 2b c++ extension?
-	//overload [ ] operator to return m_SwapChainImages at index
-	//VkImage& operator[](int index) { return m_SwapChainImages[index]; }
 	static VkImage& Image(int index) { return m_SwapChainImages[index]; }
 
 	static void Init(const VulkanContext* vulkanContext)
@@ -116,31 +115,23 @@ public:
 	static VkFormat& Format() { return m_Format; }
 	static uint8_t ImageCount() { return static_cast<uint8_t>(m_SwapChainImages.size()); }
 
-
-
-	static void RecreateIfNeeded(VulkanContext* vulkanContext)
+	static void RecreateIfNeeded(const VulkanContext* vulkanContext)
 	{
 		if (!m_NeedsRecreation) return;
 
-		LogInfo("Destroying SwapChain");
+	    LogInfo("Recreating SwapChain");
 		DestroySwapChain(vulkanContext);
-
-		LogInfo("Recreating SwapChain");
 		Init(vulkanContext);
-
 		vkDeviceWaitIdle(vulkanContext->device);
 
-		LogInfo("Recreating DepthResource");
-		DepthResource::Recreate(vulkanContext);
-
-		
+	    OnSwapChainRecreated.Broadcast(vulkanContext);
 		m_NeedsRecreation = false;
 	}
 
 private:
 	struct SwapChainSupportDetails
 	{
-		VkSurfaceCapabilitiesKHR capabilities;
+		VkSurfaceCapabilitiesKHR capabilities{};
 		std::vector<VkSurfaceFormatKHR> formats;
 		std::vector<VkPresentModeKHR> presentModes;
 	};

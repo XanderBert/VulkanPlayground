@@ -137,9 +137,9 @@ namespace GLTFLoader {
                     tangent = glm::normalize(tangent);
 
                     // Add the Tangent to the vertices
-                    vertices[indices[i + 0]].tangent = tangent;
-                    vertices[indices[i + 1]].tangent = tangent;
-                    vertices[indices[i + 2]].tangent = tangent;
+                    vertices[indices[i + 0]].tangent += tangent;
+                    vertices[indices[i + 1]].tangent += tangent;
+                    vertices[indices[i + 2]].tangent += tangent;
                 }
             }
 
@@ -207,8 +207,8 @@ namespace GLTFLoader {
         }
 
 
-        constexpr auto gltfOptions = fastgltf::Options::DontRequireValidAssetMember | fastgltf::Options::AllowDouble | fastgltf::Options::LoadGLBBuffers | fastgltf::Options::LoadExternalBuffers | fastgltf::Options::GenerateMeshIndices;
-        //| fastgltf::Options::LoadExternalImages;
+        auto gltfOptions = fastgltf::Options::DontRequireValidAssetMember | fastgltf::Options::AllowDouble | fastgltf::Options::LoadGLBBuffers | fastgltf::Options::LoadExternalBuffers | fastgltf::Options::GenerateMeshIndices;
+        //gltfOptions |= fastgltf::Options::LoadExternalImages;
 
         fastgltf::Parser parser{};
         fastgltf::GltfDataBuffer data;
@@ -254,14 +254,15 @@ namespace GLTFLoader {
             {
                 images.emplace_back(VulkanContext::GetAssetPath(std::string(uri->uri.string())).generic_string());
             }
-            else if(auto array = std::get_if<fastgltf::sources::Vector>(&dataa))
+            else if(auto array = std::get_if<fastgltf::sources::Array>(&dataa))
             {
 
                 LoadedImage loadedImage{};
                 if(array->mimeType == fastgltf::MimeType::KTX2)
                 {
+                    auto pD = array->bytes;
                     ktxTexture* texturePtr{};
-                    auto sources = ktx::CreateImageFromMemory(vulkanContext, array->bytes, loadedImage.imageSize, loadedImage.mipLevels, &texturePtr);
+                    auto sources = ktx::CreateImageFromMemory(vulkanContext, array->bytes.data(), array->bytes.size(),loadedImage.imageSize, loadedImage.mipLevels, &texturePtr);
 
                     loadedImage.texture = texturePtr;
                     loadedImage.staginBuffer = sources.first;
@@ -269,12 +270,9 @@ namespace GLTFLoader {
 
                 }else if(array->mimeType == fastgltf::MimeType::PNG || array->mimeType == fastgltf::MimeType::JPEG ||array->mimeType == fastgltf::MimeType::None)
                 {
-
-
-
-                    auto sources = stbi::CreateImageFromMemory(vulkanContext, array->bytes, loadedImage.imageSize, loadedImage.mipLevels);
+                    auto sources = stbi::CreateImageFromMemory(vulkanContext, array->bytes.data(), array->bytes.size(), loadedImage.imageSize, loadedImage.mipLevels);
                     loadedImage.staginBuffer = sources.first;
-                    loadedImage.stagingBufferMemory = sources.second;
+                     loadedImage.stagingBufferMemory = sources.second;
                 }else {
                     LogError("Unsuported embeded texture format in gtlf");
                 }

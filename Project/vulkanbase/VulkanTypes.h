@@ -11,6 +11,7 @@
 #include <iostream>
 #include <vector>
 #include "Core/Logger.h"
+#include "Patterns/Delegate.h"
 
 
 class Window
@@ -56,7 +57,6 @@ public:
 	}
 
 	GLFWwindow* Ptr() const { return m_pWindow; }
-
 private:
 	GLFWwindow* m_pWindow;
 	const uint32_t WIDTH = 1280;
@@ -95,7 +95,7 @@ public:
 
     static std::filesystem::path GetAssetPath(const std::string& path)
     {
-        return std::filesystem::current_path().parent_path().parent_path() / "Assets" / path;
+        return std::filesystem::current_path()/ "Assets" / path;
     }
 
 

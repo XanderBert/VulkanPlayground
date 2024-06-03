@@ -1,6 +1,7 @@
 #pragma once
-#include <efsw/include/efsw/efsw.hpp>
 #include <efsw/System.hpp>
+#include <efsw/include/efsw/efsw.hpp>
+#include <thread>
 
 #include "SpirvHelper.h"
 
@@ -11,31 +12,22 @@ public:
 
 	ShaderListener() = default;
 
-	void handleFileAction(efsw::WatchID, const std::string&, const std::string& filename, efsw::Action action,	std::string oldFilename) override
+	void handleFileAction(efsw::WatchID id, const std::string& str, const std::string& filename, efsw::Action action,	std::string oldFilename) override
 	{
-		//Wait for a bit to make sure the file is done being written (as sometimes it is not done yet)
-		efsw::System::sleep(100);
-
 		//Check if the file was created/modified
-		if(action == efsw::Actions::Modified || action == efsw::Actions::Moved)
+		if(action == efsw::Actions::Modified)
 		{
 		    //Check if last 3 chars are .spv
 		    const std::string extension = filename.substr(filename.size() - 4, 4);
-            if(extension == ".spv")
-            {
-                LogInfo("Shader: " + filename + " is a .spv file, skipping");
-                return;
-            }
-
+            if(extension == ".spv") return;
+		    
 			LogInfo("Shader: " + filename + " has event Modified");
 
-			//Compile and Save the shader
+		    //Wait a little bit, As some programs write the file in chunks (meaning more then one modified event will be triggered)(e.g. Visual Studio Code)
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			SpirvHelper::CompileAndSaveShader(filename);
 		}
 	}
-
-private:
-
 };
 
 
@@ -47,7 +39,7 @@ public:
 		m_FileWatcher = std::make_unique<efsw::FileWatcher>();
 		m_Listener = std::make_unique<ShaderListener>();
 
-		m_FileWatcher->addWatch("shaders", m_Listener.get(), true);
+		m_FileWatcher->addWatch("shaders", m_Listener.get(), false);
 		m_FileWatcher->watch();
 	}
 

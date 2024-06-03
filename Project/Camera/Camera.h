@@ -29,6 +29,8 @@ public:
     Camera(Camera&&) = delete;
     Camera& operator=(Camera&&) = delete;
 
+    static void Init();
+
     static float GetNearPlane();
     static float GetFarPlane();
 
@@ -54,6 +56,7 @@ public:
 	static void OnImGui();
     static void Update();
 
+    static void SetAspectRatio(float width, float height);
 private:
     inline static glm::vec2 m_DragStartPos = { 0.f, 0.f };
 

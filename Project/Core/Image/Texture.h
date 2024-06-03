@@ -82,13 +82,13 @@ concept TextureConcept =    std::is_base_of_v<Texture, TextureType> &&
 namespace stbi
 {
     std::pair<VkBuffer, VkDeviceMemory> CreateImage(VulkanContext* vulkanContext, const std::filesystem::path &path, glm::ivec2 &imageSize, uint32_t &mipLevels);
-    std::pair<VkBuffer, VkDeviceMemory> CreateImageFromMemory(VulkanContext *vulkanContext,const  std::vector<std::uint8_t>& data, glm::ivec2 &imageSize, uint32_t &mipLevels);
+    std::pair<VkBuffer, VkDeviceMemory> CreateImageFromMemory(VulkanContext *vulkanContext,const std::uint8_t* data, size_t size, glm::ivec2 &imageSize, uint32_t &mipLevels);
 }
 
 //ktx Loader
 namespace ktx
 {
     std::pair<VkBuffer, VkDeviceMemory> CreateImage(VulkanContext *vulkanContext, const std::filesystem::path &path, glm::ivec2 &imageSize, uint32_t &mipLevels, ktxTexture** texture);
-    std::pair<VkBuffer, VkDeviceMemory> CreateImageFromMemory(VulkanContext *vulkanContext,const  std::vector<std::uint8_t>& data, glm::ivec2 &imageSize, uint32_t &mipLevels, ktxTexture** texture);
+    std::pair<VkBuffer, VkDeviceMemory> CreateImageFromMemory(VulkanContext *vulkanContext, const std::uint8_t* data, size_t size, glm::ivec2 &imageSize, uint32_t &mipLevels, ktxTexture** texture);
 }
 

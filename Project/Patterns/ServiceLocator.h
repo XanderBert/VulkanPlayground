@@ -4,7 +4,7 @@
 #include <typeinfo>
 #include <unordered_map>
 #include <cassert>
-#include <sstream>
+
 
 
 
@@ -66,7 +66,6 @@ private:
 	inline static std::unordered_map<std::type_index, std::unique_ptr<void, void (*)(void const*)>> m_ServiceInstances{};
 };
 
-#include "LuaScripts/LuaScriptRunner.h"
 #include "vulkanbase/VulkanTypes.h"
 class ServiceConfigurator 
 {
@@ -80,9 +79,7 @@ public:
 
 	static void Configure()
 	{
-		ServiceLocator::RegisterService<LuaScriptRunner>();
 		ServiceLocator::RegisterService<VulkanContext>();
-
 	    LogInfo("Services Configured");
 	}
 };

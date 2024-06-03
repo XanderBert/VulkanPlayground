@@ -73,12 +73,12 @@ std::pair<VkBuffer, VkDeviceMemory> stbi::CreateImage(VulkanContext *vulkanConte
 
     return {stagingBuffer, stagingBufferMemory};
 }
-std::pair<VkBuffer, VkDeviceMemory> stbi::CreateImageFromMemory(VulkanContext *vulkanContext,const  std::vector<std::uint8_t>& data, glm::ivec2 &imageSize, uint32_t &mipLevels)
+std::pair<VkBuffer, VkDeviceMemory> stbi::CreateImageFromMemory(VulkanContext *vulkanContext,const std::uint8_t* data, size_t size, glm::ivec2 &imageSize, uint32_t &mipLevels)
 {
     int channels{};
-    stbi_uc *pixels = stbi_load_from_memory(data.data(), static_cast<int>(data.size()), &imageSize.x, &imageSize.y, &channels, 4);
+    stbi_uc *pixels = stbi_load_from_memory(data, size, &imageSize.x, &imageSize.y, &channels, 4);
     LogAssert(pixels, "failed to load texture image!", true)
-     mipLevels = 1;
+    mipLevels = 1;
 
     const VkDeviceSize deviceImageSize = static_cast<VkDeviceSize>(imageSize.x) * imageSize.y * 4;
     VkBuffer stagingBuffer;
@@ -116,10 +116,10 @@ std::pair<VkBuffer, VkDeviceMemory> ktx::CreateImage(VulkanContext *vulkanContex
 
     return {stagingBuffer, stagingBufferMemory};
 }
-std::pair<VkBuffer, VkDeviceMemory> ktx::CreateImageFromMemory(VulkanContext *vulkanContext, const  std::vector<std::uint8_t>& data, glm::ivec2 &imageSize, uint32_t &mipLevels, ktxTexture **texture)
+std::pair<VkBuffer, VkDeviceMemory> ktx::CreateImageFromMemory(VulkanContext *vulkanContext, const std::uint8_t* data, size_t size, glm::ivec2 &imageSize, uint32_t &mipLevels, ktxTexture **texture)
 {
     // TODO: KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT -  should not be set, It should be directly loaded in the staging buffer
-    auto errorCode = ktxTexture_CreateFromMemory(data.data(), data.size(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, texture);
+    auto errorCode = ktxTexture_CreateFromMemory(data, size, KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, texture);
     LogAssert(errorCode == KTX_SUCCESS, "Failed to load texture image!", true)
     LogAssert((*texture) != nullptr, "The KTX Texture is not valid", true)
 

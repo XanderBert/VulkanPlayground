@@ -54,8 +54,7 @@ set(SOURCES
     "shaders/Logic/Shader.h"
     "shaders/Logic/Shader.cpp" 
     "Patterns/Singleton.h"
-    "LuaScripts/LuaScriptRunner.h"
-    "shaders/Logic/ShaderFactory.h"
+        "shaders/Logic/ShaderFactory.h"
     "shaders/Logic/SpirvHelper.h"
     "shaders/Logic/ShaderFileWatcher.h" 
     "Mesh/Vertex.h" 
@@ -112,6 +111,9 @@ set(SOURCES
         Core/Lights/Light.h
         Core/Lights/LightManager.cpp
         Core/Lights/LightManager.h
+        Patterns/Delegate.h
+        shaders/Logic/ShaderEditor.cpp
+        shaders/Logic/ShaderEditor.h
 )
 
 
@@ -134,24 +136,6 @@ set (IMGUI_SOURCE_FILES
     ${IMGUI_DIR}/imgui_tables.cpp 
     ${IMGUI_DIR}/imgui_widgets.cpp
 )
-
-FetchContent_Declare(
-  Sol
-  GIT_REPOSITORY https://github.com/ThePhD/sol2.git
-  GIT_TAG        v4.0.0-alpha
-)
-FetchContent_MakeAvailable(Sol)
-set(SOL_DIR ${sol_SOURCE_DIR})
-include_directories(${SOL_DIR}/single/include)
-
-FetchContent_Declare(
-    lua
-    GIT_REPOSITORY https://github.com/marovira/lua
-    GIT_TAG         5.4.4
-)
-FetchContent_MakeAvailable(lua)
-set (LUA_SCRIPTS ${CMAKE_CURRENT_SOURCE_DIR}/LuaScripts/CreateShader.lua)
-file(COPY ${LUA_SCRIPTS} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/LuaScripts)
 
 FetchContent_Declare(
     tinyObj
@@ -218,16 +202,6 @@ set (IMGUIFILEDIALOG_SOURCE_FILES
         ${imguifiledialog_SOURCE_DIR}/ImGuiFileDialogConfig.h
 )
 
-#FetchContent_Declare(
-#        FastGLTF
-#        GIT_REPOSITORY  https://github.com/spnda/fastgltf.git
-#        GIT_TAG v0.7.1
-#)
-#FetchContent_MakeAvailable(FastGLTF)
-#set(FAST_GLTF_DIR ${fastgltf_SOURCE_DIR})
-
-
-
 
 
 set(EXTERNALS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../includes)
@@ -248,7 +222,13 @@ include_directories( ${KTX_DIR}/include)
 include_directories( ${KTX_DIR}/other_include)
 
 
+set(ImGuiTextEditSourceDir ${EXTERNALS_DIR}/ImGuiTextEdit)
 
+set(IMGUI_TEXTEDIT_SOURCES
+    ${ImGuiTextEditSourceDir}/TextEditor.cpp
+    ${ImGuiTextEditSourceDir}/TextEditor.h)
+
+include_directories(${ImGuiTextEditSourceDir})
 
 
 
@@ -261,9 +241,9 @@ add_executable(
     ${IMGUIZMO_SOURCE_FILES} 
     ${IMPLOT_SOURCE_FILES}
     ${IMGUIFILEDIALOG_SOURCE_FILES}
-    ${LUA_SCRIPTS} 
     ${STB_SOURCES}
     ${KTX_SOURCES}
+    ${IMGUI_TEXTEDIT_SOURCES}
 )
 
 
@@ -276,7 +256,6 @@ target_include_directories(
     ${PROJECT_NAME}
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} 
     PRIVATE ${EXTERNALS_DIR}
-    PRIVATE ${LUA_DIR}
     PRIVATE ${TINY_OBJ_DIR}
     PRIVATE ${IMGUI_DIR}
     PRIVATE ${imguizmo_SOURCE_DIR}
@@ -289,7 +268,6 @@ target_link_libraries(${PROJECT_NAME}
     PRIVATE ${Vulkan_LIBRARIES}
     PUBLIC glfw
     PUBLIC debug ${SHADERC_DEBUG} optimized ${Vulkan_shaderc_combined_LIBRARY}
-    PRIVATE lua::lua
     PRIVATE efsw
     PRIVATE glm
     PRIVATE tinyobjloader

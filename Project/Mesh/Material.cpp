@@ -36,13 +36,13 @@ void Material::OnImGui()
 }
 
 void Material::Bind(const VkCommandBuffer commandBuffer, const glm::mat4x4 &pushConstantMatrix) {
+
     // Update model matrix
     m_pGraphicsPipeline->BindPushConstant(commandBuffer, pushConstantMatrix);
     m_pGraphicsPipeline->BindPipeline(commandBuffer);
     m_DescriptorSet.Bind(m_pContext, commandBuffer, m_pGraphicsPipeline->GetPipelineLayout(), 1);
 
-    // TODO: This is a temporary solution to avoid binding the same pipeline multiple times
-    // This would be a better solution:
+    // TODO: This would be a better solution:
     //  for each material
     //  {
     //      bind material resources  // material parameters and textures
@@ -53,9 +53,6 @@ void Material::Bind(const VkCommandBuffer commandBuffer, const glm::mat4x4 &push
     //      }
     //  }
 
-    // Don't bind the same pipeline if it's already bound
-    // if(MaterialManager::GetCurrentBoundPipeline() ==  m_pGraphicsPipeline.get()) return;
-    // MaterialManager::SetCurrentBoundPipeline(m_pGraphicsPipeline.get());
 }
 Shader *Material::SetShader(const std::string &shaderPath, ShaderType shaderType)
 {

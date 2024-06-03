@@ -1,13 +1,17 @@
 #pragma once
 #include <fstream>
-#include <vulkanbase/vulkanUtil.h>
+#include <optional>
 #include <shaderc/shaderc.h>
 #include <shaderc/shaderc.hpp>
+#include <vulkanbase/vulkanUtil.h>
 #include "Core/Logger.h"
+#include "Patterns/Delegate.h"
 
 struct SpirvHelper
 {
-     struct includer : public shaderc::CompileOptions::IncluderInterface {
+    inline static Delegate<const std::string&> OnCompilingFinished;
+
+    struct includer : public shaderc::CompileOptions::IncluderInterface {
 
          struct result_t : shaderc_include_result
          {
@@ -50,7 +54,7 @@ struct SpirvHelper
          }
      };
 
-    static std::vector<uint32_t> CompileShader(const std::string& sourceName, shaderc_shader_kind kind, const std::string& source, bool optimize = false) 
+    static std::optional<std::vector<uint32_t>> CompileShader(const std::string& sourceName, shaderc_shader_kind kind, const std::string& source, bool& didCompileSuccessfully, bool optimize = false)
     {
         LogInfo("Compiling shader: " + sourceName);
 
@@ -71,23 +75,32 @@ struct SpirvHelper
         if (optimize) options.SetOptimizationLevel(shaderc_optimization_level_size);
 
 
+
         // preprocess
         const shaderc::PreprocessedSourceCompilationResult preprocessed = compiler.PreprocessGlsl(shaderString, kind, sourceName.c_str(), options);
-
-		LogAssert(preprocessed.GetCompilationStatus() == shaderc_compilation_status_success, preprocessed.GetErrorMessage(), false)
-        LogAssert(preprocessed.cend() - preprocessed.cbegin() > 0, "Preprocessed module is empty", false)
-
         shaderString = { preprocessed.cbegin(), preprocessed.cend() };
 
         //Compile the shader
         const shaderc::SpvCompilationResult module = compiler.CompileGlslToSpv(shaderString, kind, sourceName.c_str(), options);
 
-        //Check for compilation errors
-		LogAssert(module.GetCompilationStatus() == shaderc_compilation_status_success, module.GetErrorMessage(), false)
-        LogAssert(module.cend() - module.cbegin() > 0, "Compiled module is empty", false)
+        didCompileSuccessfully =
+            preprocessed.GetCompilationStatus() == shaderc_compilation_status_success &&
+            module.GetCompilationStatus() == shaderc_compilation_status_success &&
+            module.cend() - module.cbegin() > 0 &&
+            preprocessed.cend() - preprocessed.cbegin() > 0;
+
+        if(!didCompileSuccessfully)
+        {
+            LogError("Failed to compile shader: " + sourceName);
+            LogError(module.GetErrorMessage());
+            return std::nullopt;
+        }
 
         //Return the compiled binary
-        return { module.cbegin(), module.cend() };
+        auto binary = std::optional<std::vector<uint32_t>>{};
+        //set the value
+        binary = { module.cbegin(), module.cend() };
+        return binary;
     }
 
     static void CompileAndSaveShader(const std::string& sourceName, bool optimize = false)
@@ -100,15 +113,24 @@ struct SpirvHelper
             return;
         }
 
+        bool didCompileSuccessfully = false;
+
     	//Compile the shader
-		auto shaderBinary = CompileShader(sourceName, GetShaderKind(sourceName), "shaders/" + sourceName, optimize);
+		auto shaderBinary = CompileShader(sourceName, GetShaderKind(sourceName), "shaders/" + sourceName, didCompileSuccessfully, optimize);
+        if(!shaderBinary.has_value()) return;
 
-
+        std::vector<uint32_t> binaryData = shaderBinary.value();
 
 		//Store the shader binary to a file
 		std::ofstream file("shaders/" + sourceName + ".spv", std::ios::binary);
-		file.write((char*)shaderBinary.data(), shaderBinary.size() * sizeof(uint32_t));
+		file.write(reinterpret_cast<char *>(binaryData.data()), binaryData.size() * sizeof(uint32_t));
 		file.close();
+
+        if(didCompileSuccessfully)
+        {
+            //Notify the listeners
+            OnCompilingFinished.Broadcast(sourceName);
+        }
 	}
 
     static shaderc_shader_kind GetShaderKind(const std::string& filename)

@@ -1,6 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <functional>
+#include <imgui_impl_glfw.h>
 #include <glm/vec2.hpp>
 #include "vulkanbase/VulkanTypes.h"
 #include "Core/Logger.h"
@@ -23,8 +24,6 @@ namespace Input
 		bool operator==(const InputProperties& other) const
 		{
 			if (key != other.key) return false;
-			//if (keyType == KeyType::Press) return true;
-			//if (keyType != other.keyType) return false;
 			return true;
 		}
 	};
@@ -79,28 +78,24 @@ namespace Input
 	{
 		windowPtr = window;
 
-		glfwSetKeyCallback(window, [](GLFWwindow*, int key, int, int action, int)
+		glfwSetKeyCallback(window, [](GLFWwindow* window, int key, int scanCode, int action, int mods)
 		{
+		    ImGui_ImplGlfw_KeyCallback(window, key, action, action, mods);
 			KeyEvent(key, action);
 		});
 
-		glfwSetCursorPosCallback(window, [](GLFWwindow*, double xpos, double ypos)
+		glfwSetCursorPosCallback(window, [](GLFWwindow* window, double xpos, double ypos)
 		{
-			ImGuiIO& io = ImGui::GetIO();
-			io.AddMousePosEvent(static_cast<float>(xpos), static_cast<float>(ypos));
-
-			if(io.WantCaptureMouse) return;
+		    ImGui_ImplGlfw_CursorPosCallback(window, xpos, ypos);
+		    if (ImGui::GetIO().WantCaptureMouse) return;
 
 			MouseMove(xpos, ypos);
 		});
 
-		glfwSetMouseButtonCallback(window, [](GLFWwindow*, int button, int action, int)
+		glfwSetMouseButtonCallback(window, [](GLFWwindow* window, int button, int action, int mods)
 		{
-			ImGuiIO& io = ImGui::GetIO();
-			io.AddMouseButtonEvent(button, action);
-
-			if (io.WantCaptureMouse) return;
-
+			ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
+			if (ImGui::GetIO().WantCaptureMouse) return;
 			KeyEvent(button, action);
 		});
 
