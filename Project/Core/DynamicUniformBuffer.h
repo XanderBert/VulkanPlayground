@@ -4,6 +4,7 @@
 #include <glm/vec4.hpp>
 #include <vulkan/vulkan.h>
 #include "vulkanbase/VulkanTypes.h"
+#include "Core/VmaUsage.h"
 
 namespace Descriptor
 {
@@ -60,6 +61,6 @@ private:
 
 
 	VkBuffer m_UniformBuffer;
-	VkDeviceMemory m_UniformBuffersMemory;
+	VmaAllocation m_UniformBuffersMemory;
 	void* m_UniformBuffersMapped;
 };

@@ -22,8 +22,7 @@ void DepthResource::Init(const VulkanContext* vulkanContext)
 void DepthResource::Cleanup(const VulkanContext* vulkanContext)
 {
 	vkDestroyImageView(vulkanContext->device, m_ImageView, nullptr);
-	vkDestroyImage(vulkanContext->device, m_Image, nullptr);
-	vkFreeMemory(vulkanContext->device, m_Memory, nullptr);
+    vmaDestroyImage(Allocator::VmaAllocator, m_Image, m_Memory);
 }
 
 VkPipelineDepthStencilStateCreateInfo DepthResource::GetDepthPipelineInfo(VkBool32 depthTestEnable, VkBool32 depthWriteEnable)
@@ -51,8 +50,8 @@ VkFormat DepthResource::GetFormat()
 
 VkImage DepthResource::GetImage() { return m_Image; }
 
-void DepthResourceBuilder::Build(const VulkanContext *vulkanContext, VkImage &image, VkImageView &imageView,
-                                 VkDeviceMemory &memory, VkFormat &format) {
+void DepthResourceBuilder::Build(const VulkanContext* vulkanContext, VkImage& image, VkImageView& imageView , VmaAllocation& memory, VkFormat& format)
+{
     format = FindDepthFormat(vulkanContext);
     CreateDepthResources(vulkanContext, image, imageView, memory);
 }
@@ -69,13 +68,13 @@ VkFormat DepthResourceBuilder::FindDepthFormat(const VulkanContext* vulkanContex
 	return FindSupportedFormat(vulkanContext, depthFormatPriorityList, true);
 }
 
-void DepthResourceBuilder::CreateDepthResources(const VulkanContext* vulkanContext, VkImage& image, VkImageView& imageView , VkDeviceMemory& memory)
+void DepthResourceBuilder::CreateDepthResources(const VulkanContext* vulkanContext, VkImage& image, VkImageView& imageView , VmaAllocation& memory)
 {
 	const VkFormat depthFormat = FindDepthFormat(vulkanContext);
 
 	//Create Image
-    //VK_IMAGE_USAGE_SAMPLED_BIT is added to allow the depth image to be used as a texture (Shadow Mapping)
-	Image::CreateImage(vulkanContext, SwapChain::Extends().width, SwapChain::Extends().height, 1, VK_SAMPLE_COUNT_1_BIT, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, memory);
+    //VK_IMAGE_USAGE_SAMPLED_BIT must be added to allow the depth image to be used as a texture (Shadow Mapping)
+	Image::CreateImage(SwapChain::Extends().width, SwapChain::Extends().height, 1, VK_SAMPLE_COUNT_1_BIT, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, image, memory, TextureType::TEXTURE_2D);
 
 
 	VkImageAspectFlags aspectMaskFlags = VK_IMAGE_ASPECT_DEPTH_BIT;
@@ -86,7 +85,7 @@ void DepthResourceBuilder::CreateDepthResources(const VulkanContext* vulkanConte
 		aspectMaskFlags |= VK_IMAGE_ASPECT_STENCIL_BIT;
 	}
 
-	Image::CreateImageView(vulkanContext->device, image, depthFormat, aspectMaskFlags, imageView);
+	Image::CreateImageView(vulkanContext->device, image, depthFormat, aspectMaskFlags, imageView, TextureType::TEXTURE_2D);
 }
 
 VkFormat DepthResourceBuilder::FindSupportedFormat(const VulkanContext* vulkanContext, const std::vector<VkFormat>& candidates, bool isDepthOnly)

@@ -1,6 +1,71 @@
 #include <set>
+#include "Core/SwapChain.h"
+#include <imgui_impl_vulkan.h>
 
+#include "Core/DepthResource.h"
+#include "Scene/SceneManager.h"
 #include "vulkanbase/VulkanBase.h"
+#include "vulkanbase/VulkanTypes.h"
+
+void VulkanBase::drawFrame(uint32_t imageIndex) const
+{
+    VkExtent2D& swapChainExtent = SwapChain::Extends();
+
+    VkRenderingAttachmentInfoKHR colorAttachmentInfo{};
+    colorAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
+    colorAttachmentInfo.pNext = VK_NULL_HANDLE;
+    colorAttachmentInfo.imageView = SwapChain::ImageViews()[imageIndex];
+    colorAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    colorAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    colorAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    colorAttachmentInfo.clearValue = {{0.83f, 0.75f, 0.83f, 1.0f}};
+
+
+    VkRenderingAttachmentInfoKHR depthAttachmentInfo{};
+    depthAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
+    depthAttachmentInfo.pNext = VK_NULL_HANDLE;
+    depthAttachmentInfo.imageView = DepthResource::GetImageView();
+    depthAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    depthAttachmentInfo.resolveMode = VK_RESOLVE_MODE_NONE;
+    depthAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    depthAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    depthAttachmentInfo.clearValue = {{1.0f, 0.0f}};
+
+
+    VkRenderingAttachmentInfoKHR depthAttatchements[1] = { depthAttachmentInfo};
+    VkRenderingInfoKHR renderInfo{};
+    renderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
+    renderInfo.renderArea = { 0, 0, swapChainExtent };
+    renderInfo.layerCount = 1;
+    renderInfo.colorAttachmentCount = 1;
+    renderInfo.pColorAttachments = &colorAttachmentInfo;
+    renderInfo.pDepthAttachment = depthAttatchements;
+    renderInfo.pStencilAttachment = VK_NULL_HANDLE;
+
+
+    //Set the viewport
+    VkViewport viewport{};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = (float)swapChainExtent.width;
+    viewport.height = (float)swapChainExtent.height;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+    vkCmdSetViewport(commandBuffer.Handle, 0, 1, &viewport);
+
+
+    //Set the scissor
+    VkRect2D scissor{};
+    scissor.offset = { 0, 0 };
+    scissor.extent = swapChainExtent;
+    vkCmdSetScissor(commandBuffer.Handle, 0, 1, &scissor);
+
+
+    vkCmdBeginRenderingKHR(commandBuffer.Handle, &renderInfo);
+    SceneManager::Render(commandBuffer.Handle);
+    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer.Handle);
+    vkCmdEndRenderingKHR(commandBuffer.Handle);
+}
 
 void VulkanBase::pickPhysicalDevice()
 {

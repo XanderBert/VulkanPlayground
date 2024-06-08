@@ -7,6 +7,7 @@
 
 #include "Buffer.h"
 #include "Descriptor.h"
+#include "Core/VmaUsage.h"
 #include "Patterns/ServiceLocator.h"
 
 
@@ -18,8 +19,11 @@ void DynamicBuffer::Init(VulkanContext* vulkanContext)
 	//Log the size of the buffer in bytes
 	LogInfo("Initializing Dynamic buffer with size: " + std::to_string(GetSize()) + " bytes");
 
-	Core::Buffer::CreateBuffer(vulkanContext, GetSize(), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_UniformBuffer, m_UniformBuffersMemory);
-	vkMapMemory(vulkanContext->device, m_UniformBuffersMemory, 0, GetSize(), 0, &m_UniformBuffersMapped);
+	Core::Buffer::CreateBuffer(GetSize(), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, m_UniformBuffer, m_UniformBuffersMemory, true, true);
+
+    VmaAllocationInfo allocInfo;
+    vmaGetAllocationInfo(Allocator::VmaAllocator, m_UniformBuffersMemory, &allocInfo);
+    m_UniformBuffersMapped = (void*)allocInfo.pMappedData;
 }
 
 void DynamicBuffer::ProperBind(int bindingNumber, Descriptor::DescriptorWriter &descriptorWriter) const {
@@ -41,8 +45,7 @@ void DynamicBuffer::FullRebind(int bindingNumber, const VkDescriptorSet &descrip
 
 void DynamicBuffer::Cleanup(VkDevice device) const
 {
-	vkDestroyBuffer(device, m_UniformBuffer, nullptr);
-	vkFreeMemory(device, m_UniformBuffersMemory, nullptr);
+    vmaDestroyBuffer(Allocator::VmaAllocator, m_UniformBuffer, m_UniformBuffersMemory);
 }
 
 uint16_t DynamicBuffer::AddVariable(const glm::vec4& value)

@@ -101,12 +101,8 @@ set(SOURCES
     "Core/DescriptorSet.h"
         Scene/SceneManager.cpp
         Scene/SceneManager.h
-        Core/Image/CubeMap.cpp
-        Core/Image/CubeMap.h
         Core/Image/Texture.cpp
         Core/Image/Texture.h
-        Core/Image/Texture2D.cpp
-        Core/Image/Texture2D.h
         Core/Lights/Light.cpp
         Core/Lights/Light.h
         Core/Lights/LightManager.cpp
@@ -114,6 +110,7 @@ set(SOURCES
         Patterns/Delegate.h
         shaders/Logic/ShaderEditor.cpp
         shaders/Logic/ShaderEditor.h
+        vulkanbase/VulkanBase.cpp
 )
 
 
@@ -230,7 +227,12 @@ set(IMGUI_TEXTEDIT_SOURCES
 
 include_directories(${ImGuiTextEditSourceDir})
 
-
+set(VMA_SOURCE_DIR ${EXTERNALS_DIR}/VulkanMemoryAllocator)
+set(VMA_SOURCES
+    ${VMA_SOURCE_DIR}/vk_mem_alloc.h
+        Core/VmaUsage.h
+        Core/VmaUsage.cpp
+)
 
 # Create the executable
 add_executable(
@@ -244,7 +246,9 @@ add_executable(
     ${STB_SOURCES}
     ${KTX_SOURCES}
     ${IMGUI_TEXTEDIT_SOURCES}
+    ${VMA_SOURCES}
 )
+
 
 
 
@@ -261,6 +265,7 @@ target_include_directories(
     PRIVATE ${imguizmo_SOURCE_DIR}
     PRIVATE ${implot_SOURCE_DIR}
     PRIVATE ${imguifiledialog_SOURCE_DIR}
+    PRIVATE ${VMA_SOURCE_DIR}
 )
 
 string(REPLACE ".lib" "d.lib" SHADERC_DEBUG ${Vulkan_shaderc_combined_LIBRARY})

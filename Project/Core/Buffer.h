@@ -1,24 +1,25 @@
 #pragma once
 #include <vulkan/vulkan.h>
 #include "vulkanbase/VulkanTypes.h"
+#include "Core/VmaUsage.h"
 
 struct Vertex;
 namespace Core
 {
 	namespace Buffer
 	{
-		void CreateBuffer(VulkanContext* vulkanContext, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+	    void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkBuffer& buffer, VmaAllocation& bufferMemory, bool willBeMapped = false, bool willBePersistantmapped = false);
 
 		template <typename T>
-		void CreateStagingBuffer(VulkanContext* vulkanContext, VkDeviceSize size, VkBuffer& buffer, VkDeviceMemory& bufferMemory, const T* actualData)
+		void CreateStagingBuffer(VkDeviceSize size, VkBuffer& buffer, VmaAllocation& bufferMemory, const T* actualData)
 		{
-			CreateBuffer(vulkanContext, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, buffer, bufferMemory);
+			CreateBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, buffer, bufferMemory, true);
 
-			//Copy the vertex data to the staging buffer
-			void* data;
-			vkMapMemory(vulkanContext->device, bufferMemory, 0, size, 0, &data);
+			//Copy the data to the staging buffer
+		    void* data;
+		    vmaMapMemory(Allocator::VmaAllocator, bufferMemory, &data);
 			memcpy(data, actualData, size);
-			vkUnmapMemory(vulkanContext->device, bufferMemory);
+		    vmaUnmapMemory(Allocator::VmaAllocator, bufferMemory);
 		}
 
 		void CopyBuffer(VulkanContext* vulkanContext, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);

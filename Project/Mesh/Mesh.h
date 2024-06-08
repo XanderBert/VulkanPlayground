@@ -58,10 +58,10 @@ private:
 	//TODO: Store the vertex and index buffer in 1 VkBuffer to reduce cache misses
 	//Use offsets in commands like vkCmdBindVertexBuffers
 	VkBuffer m_VertexBuffer;
-	VkDeviceMemory m_VertexBufferMemory;
+	VmaAllocation m_VertexBufferMemory;
 
 	VkBuffer m_IndexBuffer;
-	VkDeviceMemory m_IndexBufferMemory;
+	VmaAllocation m_IndexBufferMemory;
 
 	uint32_t m_VertexCount;
 	uint32_t m_IndexCount;

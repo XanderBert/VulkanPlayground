@@ -126,11 +126,8 @@ void Mesh::Render(VkCommandBuffer commandBuffer)
 
 void Mesh::CleanUp()
 {
-   	vkDestroyBuffer(m_pContext->device, m_VertexBuffer, nullptr);
-	vkFreeMemory(m_pContext->device, m_VertexBufferMemory, nullptr);
-
-	vkDestroyBuffer(m_pContext->device, m_IndexBuffer, nullptr);
-	vkFreeMemory(m_pContext->device, m_IndexBufferMemory, nullptr);
+    vmaDestroyBuffer(Allocator::VmaAllocator, m_VertexBuffer, m_VertexBufferMemory);
+    vmaDestroyBuffer(Allocator::VmaAllocator, m_IndexBuffer, m_IndexBufferMemory);
 }
 
 void Mesh::SetPosition(const glm::vec3& position)
@@ -164,22 +161,16 @@ void Mesh::CreateVertexBuffer(const std::vector<Vertex>& vertices)
 
 	//Create a staging buffer
 	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
-
-
-	Core::Buffer::CreateStagingBuffer<Vertex>(m_pContext, bufferSize, stagingBuffer, stagingBufferMemory, vertices.data());
+	VmaAllocation stagingBufferMemory;
+	Core::Buffer::CreateStagingBuffer<Vertex>(bufferSize, stagingBuffer, stagingBufferMemory, vertices.data());
 
 
 	//Create a Vertex buffer
-	Core::Buffer::CreateBuffer(m_pContext, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_VertexBuffer, m_VertexBufferMemory);
+	Core::Buffer::CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, m_VertexBuffer, m_VertexBufferMemory);
 
 	//Copy the staging buffer to the vertex buffer
 	Core::Buffer::CopyBuffer(m_pContext, stagingBuffer, m_VertexBuffer, bufferSize);
-
-
-	//Clean up the staging buffer
-	vkDestroyBuffer(device, stagingBuffer, nullptr);
-	vkFreeMemory(device, stagingBufferMemory, nullptr);
+    vmaDestroyBuffer(Allocator::VmaAllocator, stagingBuffer, stagingBufferMemory);
 }
 
 void Mesh::CreateIndexBuffer(const std::vector<uint32_t>& indices)
@@ -193,16 +184,14 @@ void Mesh::CreateIndexBuffer(const std::vector<uint32_t>& indices)
 
 	//Create a staging buffer
 	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
-	Core::Buffer::CreateStagingBuffer<uint32_t>(m_pContext, bufferSize, stagingBuffer, stagingBufferMemory, indices.data());
+	VmaAllocation stagingBufferMemory;
+	Core::Buffer::CreateStagingBuffer<uint32_t>(bufferSize, stagingBuffer, stagingBufferMemory, indices.data());
 
 
 	//Create A index buffer
-	Core::Buffer::CreateBuffer(m_pContext, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_IndexBuffer, m_IndexBufferMemory);
+	Core::Buffer::CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, m_IndexBuffer, m_IndexBufferMemory);
 
 	//Copy the staging buffer to the index buffer
 	Core::Buffer::CopyBuffer(m_pContext, stagingBuffer, m_IndexBuffer, bufferSize);
-
-	vkDestroyBuffer(device, stagingBuffer, nullptr);
-	vkFreeMemory(device, stagingBufferMemory, nullptr);
+    vmaDestroyBuffer(Allocator::VmaAllocator, stagingBuffer, stagingBufferMemory);
 }

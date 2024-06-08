@@ -2,13 +2,12 @@
 #include <string>
 #include <unordered_map>
 #include <variant>
-#include <vulkan/vulkan.h>
+
+
 #include "Descriptor.h"
 #include "DynamicUniformBuffer.h"
-#include "Image/CubeMap.h"
 #include "Image/ImageLoader.h"
 #include "Image/Texture.h"
-#include "Image/Texture2D.h"
 
 
 class VulkanContext;
@@ -28,9 +27,7 @@ public:
     DynamicBuffer* AddUniformBuffer(int binding);
     DynamicBuffer* GetUniformBuffer(int binding);
 
-    template<typename TextureType>
-    void AddTexture(int binding, const std::variant<std::string, LoadedImage>& path, VulkanContext* pContext, ColorType colorType = ColorType::LINEAR)
-    requires TextureConcept<TextureType>
+    void AddTexture(int binding, const std::variant<std::filesystem::path,ImageInMemory>& pathOrImage, VulkanContext* pContext, ColorType colorType = ColorType::LINEAR, TextureType textureType = TextureType::TEXTURE_2D)
     {
         // Check if the binding already exists in the uniform buffer map
         if (const auto it = m_UniformBuffers.find(binding); it != m_UniformBuffers.end())
@@ -39,20 +36,10 @@ public:
             return;
         }
 
-        //Create and add a new texture at binding x
+        //Create a new texture
+        std::unique_ptr<Texture> texture = std::make_unique<Texture>(pathOrImage, pContext, colorType, textureType);
 
-        std::unique_ptr<TextureType> texture;
-
-        //Check if in the variant is a string or a LoadedImage then create the texture with that
-        if (std::holds_alternative<std::string>(path))
-        {
-            texture = std::make_unique<TextureType>(std::get<std::string>(path), pContext, colorType);
-        }else {
-            texture = std::make_unique<TextureType>(std::get<LoadedImage>(path), pContext, colorType);
-        }
-
-
-
+        //Add a new texture at binding x
         const auto [iterator, isEmplaced] = m_Textures.try_emplace(binding, std::move(texture));
         if (!isEmplaced)
         {

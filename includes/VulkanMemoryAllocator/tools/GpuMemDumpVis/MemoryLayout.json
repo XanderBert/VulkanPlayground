@@ -1,0 +1,354 @@
+{
+  "General": {
+    "API": "Vulkan", 
+    "apiVersion": "1.3.246", 
+    "GPU": "AMD Radeon(TM) Graphics", 
+    "deviceType": 1, 
+    "maxMemoryAllocationCount": 4096, 
+    "bufferImageGranularity": 1, 
+    "nonCoherentAtomSize": 128, 
+    "memoryHeapCount": 3, 
+    "memoryTypeCount": 16
+  }, 
+  "Total": {
+    "BlockCount": 3, 
+    "BlockBytes": 142606336, 
+    "AllocationCount": 19, 
+    "AllocationBytes": 3794288, 
+    "UnusedRangeCount": 3, 
+    "AllocationSizeMin": 32, 
+    "AllocationSizeMax": 1061984, 
+    "UnusedRangeSizeMin": 400336, 
+    "UnusedRangeSizeMax": 134217728
+  }, 
+  "MemoryInfo": {
+    "Heap 0": {
+      "Flags": ["DEVICE_LOCAL", "MULTI_INSTANCE"], 
+      "Size": 268435456, 
+      "Budget": {
+        "BudgetBytes": 214748364, 
+        "UsageBytes": 4194304
+      }, 
+      "Stats": {
+        "BlockCount": 1, 
+        "BlockBytes": 4194304, 
+        "AllocationCount": 12, 
+        "AllocationBytes": 3793968, 
+        "UnusedRangeCount": 1, 
+        "AllocationSizeMin": 144, 
+        "AllocationSizeMax": 1061984
+      }, 
+      "MemoryPools": {
+        "Type 0": {
+          "Flags": ["DEVICE_LOCAL"], 
+          "Stats": {
+            "BlockCount": 1, 
+            "BlockBytes": 4194304, 
+            "AllocationCount": 12, 
+            "AllocationBytes": 3793968, 
+            "UnusedRangeCount": 1, 
+            "AllocationSizeMin": 144, 
+            "AllocationSizeMax": 1061984
+          }
+        }, 
+        "Type 4": {
+          "Flags": ["DEVICE_LOCAL", "DEVICE_COHERENT_AMD", "DEVICE_UNCACHED_AMD"], 
+          "Stats": {
+            "BlockCount": 0, 
+            "BlockBytes": 0, 
+            "AllocationCount": 0, 
+            "AllocationBytes": 0, 
+            "UnusedRangeCount": 0
+          }
+        }, 
+        "Type 8": {
+          "Flags": ["DEVICE_LOCAL"], 
+          "Stats": {
+            "BlockCount": 0, 
+            "BlockBytes": 0, 
+            "AllocationCount": 0, 
+            "AllocationBytes": 0, 
+            "UnusedRangeCount": 0
+          }
+        }, 
+        "Type 12": {
+          "Flags": ["DEVICE_LOCAL", "DEVICE_COHERENT_AMD", "DEVICE_UNCACHED_AMD"], 
+          "Stats": {
+            "BlockCount": 0, 
+            "BlockBytes": 0, 
+            "AllocationCount": 0, 
+            "AllocationBytes": 0, 
+            "UnusedRangeCount": 0
+          }
+        }
+      }
+    }, 
+    "Heap 1": {
+      "Flags": [], 
+      "Size": 7978614784, 
+      "Budget": {
+        "BudgetBytes": 6382891827, 
+        "UsageBytes": 134217728
+      }, 
+      "Stats": {
+        "BlockCount": 1, 
+        "BlockBytes": 134217728, 
+        "AllocationCount": 0, 
+        "AllocationBytes": 0, 
+        "UnusedRangeCount": 1
+      }, 
+      "MemoryPools": {
+        "Type 1": {
+          "Flags": ["HOST_VISIBLE", "HOST_COHERENT"], 
+          "Stats": {
+            "BlockCount": 1, 
+            "BlockBytes": 134217728, 
+            "AllocationCount": 0, 
+            "AllocationBytes": 0, 
+            "UnusedRangeCount": 1
+          }
+        }, 
+        "Type 3": {
+          "Flags": ["HOST_VISIBLE", "HOST_COHERENT", "HOST_CACHED"], 
+          "Stats": {
+            "BlockCount": 0, 
+            "BlockBytes": 0, 
+            "AllocationCount": 0, 
+            "AllocationBytes": 0, 
+            "UnusedRangeCount": 0
+          }
+        }, 
+        "Type 5": {
+          "Flags": ["HOST_VISIBLE", "HOST_COHERENT", "DEVICE_COHERENT_AMD", "DEVICE_UNCACHED_AMD"], 
+          "Stats": {
+            "BlockCount": 0, 
+            "BlockBytes": 0, 
+            "AllocationCount": 0, 
+            "AllocationBytes": 0, 
+            "UnusedRangeCount": 0
+          }
+        }, 
+        "Type 7": {
+          "Flags": ["HOST_VISIBLE", "HOST_COHERENT", "HOST_CACHED", "DEVICE_COHERENT_AMD", "DEVICE_UNCACHED_AMD"], 
+          "Stats": {
+            "BlockCount": 0, 
+            "BlockBytes": 0, 
+            "AllocationCount": 0, 
+            "AllocationBytes": 0, 
+            "UnusedRangeCount": 0
+          }
+        }, 
+        "Type 9": {
+          "Flags": ["HOST_VISIBLE", "HOST_COHERENT"], 
+          "Stats": {
+            "BlockCount": 0, 
+            "BlockBytes": 0, 
+            "AllocationCount": 0, 
+            "AllocationBytes": 0, 
+            "UnusedRangeCount": 0
+          }
+        }, 
+        "Type 11": {
+          "Flags": ["HOST_VISIBLE", "HOST_COHERENT", "HOST_CACHED"], 
+          "Stats": {
+            "BlockCount": 0, 
+            "BlockBytes": 0, 
+            "AllocationCount": 0, 
+            "AllocationBytes": 0, 
+            "UnusedRangeCount": 0
+          }
+        }, 
+        "Type 13": {
+          "Flags": ["HOST_VISIBLE", "HOST_COHERENT", "DEVICE_COHERENT_AMD", "DEVICE_UNCACHED_AMD"], 
+          "Stats": {
+            "BlockCount": 0, 
+            "BlockBytes": 0, 
+            "AllocationCount": 0, 
+            "AllocationBytes": 0, 
+            "UnusedRangeCount": 0
+          }
+        }, 
+        "Type 15": {
+          "Flags": ["HOST_VISIBLE", "HOST_COHERENT", "HOST_CACHED", "DEVICE_COHERENT_AMD", "DEVICE_UNCACHED_AMD"], 
+          "Stats": {
+            "BlockCount": 0, 
+            "BlockBytes": 0, 
+            "AllocationCount": 0, 
+            "AllocationBytes": 0, 
+            "UnusedRangeCount": 0
+          }
+        }
+      }
+    }, 
+    "Heap 2": {
+      "Flags": ["DEVICE_LOCAL", "MULTI_INSTANCE"], 
+      "Size": 268435456, 
+      "Budget": {
+        "BudgetBytes": 214748364, 
+        "UsageBytes": 4194304
+      }, 
+      "Stats": {
+        "BlockCount": 1, 
+        "BlockBytes": 4194304, 
+        "AllocationCount": 7, 
+        "AllocationBytes": 320, 
+        "UnusedRangeCount": 1, 
+        "AllocationSizeMin": 32, 
+        "AllocationSizeMax": 128
+      }, 
+      "MemoryPools": {
+        "Type 2": {
+          "Flags": ["DEVICE_LOCAL", "HOST_VISIBLE", "HOST_COHERENT"], 
+          "Stats": {
+            "BlockCount": 1, 
+            "BlockBytes": 4194304, 
+            "AllocationCount": 7, 
+            "AllocationBytes": 320, 
+            "UnusedRangeCount": 1, 
+            "AllocationSizeMin": 32, 
+            "AllocationSizeMax": 128
+          }
+        }, 
+        "Type 6": {
+          "Flags": ["DEVICE_LOCAL", "HOST_VISIBLE", "HOST_COHERENT", "DEVICE_COHERENT_AMD", "DEVICE_UNCACHED_AMD"], 
+          "Stats": {
+            "BlockCount": 0, 
+            "BlockBytes": 0, 
+            "AllocationCount": 0, 
+            "AllocationBytes": 0, 
+            "UnusedRangeCount": 0
+          }
+        }, 
+        "Type 10": {
+          "Flags": ["DEVICE_LOCAL", "HOST_VISIBLE", "HOST_COHERENT"], 
+          "Stats": {
+            "BlockCount": 0, 
+            "BlockBytes": 0, 
+            "AllocationCount": 0, 
+            "AllocationBytes": 0, 
+            "UnusedRangeCount": 0
+          }
+        }, 
+        "Type 14": {
+          "Flags": ["DEVICE_LOCAL", "HOST_VISIBLE", "HOST_COHERENT", "DEVICE_COHERENT_AMD", "DEVICE_UNCACHED_AMD"], 
+          "Stats": {
+            "BlockCount": 0, 
+            "BlockBytes": 0, 
+            "AllocationCount": 0, 
+            "AllocationBytes": 0, 
+            "UnusedRangeCount": 0
+          }
+        }
+      }
+    }
+  }, 
+  "DefaultPools": {
+    "Type 0": {
+      "PreferredBlockSize": 33554432, 
+      "Blocks": {
+        "0": {
+          "MapRefCount": 0, 
+          "TotalBytes": 4194304, 
+          "UnusedBytes": 400336, 
+          "Allocations": 12, 
+          "UnusedRanges": 1, 
+          "Suballocations": [
+            {"Offset": 0, "Type": "BUFFER", "Size": 315260, "Usage": 130}, 
+            {"Offset": 315260, "Type": "BUFFER", "Size": 97632, "Usage": 66}, 
+            {"Offset": 412892, "Type": "BUFFER", "Size": 552288, "Usage": 130}, 
+            {"Offset": 965180, "Type": "BUFFER", "Size": 262752, "Usage": 66}, 
+            {"Offset": 1227932, "Type": "BUFFER", "Size": 19184, "Usage": 130}, 
+            {"Offset": 1247116, "Type": "BUFFER", "Size": 8832, "Usage": 66}, 
+            {"Offset": 1255948, "Type": "BUFFER", "Size": 707388, "Usage": 130}, 
+            {"Offset": 1963336, "Type": "BUFFER", "Size": 241152, "Usage": 66}, 
+            {"Offset": 2204488, "Type": "BUFFER", "Size": 1061984, "Usage": 130}, 
+            {"Offset": 3266472, "Type": "BUFFER", "Size": 526296, "Usage": 66}, 
+            {"Offset": 3792768, "Type": "BUFFER", "Size": 1056, "Usage": 130}, 
+            {"Offset": 3793824, "Type": "BUFFER", "Size": 144, "Usage": 66}, 
+            {"Offset": 3793968, "Type": "FREE", "Size": 400336}
+          ]
+        }
+      }, 
+      "DedicatedAllocations": [
+      ]
+    }, 
+    "Type 1": {
+      "PreferredBlockSize": 268435456, 
+      "Blocks": {
+        "0": {
+          "MapRefCount": 0, 
+          "TotalBytes": 134217728, 
+          "UnusedBytes": 134217728, 
+          "Allocations": 0, 
+          "UnusedRanges": 1, 
+          "Suballocations": [
+            {"Offset": 0, "Type": "FREE", "Size": 134217728}
+          ]
+        }
+      }, 
+      "DedicatedAllocations": [
+      ]
+    }, 
+    "Type 2": {
+      "PreferredBlockSize": 33554432, 
+      "Blocks": {
+        "0": {
+          "MapRefCount": 7, 
+          "TotalBytes": 4194304, 
+          "UnusedBytes": 4193984, 
+          "Allocations": 7, 
+          "UnusedRanges": 1, 
+          "Suballocations": [
+            {"Offset": 0, "Type": "BUFFER", "Size": 128, "Usage": 16}, 
+            {"Offset": 128, "Type": "BUFFER", "Size": 32, "Usage": 16}, 
+            {"Offset": 160, "Type": "BUFFER", "Size": 32, "Usage": 16}, 
+            {"Offset": 192, "Type": "BUFFER", "Size": 32, "Usage": 16}, 
+            {"Offset": 224, "Type": "BUFFER", "Size": 32, "Usage": 16}, 
+            {"Offset": 256, "Type": "BUFFER", "Size": 32, "Usage": 16}, 
+            {"Offset": 288, "Type": "BUFFER", "Size": 32, "Usage": 16}, 
+            {"Offset": 320, "Type": "FREE", "Size": 4193984}
+          ]
+        }
+      }, 
+      "DedicatedAllocations": [
+      ]
+    }, 
+    "Type 3": {
+      "PreferredBlockSize": 268435456, 
+      "Blocks": {
+      }, 
+      "DedicatedAllocations": [
+      ]
+    }, 
+    "Type 8": {
+      "PreferredBlockSize": 33554432, 
+      "Blocks": {
+      }, 
+      "DedicatedAllocations": [
+      ]
+    }, 
+    "Type 9": {
+      "PreferredBlockSize": 268435456, 
+      "Blocks": {
+      }, 
+      "DedicatedAllocations": [
+      ]
+    }, 
+    "Type 10": {
+      "PreferredBlockSize": 33554432, 
+      "Blocks": {
+      }, 
+      "DedicatedAllocations": [
+      ]
+    }, 
+    "Type 11": {
+      "PreferredBlockSize": 268435456, 
+      "Blocks": {
+      }, 
+      "DedicatedAllocations": [
+      ]
+    }
+  }, 
+  "CustomPools": {
+  }
+}

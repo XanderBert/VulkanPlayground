@@ -1,10 +1,10 @@
 #include "DescriptorSet.h"
 
 #include <algorithm>
+#include <ranges>
 
 #include "DynamicUniformBuffer.h"
 #include "Image/ImageLoader.h"
-#include "Image/Texture2D.h"
 
 DynamicBuffer *DescriptorSet::AddUniformBuffer(int binding) {
     // check if the binding already exists in the texture map
@@ -114,22 +114,18 @@ void DescriptorSet::CleanUp(VkDevice device) {
 }
 void DescriptorSet::OnImGui()
 {
-    //Check if any texture implement the IImGuiRenderable interface
-    bool IsAnyTextureRenderable = std::ranges::any_of(
-            m_Textures, [](const auto& texture) {
-        return dynamic_cast<IImGuiRenderable*>(texture.second.get());
-    });
-
-    if(!m_Textures.empty() && IsAnyTextureRenderable) {
+    if(!m_Textures.empty())
+    {
         ImGui::Separator();
         ImGui::Text("Textures:");
-        for(auto& [binding, texture] : m_Textures)
+        for(const auto &texture: m_Textures | std::views::values)
         {
-            if(auto renderable = dynamic_cast<IImGuiRenderable*>(texture.get())) renderable->OnImGui();
+             texture->OnImGui();
         }
     }
 
-    if(!m_UniformBuffers.empty()) {
+    if(!m_UniformBuffers.empty())
+    {
         ImGui::Separator();
         ImGui::Text("Uniform Buffers:");
         for(auto& [binding, ubo] : m_UniformBuffers)

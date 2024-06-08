@@ -1,5 +1,7 @@
 #pragma once
 #include <vulkan/vulkan.h>
+
+#include "Core/VmaUsage.h"
 #include "vulkanbase/VulkanTypes.h"
 
 class DepthResource
@@ -18,7 +20,7 @@ public:
 
 private:
 	inline static VkImage m_Image;
-	inline static VkDeviceMemory m_Memory;
+	inline static VmaAllocation m_Memory;
 	inline static VkImageView m_ImageView;
 	inline static VkFormat m_Format;
 };
@@ -26,9 +28,9 @@ private:
 class DepthResourceBuilder
 {
 public:
-    static void Build(const VulkanContext* vulkanContext, VkImage& image, VkImageView& imageView , VkDeviceMemory& memory, VkFormat& format);
+    static void Build(const VulkanContext* vulkanContext, VkImage& image, VkImageView& imageView , VmaAllocation& memory, VkFormat& format);
 private:
     static VkFormat FindDepthFormat(const VulkanContext* vulkanContext);
-    static  void CreateDepthResources(const VulkanContext* vulkanContext, VkImage& image, VkImageView& imageView , VkDeviceMemory& memory);
+    static  void CreateDepthResources(const VulkanContext* vulkanContext, VkImage& image, VkImageView& imageView , VmaAllocation& memory);
     static VkFormat FindSupportedFormat(const VulkanContext* vulkanContext, const std::vector<VkFormat>& candidates, bool isDepthOnly);
 };

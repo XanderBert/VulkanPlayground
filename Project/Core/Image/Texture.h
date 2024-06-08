@@ -1,56 +1,67 @@
 #pragma once
-#include <array>
+#include <variant>
 #include <filesystem>
 #include <glm/vec2.hpp>
 #include <ktx.h>
-#include <string>
 
 #include "Core/Descriptor.h"
 #include "ImageLoader.h"
+#include "Core/ImGuiWrapper.h"
 #include "vulkanbase/VulkanTypes.h"
 
-enum class ColorType
+enum class ColorType : uint8_t
 {
     SRGB = VK_FORMAT_R8G8B8A8_SRGB,
     LINEAR = VK_FORMAT_R8G8B8A8_UNORM
 };
 
-struct  LoadedImage
+enum class TextureType : uint8_t
+{
+    TEXTURE_2D = VK_IMAGE_VIEW_TYPE_2D,
+    TEXTURE_CUBE = VK_IMAGE_VIEW_TYPE_CUBE
+};
+
+struct  ImageInMemory
 {
     VkBuffer staginBuffer;
-    VkDeviceMemory stagingBufferMemory;
+    VmaAllocation stagingBufferMemory;
+
     glm::ivec2 imageSize;
     uint32_t mipLevels;
 
     std::optional<ktxTexture*> texture;
 };
 
-
-class Texture
+//TODO only take a ImageInMemory To Construct a actual image
+class Texture final
 {
 public:
-    Texture(const std::filesystem::path &path,  VulkanContext* vulkanContext, ColorType colorType);
-    Texture(const LoadedImage &loadedImage, VulkanContext* vulkanContext, ColorType colorType);
+    Texture(const std::variant<std::filesystem::path,ImageInMemory>& pathOrImage, VulkanContext *vulkanContext, ColorType colorType, TextureType textureType);
 
-    virtual ~Texture() = default;
+    ~Texture() = default;
     Texture(const Texture&) = delete;
     Texture& operator=(const Texture&) = delete;
-    Texture(Texture &&other) noexcept;
+    Texture(Texture &&other) noexcept = delete;
     Texture& operator=(Texture&&) = delete;
+
+    void OnImGui();
 
     void ProperBind(int bindingNumber, Descriptor::DescriptorWriter& descriptorWriter) const;
 
-    virtual void Cleanup(VkDevice device) const;
+    void Cleanup(VkDevice device) const;
 
-    virtual void InitTexture(std::optional<LoadedImage> loadedImage = std::nullopt) = 0;
-protected:
+    void InitTexture(const ImageInMemory& loadedImage);
+    void InitTexture(const std::filesystem::path& path);
 
-    VulkanContext* VulkanContext{};
-    std::filesystem::path m_Path{};
+    void TransitionAndCopyImageBuffer(VkBuffer srcBuffer, std::optional<ktxTexture*> texture) const;
+private:
+
+    VulkanContext* m_pContext{};
+    std::optional<std::filesystem::path> m_Path{};
 
     glm::ivec2 m_ImageSize{};
     uint32_t m_MipLevels{};
-    VkDeviceMemory m_ImageMemory{};
+    VmaAllocation m_ImageMemory{};
 
     VkImage m_Image{};
     VkImageView m_ImageView{};
@@ -58,37 +69,8 @@ protected:
 
 
     ColorType m_ColorType{};
+    TextureType m_TextureType{};
+
+
+    std::unique_ptr<ImGuiTexture> m_ImGuiTexture{};
 };
-
-
-// Texture concept
-
-//Texture can also be constructed as  Texture(const LoadedImage &loadedImage, VulkanContext* vulkanContext, ColorType colorType);
-template<typename TextureType>
-concept TextureConcept =    std::is_base_of_v<Texture, TextureType> &&
-                            std::is_constructible_v<TextureType, const std::filesystem::path&, VulkanContext*, ColorType> ||
-                            std::is_constructible_v<TextureType, const LoadedImage&, VulkanContext*, ColorType> &&
-                            std::is_move_constructible_v<TextureType>;
-
-
-
-
-
-
-
-
-
-//stbi loader
-namespace stbi
-{
-    std::pair<VkBuffer, VkDeviceMemory> CreateImage(VulkanContext* vulkanContext, const std::filesystem::path &path, glm::ivec2 &imageSize, uint32_t &mipLevels);
-    std::pair<VkBuffer, VkDeviceMemory> CreateImageFromMemory(VulkanContext *vulkanContext,const std::uint8_t* data, size_t size, glm::ivec2 &imageSize, uint32_t &mipLevels);
-}
-
-//ktx Loader
-namespace ktx
-{
-    std::pair<VkBuffer, VkDeviceMemory> CreateImage(VulkanContext *vulkanContext, const std::filesystem::path &path, glm::ivec2 &imageSize, uint32_t &mipLevels, ktxTexture** texture);
-    std::pair<VkBuffer, VkDeviceMemory> CreateImageFromMemory(VulkanContext *vulkanContext, const std::uint8_t* data, size_t size, glm::ivec2 &imageSize, uint32_t &mipLevels, ktxTexture** texture);
-}
-

@@ -10,18 +10,19 @@ namespace Input
 {
 	inline GLFWwindow* windowPtr;
 
-	enum class KeyType : uint8_t
+	enum class InputType : uint8_t
 	{
 		Hold = GLFW_REPEAT,
 		Press = GLFW_PRESS,
+		Release = GLFW_RELEASE,
 	};
 
-	struct InputProperties
+	struct InputAction
 	{
 		int key;
-		KeyType keyType;
+		InputType keyType;
 
-		bool operator==(const InputProperties& other) const
+		bool operator==(const InputAction& other) const
 		{
 			if (key != other.key) return false;
 			return true;
@@ -30,7 +31,7 @@ namespace Input
 
 	struct InputPropertiesHash
 	{
-		std::size_t operator()(const InputProperties& props) const
+		std::size_t operator()(const InputAction& props) const
 		{
 			std::size_t seed = 0;
 
@@ -41,13 +42,13 @@ namespace Input
 		}
 	};
 
-	inline std::unordered_map<InputProperties, std::function<void()>, InputPropertiesHash> functionBindings;
+	inline std::unordered_map<InputAction, std::function<void()>, InputPropertiesHash> functionBindings;
 	inline std::vector<std::function<void(glm::vec2)>> mouseMovementListeners;
 
 
 	inline void KeyEvent(int key, int action)
 	{
-		const InputProperties keyProps{ key,static_cast<KeyType>(action)};
+		const InputAction keyProps{ key,static_cast<InputType>(action)};
 
 		const auto& binding = functionBindings.find(keyProps);
 
@@ -64,7 +65,7 @@ namespace Input
 		}
 	}
 
-	inline void BindFunction(const InputProperties& inputProps ,std::function<void()>&& function)
+	inline void BindFunction(const InputAction& inputProps ,std::function<void()>&& function)
 	{
 		functionBindings.emplace(inputProps, std::move(function));
 	}

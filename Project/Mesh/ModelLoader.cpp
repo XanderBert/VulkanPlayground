@@ -242,13 +242,10 @@ namespace GLTFLoader {
     void CreateMaterials(const fastgltf::Asset &gltf, VulkanContext* vulkanContext)
     {
         // Load Textures
-        std::vector<std::variant<std::string, LoadedImage>> images;
-        //std::vector<std::string> images;
+        std::vector<std::variant<std::filesystem::path, ImageInMemory>> images;
 
         for (const fastgltf::Image &texture: gltf.images)
         {
-            // using DataSource = std::variant<std::monostate, sources::BufferView, sources::URI, sources::Array,
-            // sources::Vector, sources::CustomBuffer, sources::ByteView, sources::Fallback>;
             fastgltf::DataSource dataa = texture.data;
             if (const auto uri = std::get_if<fastgltf::sources::URI>(&dataa))
             {
@@ -257,12 +254,12 @@ namespace GLTFLoader {
             else if(auto array = std::get_if<fastgltf::sources::Array>(&dataa))
             {
 
-                LoadedImage loadedImage{};
+                ImageInMemory loadedImage{};
                 if(array->mimeType == fastgltf::MimeType::KTX2)
                 {
                     auto pD = array->bytes;
                     ktxTexture* texturePtr{};
-                    auto sources = ktx::CreateImageFromMemory(vulkanContext, array->bytes.data(), array->bytes.size(),loadedImage.imageSize, loadedImage.mipLevels, &texturePtr);
+                    auto sources = ktx::CreateImageFromMemory(array->bytes.data(), array->bytes.size(),loadedImage.imageSize, loadedImage.mipLevels, &texturePtr);
 
                     loadedImage.texture = texturePtr;
                     loadedImage.staginBuffer = sources.first;
@@ -270,7 +267,7 @@ namespace GLTFLoader {
 
                 }else if(array->mimeType == fastgltf::MimeType::PNG || array->mimeType == fastgltf::MimeType::JPEG ||array->mimeType == fastgltf::MimeType::None)
                 {
-                    auto sources = stbi::CreateImageFromMemory(vulkanContext, array->bytes.data(), array->bytes.size(), loadedImage.imageSize, loadedImage.mipLevels);
+                    auto sources = stbi::CreateImageFromMemory(array->bytes.data(), array->bytes.size(), loadedImage.imageSize, loadedImage.mipLevels);
                     loadedImage.staginBuffer = sources.first;
                      loadedImage.stagingBufferMemory = sources.second;
                 }else {
@@ -311,34 +308,33 @@ namespace GLTFLoader {
             if (mat.pbrData.baseColorTexture.has_value())
             {
                 size_t img = gltf.textures[mat.pbrData.baseColorTexture.value().textureIndex].imageIndex.value();
-                newMaterial->GetDescriptorSet()->AddTexture<Texture2D>(1, images[img], vulkanContext, ColorType::SRGB);
+                newMaterial->GetDescriptorSet()->AddTexture(1, images[img], vulkanContext, ColorType::SRGB);
             }else{
-                newMaterial->GetDescriptorSet()->AddTexture<Texture2D>(1, "Assets/white.ktx", vulkanContext, ColorType::LINEAR);
+                newMaterial->GetDescriptorSet()->AddTexture(1, "Assets/white.ktx", vulkanContext, ColorType::LINEAR);
             }
 
             // Load Normal
             if (mat.normalTexture.has_value()) {
                 size_t img = gltf.textures[mat.normalTexture.value().textureIndex].imageIndex.value();
-                newMaterial->GetDescriptorSet()->AddTexture<Texture2D>(2, images[img], vulkanContext,
-                                                                       ColorType::LINEAR);
-            }else {
-                newMaterial->GetDescriptorSet()->AddTexture<Texture2D>(2, "Assets/white.ktx", vulkanContext, ColorType::LINEAR);
+                newMaterial->GetDescriptorSet()->AddTexture(2, images[img], vulkanContext, ColorType::LINEAR);
+            }else
+            {
+                newMaterial->GetDescriptorSet()->AddTexture(2, "Assets/white.ktx", vulkanContext, ColorType::LINEAR);
             }
 
             // Load graypacked metal/roughness
-            if (mat.pbrData.metallicRoughnessTexture.has_value()) {
-                size_t img =
-                        gltf.textures[mat.pbrData.metallicRoughnessTexture.value().textureIndex].imageIndex.value();
-                newMaterial->GetDescriptorSet()->AddTexture<Texture2D>(3, images[img], vulkanContext,
-                                                                       ColorType::LINEAR);
-            }else {
-                newMaterial->GetDescriptorSet()->AddTexture<Texture2D>(3, "Assets/white.ktx", vulkanContext, ColorType::LINEAR);
+            if (mat.pbrData.metallicRoughnessTexture.has_value())
+            {
+                size_t img = gltf.textures[mat.pbrData.metallicRoughnessTexture.value().textureIndex].imageIndex.value();
+
+                newMaterial->GetDescriptorSet()->AddTexture(3, images[img], vulkanContext, ColorType::LINEAR);
+            }else
+            {
+                newMaterial->GetDescriptorSet()->AddTexture(3, "Assets/white.ktx", vulkanContext, ColorType::LINEAR);
             }
 
-
             // TODO: Scene->GetCubeMap();
-            newMaterial->GetDescriptorSet()->AddTexture<CubeMap>(4, "cubemap_vulkan.ktx", vulkanContext,
-                                                                 ColorType::SRGB);
+            newMaterial->GetDescriptorSet()->AddTexture(4, "cubemap_vulkan.ktx", vulkanContext, ColorType::SRGB, TextureType::TEXTURE_CUBE);
         }
     }
 

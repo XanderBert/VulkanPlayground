@@ -1,7 +1,7 @@
 #include <set>
-#include <vulkan/vulkan.h>
-
 #include "Core/DepthResource.h"
+#include "Core/Descriptor.h"
+#include "Core/SwapChain.h"
 #include "vulkanbase/VulkanBase.h"
 
 
@@ -104,7 +104,7 @@ void VulkanBase::drawFrame()
 		commandBuffer.Handle,
 		DepthResource::GetImage(),
 		VK_IMAGE_LAYOUT_UNDEFINED,
-		VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+		VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
 		VkImageSubresourceRange{ VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 1 });
 
 	drawFrame(imageIndex);
@@ -162,8 +162,27 @@ void VulkanBase::drawFrame()
 	}
 }
 
+VkBool32 VulkanBase::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+        VkDebugUtilsMessageTypeFlagsEXT, const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *)
+{
+    VulkanLogger::LogLevel logLevel = VulkanLogger::LogLevel::LOGERROR;
 
+    switch (messageSeverity)
+    {
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+            logLevel = VulkanLogger::LogLevel::INFO;
+            break;
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+            logLevel = VulkanLogger::LogLevel::WARNING;
+            break;
+        default:
+            break;
+    }
 
+    LogMessage(logLevel, pCallbackData->pMessage);
+    return VK_FALSE;
+}
 
 
 bool VulkanBase::checkDeviceExtensionSupport(VkPhysicalDevice device)
@@ -195,11 +214,11 @@ void VulkanBase::createInstance()
 
 	VkApplicationInfo appInfo{};
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-	appInfo.pApplicationName = "Hello Triangle";
-	appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+	appInfo.pApplicationName = "Vulkan Playground";
+	appInfo.applicationVersion = VK_MAKE_VERSION(0, 0, 1);
 	appInfo.pEngineName = "No Engine";
-	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-	appInfo.apiVersion = VK_API_VERSION_1_0;
+	appInfo.engineVersion = VK_MAKE_VERSION(0, 0, 1);
+	appInfo.apiVersion = VK_API_VERSION_1_3;
 
 	VkInstanceCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;

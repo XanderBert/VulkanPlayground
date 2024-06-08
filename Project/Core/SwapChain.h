@@ -1,13 +1,12 @@
 #pragma once
 
-#include "vulkanbase/VulkanTypes.h"
 #include <vector>
-#include "QueueFamilyIndices.h"
 #include <algorithm>
 
-#include "DepthResource.h"
-#include "Camera/Camera.h"
-#include "Image/ImageLoader.h"
+#include "vulkanbase/VulkanTypes.h"
+#include "QueueFamilyIndices.h"
+#include "Core/Image/Texture.h"
+
 
 class SwapChain final
 {
@@ -224,7 +223,7 @@ private:
 
 		for (size_t i = 0; i < m_SwapChainImages.size(); ++i)
 		{
-			Image::CreateImageView(device, m_SwapChainImages[i], m_Format, VK_IMAGE_ASPECT_COLOR_BIT, m_SwapChainImageViews[i]);
+			Image::CreateImageView(device, m_SwapChainImages[i], m_Format, VK_IMAGE_ASPECT_COLOR_BIT, m_SwapChainImageViews[i], TextureType::TEXTURE_2D);
 		}
 	}
 

@@ -1,14 +1,20 @@
 #include "ImageLoader.h"
+
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb/stb_image.h>
+#include <ktx/include/ktx.h>
 #include <ImGuiFileDialog.h>
+
+#include "Texture.h"
 #include "Core/CommandBuffer.h"
 #include "Core/Logger.h"
 #include "vulkanbase/VulkanBase.h"
 
 namespace Image
 {
-	void CreateImage(const VulkanContext* vulkanContext, uint32_t width, uint32_t height, uint32_t mipLevels,
+	void CreateImage(uint32_t width, uint32_t height, uint32_t mipLevels,
 		VkSampleCountFlagBits numSamples, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage,
-		VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory, bool isCubeMap)
+		VkImage& image, VmaAllocation& imageMemory, TextureType textureType)
 	{
 		VkImageCreateInfo imageInfo{};
 		imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -25,64 +31,44 @@ namespace Image
 		imageInfo.samples = numSamples;
 		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-        if(isCubeMap)
+        if(textureType == TextureType::TEXTURE_CUBE)
         {
             imageInfo.arrayLayers = 6;
             imageInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
         }
 
+	    VmaAllocationCreateInfo props{};
+	    props.usage = VMA_MEMORY_USAGE_AUTO ;
+	    props.priority = 1.0f;
 
-		VulkanCheck(vkCreateImage(vulkanContext->device, &imageInfo, nullptr, &image), "Failed To Create Image")
+	    //if the image size is big (greater then 1440p ) then we should use the dedicated memory
+	    //Use for:
+	    // ● Render targets, depth-stencil, UAV
+        // ● Very large buffers and images (dozens of MiB)
+        // ● Large allocations that may need to be resized (freed and reallocated) at run-time
+        if(constexpr int treshold = 2560 * 1440; width * height > treshold) props.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
 
-
-		VkMemoryRequirements memRequirements;
-		vkGetImageMemoryRequirements(vulkanContext->device, image, &memRequirements);
-
-		VkMemoryAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		allocInfo.allocationSize = memRequirements.size;
-		allocInfo.memoryTypeIndex = tools::findMemoryType(memRequirements.memoryTypeBits, properties, vulkanContext->physicalDevice);
-
-		VulkanCheck(vkAllocateMemory(vulkanContext->device, &allocInfo, nullptr, &imageMemory), "Failed To Allocate memory for the depth image")
-		VulkanCheck(vkBindImageMemory(vulkanContext->device, image, imageMemory, 0), "Failed To Bind Image memory")
+        //Create the image
+	    VulkanCheck(vmaCreateImage(Allocator::VmaAllocator, &imageInfo, &props, &image, &imageMemory, nullptr), "Failed To Create Image");
 	}
 
-	void CreateImageView(VkDevice device, VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, VkImageView &imageView) {
-        VkImageViewCreateInfo viewInfo{};
-        viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        viewInfo.image = image;
-        viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        viewInfo.format = format;
-
-        viewInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-        viewInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-        viewInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-        viewInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-
-        viewInfo.subresourceRange.aspectMask = aspectFlags;
-        viewInfo.subresourceRange.baseMipLevel = 0;
-        viewInfo.subresourceRange.levelCount = 1;
-        viewInfo.subresourceRange.baseArrayLayer = 0;
-        viewInfo.subresourceRange.layerCount = 1;
-
-        VulkanCheck(vkCreateImageView(device, &viewInfo, nullptr, &imageView), "Failed to create texture image view!")
-    }
-    void CreateCubeImageView(VkDevice device, VkImage image, VkFormat format, VkImageAspectFlags aspectFlags,
-                             VkImageView &imageView)
+	void CreateImageView(VkDevice device, VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, VkImageView &imageView, TextureType textureType)
     {
-        const VkImageViewCreateInfo viewInfo
-	    {
-	        VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-	        nullptr,
-	        0,
-	        image,
-	        VK_IMAGE_VIEW_TYPE_CUBE,
-	        format,
-	        {VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY},
-	        {aspectFlags, 0, 1, 0, 6}
-	    };
+	    //TODO: Should mips be in .levelCount?
+	    const uint32_t layerCount = textureType == TextureType::TEXTURE_CUBE ? 6 : 1;
+	    const VkImageViewCreateInfo viewInfo
+        {
+          VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+          nullptr,
+          0,
+          image,
+          static_cast<VkImageViewType>(textureType),
+          format,
+          {VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY},
+          {aspectFlags, 0, 1, 0, layerCount}
+        };
 
-        VulkanCheck(vkCreateImageView(device, &viewInfo, nullptr, &imageView), "Failed to create texture image view!")
+	    VulkanCheck(vkCreateImageView(device, &viewInfo, nullptr, &imageView), "Failed to create texture image view!")
     }
 
     void CreateSampler(const VulkanContext* vulkanContext, VkSampler& sampler, uint32_t mipLevels, const std::optional<VkSamplerCreateInfo> &overridenSamplerInfo)
@@ -122,4 +108,93 @@ namespace Image
 	{
 		return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
 	}
+}
+
+
+
+
+
+std::pair<VkBuffer, VmaAllocation> stbi::CreateImage(const std::filesystem::path &path, glm::ivec2 &imageSize, uint32_t &mipLevels)
+{
+    LogInfo(path.generic_string());
+
+    int channels{};
+    stbi_uc *pixels = stbi_load(path.generic_string().c_str(), &imageSize.x, &imageSize.y, &channels, STBI_rgb_alpha);
+
+    LogAssert(pixels, "failed to load texture image!", true)
+    mipLevels = 1;
+
+
+    const VkDeviceSize deviceImageSize = static_cast<VkDeviceSize>(imageSize.x) * imageSize.y * 4;
+    VkBuffer stagingBuffer;
+    VmaAllocation stagingBufferMemory;
+    Core::Buffer::CreateStagingBuffer<stbi_uc>(deviceImageSize, stagingBuffer, stagingBufferMemory, pixels);
+
+    stbi_image_free(pixels);
+
+
+    return {stagingBuffer, stagingBufferMemory};
+}
+std::pair<VkBuffer, VmaAllocation> stbi::CreateImageFromMemory(const std::uint8_t* data, size_t size, glm::ivec2 &imageSize, uint32_t &mipLevels)
+{
+    int channels{};
+    stbi_uc *pixels = stbi_load_from_memory(data, size, &imageSize.x, &imageSize.y, &channels, 4);
+    LogAssert(pixels, "failed to load texture image!", true)
+    mipLevels = 1;
+
+    const VkDeviceSize deviceImageSize = static_cast<VkDeviceSize>(imageSize.x) * imageSize.y * 4;
+    VkBuffer stagingBuffer;
+    VmaAllocation stagingBufferMemory;
+    Core::Buffer::CreateStagingBuffer<stbi_uc>(deviceImageSize, stagingBuffer, stagingBufferMemory,pixels);
+
+    stbi_image_free(pixels);
+
+    return {stagingBuffer, stagingBufferMemory};
+}
+std::pair<VkBuffer, VmaAllocation> ktx::CreateImage(const std::filesystem::path &path, glm::ivec2 &imageSize, uint32_t &mipLevels, ktxTexture **texture)
+{
+    LogAssert(path.extension() == ".ktx", path.generic_string() + " is not a .ktx file", true)
+
+    // TODO: KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT -  should not be set, It should be directly loaded in the staging buffer
+    auto errorCode = ktxTexture_CreateFromNamedFile(path.generic_string().c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, texture);
+
+
+
+    LogAssert(errorCode == KTX_SUCCESS, "Failed to load texture image!", true)
+    LogAssert((*texture) != nullptr, "The KTX Texture is not valid", true)
+
+    // Get properties required for using and upload texture data from the ktx texture object
+    imageSize = {(*texture)->baseWidth, (*texture)->baseHeight};
+    mipLevels = (*texture)->numLevels;
+
+    ktx_uint8_t *ktxTextureData = ktxTexture_GetData((*texture));
+    ktx_size_t ktxTextureSize = ktxTexture_GetSize((*texture));
+
+    VkBuffer stagingBuffer;
+    VmaAllocation stagingBufferMemory;
+
+    Core::Buffer::CreateStagingBuffer<ktx_uint8_t>(ktxTextureSize, stagingBuffer, stagingBufferMemory, ktxTextureData);
+
+    return {stagingBuffer, stagingBufferMemory};
+}
+std::pair<VkBuffer, VmaAllocation> ktx::CreateImageFromMemory(const std::uint8_t* data, size_t size, glm::ivec2 &imageSize, uint32_t &mipLevels, ktxTexture **texture)
+{
+    // TODO: KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT -  should not be set, It should be directly loaded in the staging buffer
+    auto errorCode = ktxTexture_CreateFromMemory(data, size, KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, texture);
+    LogAssert(errorCode == KTX_SUCCESS, "Failed to load texture image!", true)
+    LogAssert((*texture) != nullptr, "The KTX Texture is not valid", true)
+
+    // Get properties required for using and upload texture data from the ktx texture object
+    imageSize = {(*texture)->baseWidth, (*texture)->baseHeight};
+    mipLevels = (*texture)->numLevels;
+
+    ktx_uint8_t *ktxTextureData = ktxTexture_GetData((*texture));
+    ktx_size_t ktxTextureSize = ktxTexture_GetSize((*texture));
+
+    VkBuffer stagingBuffer;
+    VmaAllocation stagingBufferMemory;
+
+    Core::Buffer::CreateStagingBuffer<ktx_uint8_t>(ktxTextureSize, stagingBuffer, stagingBufferMemory, ktxTextureData);
+
+    return {stagingBuffer, stagingBufferMemory};
 }

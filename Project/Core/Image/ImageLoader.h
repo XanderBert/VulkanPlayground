@@ -1,30 +1,36 @@
 #pragma once
 #include <optional>
 #include <vulkan/vulkan_core.h>
+
+#include "Texture.h"
 #include "vulkanbase/VulkanTypes.h"
 
 
-namespace Image {
-    void CreateImage(
-        const VulkanContext* vulkanContext,
-        uint32_t width,
-        uint32_t height,
-        uint32_t mipLevels,
-        VkSampleCountFlagBits numSamples,
-        VkFormat format,
-        VkImageTiling tiling,
-        VkImageUsageFlags usage,
-        VkMemoryPropertyFlags properties,
-        VkImage& image,
-        VkDeviceMemory& imageMemory,
-        bool isCubeMap = false);
+enum class TextureType : uint8_t;
 
-    void CreateImageView(VkDevice device, VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, VkImageView& imageView);
-    void CreateCubeImageView(VkDevice device, VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, VkImageView& imageView);
+namespace Image
+{
+    void CreateImage(uint32_t width, uint32_t height, uint32_t mipLevels,
+        VkSampleCountFlagBits numSamples, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage,
+        VkImage& image, VmaAllocation& imageMemory, TextureType textureType);
+
+    void CreateImageView(VkDevice device, VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, VkImageView& imageView, TextureType textureType);
     void CreateSampler(const VulkanContext * vulkanContext, VkSampler& sampler, uint32_t mipLevels,const std::optional<VkSamplerCreateInfo> &overridenSamplerInfo = std::nullopt);
 
     bool HasStencilComponent(VkFormat format);
 }
 
 
+//stbi loader
+namespace stbi
+{
+    std::pair<VkBuffer, VmaAllocation> CreateImage(const std::filesystem::path &path, glm::ivec2 &imageSize, uint32_t &mipLevels);
+    std::pair<VkBuffer, VmaAllocation> CreateImageFromMemory(const std::uint8_t* data, size_t size, glm::ivec2 &imageSize, uint32_t &mipLevels);
+}
 
+//ktx Loader
+namespace ktx
+{
+    std::pair<VkBuffer, VmaAllocation> CreateImage(const std::filesystem::path &path, glm::ivec2 &imageSize, uint32_t &mipLevels, ktxTexture** texture);
+    std::pair<VkBuffer, VmaAllocation> CreateImageFromMemory(const std::uint8_t* data, size_t size, glm::ivec2 &imageSize, uint32_t &mipLevels, ktxTexture** texture);
+}
