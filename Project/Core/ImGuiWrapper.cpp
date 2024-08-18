@@ -15,6 +15,8 @@
 
 #include <ImGuiFileDialog.h>
 
+#include "Mesh/ModelLoader.h"
+
 void ImGuiWrapper::Initialize(VkQueue graphicsQueue)
 {
 	const auto m_pContext = ServiceLocator::GetService<VulkanContext>();
@@ -110,7 +112,7 @@ void ImGuiWrapper::NewFrame()
                 config.path = ".";
                 config.countSelectionMax = 1;
                 config.flags = ImGuiFileDialogFlags_Modal;
-                ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".obj", config);
+                ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".obj,.gltf", config);
             }
 
             ImGui::EndMenu();
@@ -134,9 +136,23 @@ void ImGuiWrapper::NewFrame()
         if (ImGuiFileDialog::Instance()->IsOk())
         {
             std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
-            std::shared_ptr<Material> baseMaterial = MaterialManager::GetMaterials()[0];
-            std::unique_ptr<Mesh> newMesh = std::make_unique<Mesh>(filePathName, baseMaterial, filePathName);
-            SceneManager::GetActiveScene()->AddMesh(std::move(newMesh));
+            LogInfo("Selected File: " + filePathName);
+
+            //Get the extension
+            std::string extension = filePathName.substr(filePathName.find_last_of(".") + 1);
+
+            if(extension == "gltf")
+            {
+                const auto vulkanContext = ServiceLocator::GetService<VulkanContext>();
+                GLTFLoader::LoadGLTF(filePathName, SceneManager::GetActiveScene(), vulkanContext);
+            }
+            else
+            {
+                //TODO: move to  OBJLoader::Load("FlightHelmet.obj", this, vulkanContext);
+                std::shared_ptr<Material> baseMaterial = MaterialManager::GetMaterials()[0];
+                std::unique_ptr<Mesh> newMesh = std::make_unique<Mesh>(filePathName, baseMaterial, filePathName);
+                SceneManager::GetActiveScene()->AddMesh(std::move(newMesh));
+            }
         }
         ImGuiFileDialog::Instance()->Close();
     }

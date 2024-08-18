@@ -251,30 +251,32 @@ namespace GLTFLoader {
             {
                 images.emplace_back(VulkanContext::GetAssetPath(std::string(uri->uri.string())).generic_string());
             }
+
+            //TODO: Fix this
             else if(auto array = std::get_if<fastgltf::sources::Array>(&dataa))
             {
-
-                ImageInMemory loadedImage{};
-                if(array->mimeType == fastgltf::MimeType::KTX2)
-                {
-                    auto pD = array->bytes;
-                    ktxTexture* texturePtr{};
-                    auto sources = ktx::CreateImageFromMemory(array->bytes.data(), array->bytes.size(),loadedImage.imageSize, loadedImage.mipLevels, &texturePtr);
-
-                    loadedImage.texture = texturePtr;
-                    loadedImage.staginBuffer = sources.first;
-                    loadedImage.stagingBufferMemory = sources.second;
-
-                }else if(array->mimeType == fastgltf::MimeType::PNG || array->mimeType == fastgltf::MimeType::JPEG ||array->mimeType == fastgltf::MimeType::None)
-                {
-                    auto sources = stbi::CreateImageFromMemory(array->bytes.data(), array->bytes.size(), loadedImage.imageSize, loadedImage.mipLevels);
-                    loadedImage.staginBuffer = sources.first;
-                     loadedImage.stagingBufferMemory = sources.second;
-                }else {
-                    LogError("Unsuported embeded texture format in gtlf");
-                }
-
-                images.emplace_back(loadedImage);
+                LogError("Array not supported yet");
+                // ImageInMemory loadedImage{};
+                // if(array->mimeType == fastgltf::MimeType::KTX2)
+                // {
+                //     auto pD = array->bytes;
+                //     ktxTexture* texturePtr{};
+                //     auto sources = ktx::CreateImageFromMemory(array->bytes.data(), array->bytes.size(),loadedImage.imageSize, loadedImage.mipLevels, &texturePtr);
+                //
+                //     loadedImage.texture = texturePtr;
+                //     loadedImage.staginBuffer = sources.first;
+                //     loadedImage.stagingBufferMemory = sources.second;
+                //
+                // }else if(array->mimeType == fastgltf::MimeType::PNG || array->mimeType == fastgltf::MimeType::JPEG ||array->mimeType == fastgltf::MimeType::None)
+                // {
+                //     auto sources = stbi::CreateImageFromMemory(array->bytes.data(), array->bytes.size(), loadedImage.imageSize, loadedImage.mipLevels);
+                //     loadedImage.staginBuffer = sources.first;
+                //      loadedImage.stagingBufferMemory = sources.second;
+                // }else {
+                //     LogError("Unsuported embeded texture format in gtlf");
+                // }
+                //
+                // images.emplace_back(loadedImage);
 
             }
 
@@ -335,6 +337,7 @@ namespace GLTFLoader {
 
             // TODO: Scene->GetCubeMap();
             newMaterial->GetDescriptorSet()->AddTexture(4, "cubemap_vulkan.ktx", vulkanContext, ColorType::SRGB, TextureType::TEXTURE_CUBE);
+            newMaterial->CreatePipeline();
         }
     }
 

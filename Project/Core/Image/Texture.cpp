@@ -6,6 +6,7 @@
 #include "vulkanbase/VulkanTypes.h"
 #include "Core/CommandBuffer.h"
 #include "ImGuiFileDialog.h"
+#include "Patterns/ServiceLocator.h"
 
 
 Texture::Texture(const std::variant<std::filesystem::path,ImageInMemory>& pathOrImage, VulkanContext *vulkanContext, ColorType colorType, TextureType textureType)
@@ -13,10 +14,7 @@ Texture::Texture(const std::variant<std::filesystem::path,ImageInMemory>& pathOr
 , m_ColorType(colorType)
 , m_TextureType(textureType)
 {
-    std::visit([this](auto&& arg)
-    {
-        this->InitTexture(arg);
-    }, pathOrImage);
+    std::visit([this](auto&& arg){ this->InitTexture(arg);}, pathOrImage);
 }
 
 
@@ -74,61 +72,76 @@ void Texture::Cleanup(VkDevice device) const
         m_ImGuiTexture->Cleanup();
     }
 
+    //Cleanup the image and the memory
+    std::visit([this](auto&& arg) { this->CleanupImage(arg, this->m_Image); }, m_ImageMemory);
 
     vkDestroySampler(device, m_Sampler, nullptr);
     vkDestroyImageView(device, m_ImageView, nullptr);
-    vmaDestroyImage(Allocator::VmaAllocator, m_Image, m_ImageMemory);
 }
 
-void Texture::InitTexture(const ImageInMemory &loadedImage)
+void Texture::InitTexture(const TextureData &loadedImage)
 {
-    m_ImageSize = loadedImage.imageSize;
-    m_MipLevels = loadedImage.mipLevels;
+    //Check if the variant is a ktxVulkanTexture
+    if(std::holds_alternative<ktxVulkanTexture>(loadedImage))
+    {
+        const auto& kTexture = std::get<ktxVulkanTexture>(loadedImage);
+        m_Image = kTexture.image;
+        m_ImageMemory = kTexture.deviceMemory;
+        m_ImageSize = {kTexture.width, kTexture.height};
+        m_MipLevels = kTexture.levelCount;
 
-    Image::CreateImage(m_ImageSize.x, m_ImageSize.y, m_MipLevels, VK_SAMPLE_COUNT_1_BIT, static_cast<VkFormat>(m_ColorType), VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, m_Image, m_ImageMemory, m_TextureType);
+        //TODO: Figure out how i can use ktx to make VK_FORMAT_R8G8B8A8_SRGB images
+        Image::CreateImageView(m_pContext->device, m_Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT,m_ImageView, m_TextureType);
+    }else
+    {
+        const auto &imageInMemory = std::get<ImageInMemory>(loadedImage);
+        m_ImageSize = imageInMemory.imageSize;
+        m_MipLevels = imageInMemory.mipLevels;
 
-    TransitionAndCopyImageBuffer(loadedImage.staginBuffer, loadedImage.texture);
+        VmaAllocation allocation{};
+        Image::CreateImage(m_ImageSize.x, m_ImageSize.y, m_MipLevels, VK_SAMPLE_COUNT_1_BIT, static_cast<VkFormat>(m_ColorType), VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, m_Image, allocation, m_TextureType);
+        m_ImageMemory = allocation;
 
-    if(loadedImage.texture.has_value()) ktxTexture_Destroy(loadedImage.texture.value());
+        TransitionAndCopyImageBuffer(imageInMemory.staginBuffer);
+        vmaDestroyBuffer(Allocator::VmaAllocator, imageInMemory.staginBuffer, imageInMemory.stagingBufferMemory);
 
-    vmaDestroyBuffer(Allocator::VmaAllocator, loadedImage.staginBuffer, loadedImage.stagingBufferMemory);
-
-    Image::CreateImageView(m_pContext->device, m_Image, static_cast<VkFormat>(m_ColorType), VK_IMAGE_ASPECT_COLOR_BIT,m_ImageView, m_TextureType);
+        Image::CreateImageView(m_pContext->device, m_Image, static_cast<VkFormat>(m_ColorType), VK_IMAGE_ASPECT_COLOR_BIT,m_ImageView, m_TextureType);
+    }
 
     Image::CreateSampler(m_pContext, m_Sampler, m_MipLevels);
 
 
     //Setup the ImGuiTexture
     if(m_TextureType == TextureType::TEXTURE_CUBE) return;
-    m_ImGuiTexture = std::make_unique<ImGuiTexture>(m_Sampler, m_ImageView, ImVec2(m_ImageSize.x, m_ImageSize.y));
+    m_ImGuiTexture = std::make_unique<ImGuiTexture>(m_Sampler, m_ImageView, ImVec2(250, 250));
 }
 
 void Texture::InitTexture(const std::filesystem::path &path)
 {
     m_Path = VulkanContext::GetAssetPath(path.generic_string());
 
-    ImageInMemory stagingSources;
-    std::pair<VkBuffer, VmaAllocation> imageData;
+    TextureData textureData;
+
 
     //Note: For now we only support .ktx files for a cubemap
     if (m_Path.value().extension() == ".ktx" || m_TextureType == TextureType::TEXTURE_CUBE)
     {
-        ktxTexture* texture = nullptr;
-        imageData = ktx::CreateImage(m_Path.value(), stagingSources.imageSize, stagingSources.mipLevels, &texture);
-        stagingSources.texture = texture;
+        textureData = ktx::CreateImage(m_Path.value());
     }
     else
     {
-        imageData = stbi::CreateImage(m_Path.value(), stagingSources.imageSize, stagingSources.mipLevels);
+        ImageInMemory stagingSources{};
+        auto bufferPair = stbi::CreateImage(m_Path.value(), stagingSources.imageSize, stagingSources.mipLevels);
+        stagingSources.staginBuffer = bufferPair.first;
+        stagingSources.stagingBufferMemory = bufferPair.second;
+
+        textureData = stagingSources;
     }
 
-    stagingSources.staginBuffer = imageData.first;
-    stagingSources.stagingBufferMemory = imageData.second;
-
-    InitTexture(stagingSources);
+    InitTexture(textureData);
 }
 
-void Texture::TransitionAndCopyImageBuffer(VkBuffer srcBuffer, std::optional<ktxTexture*> texture) const
+void Texture::TransitionAndCopyImageBuffer(VkBuffer srcBuffer) const
 {
     // Create Command Buffer
     CommandBuffer commandBuffer{};
@@ -140,15 +153,7 @@ void Texture::TransitionAndCopyImageBuffer(VkBuffer srcBuffer, std::optional<ktx
     {
         for (uint32_t mipLevel{}; mipLevel < m_MipLevels; ++mipLevel)
         {
-            //Get the proper offset for the image
-            ktx_size_t offset{};
-            if(texture.has_value())
-            {
-                const auto returnCode = ktxTexture_GetImageOffset(texture.value(), mipLevel, 0, face, &offset);
-                LogAssert(returnCode == KTX_SUCCESS, "Failed to get image offset",true );
-            }
-
-
+            VkDeviceSize offset = 0;
             VkBufferImageCopy region{};
             region.bufferOffset = offset;
 
@@ -182,4 +187,17 @@ void Texture::TransitionAndCopyImageBuffer(VkBuffer srcBuffer, std::optional<ktx
 
 
     CommandBufferManager::EndCommandBufferSingleUse(m_pContext, commandBuffer);
+}
+
+void Texture::CleanupImage(VkDeviceMemory deviceMemory, VkImage image)
+{
+    //todo: fix this uglyness with the service locator
+    const auto device = ServiceLocator::GetService<VulkanContext>()->device;
+    vkFreeMemory(device, deviceMemory, nullptr);
+    vkDestroyImage(device, image, nullptr);
+}
+
+void Texture::CleanupImage(VmaAllocation deviceMemory, VkImage image)
+{
+    vmaDestroyImage(Allocator::VmaAllocator, image, deviceMemory);
 }

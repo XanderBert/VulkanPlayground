@@ -2,12 +2,13 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
-#include <ktx/include/ktx.h>
+#include <ktx.h>
+#include <ktxvulkan.h>
 #include <ImGuiFileDialog.h>
 
 #include "Texture.h"
-#include "Core/CommandBuffer.h"
 #include "Core/Logger.h"
+#include "Patterns/ServiceLocator.h"
 #include "vulkanbase/VulkanBase.h"
 
 namespace Image
@@ -151,31 +152,49 @@ std::pair<VkBuffer, VmaAllocation> stbi::CreateImageFromMemory(const std::uint8_
 
     return {stagingBuffer, stagingBufferMemory};
 }
-std::pair<VkBuffer, VmaAllocation> ktx::CreateImage(const std::filesystem::path &path, glm::ivec2 &imageSize, uint32_t &mipLevels, ktxTexture **texture)
+ktxVulkanTexture ktx::CreateImage(const std::filesystem::path &path)
 {
     LogAssert(path.extension() == ".ktx", path.generic_string() + " is not a .ktx file", true)
 
-    // TODO: KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT -  should not be set, It should be directly loaded in the staging buffer
-    auto errorCode = ktxTexture_CreateFromNamedFile(path.generic_string().c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, texture);
+    const VulkanContext* pContext = ServiceLocator::GetService<VulkanContext>();
 
+    ktxTexture* texture = nullptr;
+    ktxVulkanDeviceInfo vdi;
+    ktxVulkanDeviceInfo_Construct(&vdi, pContext->physicalDevice, pContext->device, pContext->graphicsQueue, pContext->commandPool, nullptr);
 
-
+    auto errorCode = ktxTexture_CreateFromNamedFile(path.generic_string().c_str(), KTX_TEXTURE_CREATE_NO_FLAGS, &texture);
     LogAssert(errorCode == KTX_SUCCESS, "Failed to load texture image!", true)
-    LogAssert((*texture) != nullptr, "The KTX Texture is not valid", true)
+    LogAssert(texture != nullptr, "The KTX Texture is not valid", true)
+
+    ktxVulkanTexture kTexture;
+    errorCode = ktxTexture_VkUploadEx(texture, &vdi, &kTexture,
+                                  VK_IMAGE_TILING_OPTIMAL,
+                                  VK_IMAGE_USAGE_SAMPLED_BIT,
+                                  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+    LogAssert(errorCode == KTX_SUCCESS, "Failed to upload texture image!", true)
+
+
+    ktxTexture_Destroy(texture);
+    ktxVulkanDeviceInfo_Destruct(&vdi);
+
+    return kTexture;
+
+
 
     // Get properties required for using and upload texture data from the ktx texture object
-    imageSize = {(*texture)->baseWidth, (*texture)->baseHeight};
-    mipLevels = (*texture)->numLevels;
-
-    ktx_uint8_t *ktxTextureData = ktxTexture_GetData((*texture));
-    ktx_size_t ktxTextureSize = ktxTexture_GetSize((*texture));
-
-    VkBuffer stagingBuffer;
-    VmaAllocation stagingBufferMemory;
-
-    Core::Buffer::CreateStagingBuffer<ktx_uint8_t>(ktxTextureSize, stagingBuffer, stagingBufferMemory, ktxTextureData);
-
-    return {stagingBuffer, stagingBufferMemory};
+    // imageSize = {(*texture)->baseWidth, (*texture)->baseHeight};
+    // mipLevels = (*texture)->numLevels;
+    //
+    // ktx_uint8_t *ktxTextureData = ktxTexture_GetData((*texture));
+    // ktx_size_t ktxTextureSize = ktxTexture_GetSize((*texture));
+    //
+    // VkBuffer stagingBuffer;
+    // VmaAllocation stagingBufferMemory;
+    //
+    // Core::Buffer::CreateStagingBuffer<ktx_uint8_t>(ktxTextureSize, stagingBuffer, stagingBufferMemory, ktxTextureData);
+    //
+    // return {stagingBuffer, stagingBufferMemory};
 }
 std::pair<VkBuffer, VmaAllocation> ktx::CreateImageFromMemory(const std::uint8_t* data, size_t size, glm::ivec2 &imageSize, uint32_t &mipLevels, ktxTexture **texture)
 {

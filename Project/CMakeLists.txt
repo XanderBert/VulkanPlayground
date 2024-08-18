@@ -213,6 +213,10 @@ set(KTX_SOURCES
         ${KTX_DIR}/lib/swap.c
         ${KTX_DIR}/lib/memstream.c
         ${KTX_DIR}/lib/filestream.c
+        ${KTX_DIR}/lib/vk_format.h
+        ${KTX_DIR}/lib/vk_funcs.c
+        ${KTX_DIR}/lib/vk_funcs.h
+        ${KTX_DIR}/lib/vkloader.c
 )
 
 include_directories( ${KTX_DIR}/include)

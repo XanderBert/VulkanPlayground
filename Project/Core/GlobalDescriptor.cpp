@@ -31,6 +31,9 @@ void GlobalDescriptor::Init(VulkanContext* vulkanContext)
 
 void GlobalDescriptor::Bind(VulkanContext* vulkanContext, const VkCommandBuffer commandBuffer, const VkPipelineLayout& pipelineLayout)
 {
+    LogAssert(m_GlobalDescriptorSetLayout != VK_NULL_HANDLE, "GlobalDescriptorSetLayout is not initialized", true);
+    LogAssert(pipelineLayout != VK_NULL_HANDLE, "PipelineLayout is not initialized", true);
+
 	m_GlobalBuffer.UpdateVariable(0, Camera::GetViewProjectionMatrix());
 	m_GlobalBuffer.UpdateVariable(cameraHandle, glm::vec4(Camera::GetPosition(), 1.0f));
 	m_GlobalBuffer.UpdateVariable(cameraPlaneHandle, glm::vec4(Camera::GetNearPlane(), Camera::GetFarPlane(), 0.0f, 0.0f));

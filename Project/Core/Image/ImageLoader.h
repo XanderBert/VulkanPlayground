@@ -1,9 +1,11 @@
 #pragma once
+#include <ktxvulkan.h>
 #include <optional>
-#include <vulkan/vulkan_core.h>
 
-#include "Texture.h"
+
 #include "vulkanbase/VulkanTypes.h"
+#include "Texture.h"
+
 
 
 enum class TextureType : uint8_t;
@@ -31,6 +33,6 @@ namespace stbi
 //ktx Loader
 namespace ktx
 {
-    std::pair<VkBuffer, VmaAllocation> CreateImage(const std::filesystem::path &path, glm::ivec2 &imageSize, uint32_t &mipLevels, ktxTexture** texture);
+    ktxVulkanTexture CreateImage(const std::filesystem::path &path);
     std::pair<VkBuffer, VmaAllocation> CreateImageFromMemory(const std::uint8_t* data, size_t size, glm::ivec2 &imageSize, uint32_t &mipLevels, ktxTexture** texture);
 }

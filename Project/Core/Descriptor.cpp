@@ -106,7 +106,7 @@ namespace Descriptor
 
 	VkDescriptorPool DescriptorAllocator::GrabPool(VkDevice device)
 	{
-		constexpr int maxSets = 4096;
+		constexpr int maxSets = 4096; //(4 * 1024) - ave. usage
 		constexpr float setMultiplier = 1.5f;
 
 		VkDescriptorPool newPool;

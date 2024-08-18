@@ -25,12 +25,12 @@ struct  ImageInMemory
 {
     VkBuffer staginBuffer;
     VmaAllocation stagingBufferMemory;
-
     glm::ivec2 imageSize;
     uint32_t mipLevels;
-
-    std::optional<ktxTexture*> texture;
 };
+
+using TextureData = std::variant<ktxVulkanTexture, ImageInMemory>;
+using ImageMemory = std::variant<VmaAllocation, VkDeviceMemory>;
 
 //TODO only take a ImageInMemory To Construct a actual image
 class Texture final
@@ -50,18 +50,23 @@ public:
 
     void Cleanup(VkDevice device) const;
 
-    void InitTexture(const ImageInMemory& loadedImage);
+
+private:
+    void InitTexture(const TextureData& loadedImage);
     void InitTexture(const std::filesystem::path& path);
 
-    void TransitionAndCopyImageBuffer(VkBuffer srcBuffer, std::optional<ktxTexture*> texture) const;
-private:
+    void TransitionAndCopyImageBuffer(VkBuffer srcBuffer) const;
 
+    static void CleanupImage(VkDeviceMemory deviceMemory, VkImage image);
+    static void CleanupImage(VmaAllocation deviceMemory, VkImage image);
+private:
     VulkanContext* m_pContext{};
     std::optional<std::filesystem::path> m_Path{};
 
     glm::ivec2 m_ImageSize{};
     uint32_t m_MipLevels{};
-    VmaAllocation m_ImageMemory{};
+
+    ImageMemory m_ImageMemory{};
 
     VkImage m_Image{};
     VkImageView m_ImageView{};
