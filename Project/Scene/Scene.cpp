@@ -39,7 +39,7 @@ Scene::Scene(VulkanContext* vulkanContext)
 
 
 
-   GLTFLoader::LoadGLTF("FlightHelmet.gltf", this, vulkanContext);
+   //GLTFLoader::LoadGLTF("FlightHelmet.gltf", this, vulkanContext);
    //GLTFLoader::LoadGLTF("Assets/CesiumMan.gltf", this, vulkanContext);
    //GLTFLoader::LoadGLTF("Assets/sponza.gltf", this, vulkanContext);
 
@@ -71,9 +71,12 @@ Scene::Scene(VulkanContext* vulkanContext)
 	Input::BindFunction({ {GLFW_MOUSE_BUTTON_RIGHT}, Input::InputType::Press }, Camera::OnRightPressed);
 	Input::AddMouseMovementListener(Camera::OnMouseMoved);
 
-    Input::BindFunction({{GLFW_KEY_R}, Input::InputType::Press}, ImGuizmoHandler::TranslateOperation);
+
     Input::BindFunction({{GLFW_KEY_T}, Input::InputType::Press}, ImGuizmoHandler::RotateOperation);
     Input::BindFunction({{GLFW_KEY_Y}, Input::InputType::Press}, ImGuizmoHandler::ScaleOperation);
+
+    Input::BindFunction({{GLFW_KEY_S}, Input::InputType::Press, GLFW_MOD_CONTROL}, ShaderEditor::SaveFile);
+    //Input::BindFunction({{GLFW_KEY_I}, Input::InputType::Press, GLFW_MOD_CONTROL}, ImGuiWrapper::OpenFileDialog);
 
     LogInfo("Scene Made");
 }

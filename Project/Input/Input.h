@@ -21,10 +21,12 @@ namespace Input
 	{
 		int key;
 		InputType keyType;
+	    int mods;
 
 		bool operator==(const InputAction& other) const
 		{
 			if (key != other.key) return false;
+		    if(mods != other.mods) return false;
 			return true;
 		}
 	};
@@ -46,9 +48,9 @@ namespace Input
 	inline std::vector<std::function<void(glm::vec2)>> mouseMovementListeners;
 
 
-	inline void KeyEvent(int key, int action)
+	inline void KeyEvent(int key, int action, int mods)
 	{
-		const InputAction keyProps{ key,static_cast<InputType>(action)};
+		const InputAction keyProps{ key, static_cast<InputType>(action), mods};
 
 		const auto& binding = functionBindings.find(keyProps);
 
@@ -82,7 +84,7 @@ namespace Input
 		glfwSetKeyCallback(window, [](GLFWwindow* window, int key, int scanCode, int action, int mods)
 		{
 		    ImGui_ImplGlfw_KeyCallback(window, key, action, action, mods);
-			KeyEvent(key, action);
+			KeyEvent(key, action, mods);
 		});
 
 		glfwSetCursorPosCallback(window, [](GLFWwindow* window, double xpos, double ypos)
@@ -97,7 +99,7 @@ namespace Input
 		{
 			ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
 			if (ImGui::GetIO().WantCaptureMouse) return;
-			KeyEvent(button, action);
+			KeyEvent(button, action, mods);
 		});
 
 	    LogInfo("Input Setup");

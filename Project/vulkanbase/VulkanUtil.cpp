@@ -1,7 +1,8 @@
-#include "VulkanUtil.h"
 #include <fstream>
+
+
+#include "VulkanUtil.h"
 #include "VulkanTypes.h"
-#include "Core/CommandBuffer.h"
 #include "Core/Logger.h"
 
 namespace tools
@@ -182,6 +183,7 @@ namespace tools
 	void OpenFile(const std::string& path)
 	{
 		LogInfo("Opening File: " + path);
+
 
 
 #ifdef _WIN32

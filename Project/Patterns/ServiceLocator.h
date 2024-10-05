@@ -5,6 +5,8 @@
 #include <unordered_map>
 #include <cassert>
 
+#include "Core/Logger.h"
+#include "vulkanbase/VulkanTypes.h"
 
 
 
@@ -19,13 +21,13 @@ public:
 	ServiceLocator(ServiceLocator&&) = delete;
 	ServiceLocator& operator=(ServiceLocator&&) = delete;
 
-	template <typename T>
-	static void RegisterService()
+	template <typename T, typename... Args>
+	static void RegisterService(Args&&... args)
 	{
 		const std::type_index typeIndex = std::type_index(typeid(T));
 		if (m_ServiceInstances.find(typeIndex) == m_ServiceInstances.end())
 		{
-			std::unique_ptr<void, decltype(&MakeDeleter<T>)> p(new T(), &MakeDeleter<T>);
+			std::unique_ptr<void, decltype(&MakeDeleter<T>)> p(new T(std::forward<Args>(args)...), &MakeDeleter<T>);
 			m_ServiceInstances.emplace(std::type_index(typeid(T)), std::move(p));
 		}
 	}
@@ -66,7 +68,7 @@ private:
 	inline static std::unordered_map<std::type_index, std::unique_ptr<void, void (*)(void const*)>> m_ServiceInstances{};
 };
 
-#include "vulkanbase/VulkanTypes.h"
+
 class ServiceConfigurator 
 {
 public:
@@ -79,7 +81,7 @@ public:
 
 	static void Configure()
 	{
-		ServiceLocator::RegisterService<VulkanContext>();
+		ServiceLocator::RegisterService<VulkanContext>("Vulkan Shader Editor");
 	    LogInfo("Services Configured");
 	}
 };

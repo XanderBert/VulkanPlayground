@@ -111,6 +111,7 @@ set(SOURCES
         shaders/Logic/ShaderEditor.cpp
         shaders/Logic/ShaderEditor.h
         vulkanbase/VulkanBase.cpp
+        vulkanbase/VulkanTypes.cpp
 )
 
 

@@ -7,6 +7,7 @@
 
 #include "Image/Texture.h"
 #include "vulkanbase/VulkanTypes.h"
+#include "vulkanbase/VulkanUtil.h"
 
 void Allocator::CreateAllocator(const VulkanContext *vulkanContext)
 {

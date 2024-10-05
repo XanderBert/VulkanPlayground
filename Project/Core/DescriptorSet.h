@@ -6,7 +6,7 @@
 
 #include "Descriptor.h"
 #include "DynamicUniformBuffer.h"
-#include "Image/ImageLoader.h"
+#include "Logger.h"
 #include "Image/Texture.h"
 
 

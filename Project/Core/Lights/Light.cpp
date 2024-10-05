@@ -4,6 +4,7 @@
 #include "Camera/Camera.h"
 #include "Core/DepthResource.h"
 #include "Core/Image/ImageLoader.h"
+#include "vulkanbase/VulkanUtil.h"
 
 
 // Light::Light(const VulkanContext *vulkanContext) :

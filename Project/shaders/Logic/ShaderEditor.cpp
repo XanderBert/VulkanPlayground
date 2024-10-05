@@ -23,7 +23,17 @@ void ShaderEditor::OpenFileForEdit(const std::filesystem::path &path)
     m_Editor.SetText(tools::readFileStr(path.generic_string()));
 }
 
-void ShaderEditor::SaveFile() { tools::writeFileStr(m_CurrentPath.generic_string(), m_Editor.GetText()); }
+void ShaderEditor::SaveFile()
+{
+    //Check if a file is open
+    if(m_CurrentPath.empty())
+    {
+        LogWarning("No file open to save");
+        return;
+    }
+
+    tools::writeFileStr(m_CurrentPath.generic_string(), m_Editor.GetText());
+}
 
 
 

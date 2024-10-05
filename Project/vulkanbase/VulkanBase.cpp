@@ -20,7 +20,7 @@ void VulkanBase::run()
     ImGuiWrapper::Initialize(m_pContext->graphicsQueue);
     ShaderEditor::Init();
     SceneManager::AddScene(std::make_unique<Scene>(m_pContext));
-    Input::SetupInput(m_pContext->window.Ptr());
+    Input::SetupInput(m_pContext->window.Get());
     MaterialManager::CreatePipelines();
     mainLoop();
     cleanup();

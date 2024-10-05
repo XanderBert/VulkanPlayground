@@ -1,5 +1,6 @@
 #include "Mesh.h"
 #include <chrono>
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <utility>
@@ -13,6 +14,7 @@
 #include "Patterns/ServiceLocator.h"
 #include "Timer/GameTimer.h"
 #include "Vertex.h"
+#include "Core/Logger.h"
 #include "vulkanbase/VulkanTypes.h"
 
 

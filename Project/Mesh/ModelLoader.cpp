@@ -4,6 +4,8 @@
 
 #undef min
 #undef max
+
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/detail/type_quat.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -28,7 +30,11 @@ namespace GLTFLoader {
     void LoadGLTF(std::string_view filePath, Scene *scene, VulkanContext *vulkanContext)
     {
         LogInfo("Loading GLTF: " + std::string(filePath));
-        auto gltf_opt = std::move(Load( VulkanContext::GetAssetPath(std::string(filePath)).generic_string() ));
+
+        const std::filesystem::path fullfilePath = VulkanContext::GetAssetPath() / filePath;
+
+        std::optional<fastgltf::Asset> gltf_opt = Load(fullfilePath.generic_string());
+
         if(!gltf_opt.has_value())
         {
             LogError("Failed to load GLTF: " + std::string(filePath));
@@ -249,7 +255,7 @@ namespace GLTFLoader {
             fastgltf::DataSource dataa = texture.data;
             if (const auto uri = std::get_if<fastgltf::sources::URI>(&dataa))
             {
-                images.emplace_back(VulkanContext::GetAssetPath(std::string(uri->uri.string())).generic_string());
+                images.emplace_back(VulkanContext::GetAssetPath() / std::string(uri->uri.string()));
             }
 
             //TODO: Fix this
@@ -381,7 +387,7 @@ namespace ObjLoader
 {
 	void LoadObj(const std::string& filePath, std::vector<Vertex>& vertices, std::vector<uint32_t>& indices)
 	{
-        const auto path = VulkanContext::GetAssetPath(filePath);
+        const auto path = VulkanContext::GetAssetPath() / filePath;
 
 
 		tinyobj::attrib_t attributes;

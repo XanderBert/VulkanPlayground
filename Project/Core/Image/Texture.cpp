@@ -7,6 +7,7 @@
 #include "Core/CommandBuffer.h"
 #include "ImGuiFileDialog.h"
 #include "Patterns/ServiceLocator.h"
+#include "vulkanbase/VulkanUtil.h"
 
 
 Texture::Texture(const std::variant<std::filesystem::path,ImageInMemory>& pathOrImage, VulkanContext *vulkanContext, ColorType colorType, TextureType textureType)
@@ -118,7 +119,7 @@ void Texture::InitTexture(const TextureData &loadedImage)
 
 void Texture::InitTexture(const std::filesystem::path &path)
 {
-    m_Path = VulkanContext::GetAssetPath(path.generic_string());
+    m_Path = VulkanContext::GetAssetPath() / path;
 
     TextureData textureData;
 

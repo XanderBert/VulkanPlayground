@@ -3,9 +3,14 @@
 #include <vector>
 #include <algorithm>
 
+#include "Patterns/Delegate.h"
 #include "vulkanbase/VulkanTypes.h"
+
 #include "QueueFamilyIndices.h"
 #include "Core/Image/Texture.h"
+#include "Core/Logger.h"
+
+
 
 
 class SwapChain final
@@ -89,7 +94,7 @@ public:
 
 	static void CreateSurface(const VulkanContext* vulkanContext)
 	{
-		VulkanCheck(glfwCreateWindowSurface(vulkanContext->instance, vulkanContext->window.Ptr(), nullptr, &m_SwapChainSurface), "Failed To Create Window Surface")
+		VulkanCheck(glfwCreateWindowSurface(vulkanContext->instance, vulkanContext->window.Get(), nullptr, &m_SwapChainSurface), "Failed To Create Window Surface")
 	}
 
 	static void DestroySwapChain(const VulkanContext* vulkanContext)

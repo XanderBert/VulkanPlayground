@@ -51,7 +51,7 @@ void ImGuiWrapper::Initialize(VkQueue graphicsQueue)
 	ImGui::StyleColorsDark();
 
 
-	ImGui_ImplGlfw_InitForVulkan(m_pContext->window.Ptr(), true);
+	ImGui_ImplGlfw_InitForVulkan(m_pContext->window.Get(), true);
 	ImGui_ImplVulkan_InitInfo init_info = {};
 	init_info.Instance = m_pContext->instance;
 	init_info.PhysicalDevice = m_pContext->physicalDevice;
@@ -104,10 +104,8 @@ void ImGuiWrapper::NewFrame()
         {
             if (ImGui::MenuItem("Import", "Ctrl+I"))
             {
-                //Open File Dialog
-                //Test import mesh
+                //Setup File Dialog
                 LogInfo("Importing Mesh...");
-
                 IGFD::FileDialogConfig config;
                 config.path = ".";
                 config.countSelectionMax = 1;
@@ -117,16 +115,6 @@ void ImGuiWrapper::NewFrame()
 
             ImGui::EndMenu();
         }
-        // if (ImGui::BeginMenu("Edit"))
-        // {
-        //     if (ImGui::MenuItem("Undo", "CTRL+Z")) {}
-        //     if (ImGui::MenuItem("Redo", "CTRL+Y", false, false)) {}  // Disabled item
-        //     ImGui::Separator();
-        //     if (ImGui::MenuItem("Cut", "CTRL+X")) {}
-        //     if (ImGui::MenuItem("Copy", "CTRL+C")) {}
-        //     if (ImGui::MenuItem("Paste", "CTRL+V")) {}
-        //     ImGui::EndMenu();
-        // }
         ImGui::EndMainMenuBar();
     }
 
@@ -139,7 +127,7 @@ void ImGuiWrapper::NewFrame()
             LogInfo("Selected File: " + filePathName);
 
             //Get the extension
-            std::string extension = filePathName.substr(filePathName.find_last_of(".") + 1);
+            std::string extension = filePathName.substr(filePathName.find_last_of('.') + 1);
 
             if(extension == "gltf")
             {
@@ -246,7 +234,6 @@ void ImGuiWrapper::SetDarkStyle()
 	style.LogSliderDeadzone = 4;
 	style.TabRounding = 4;
 }
-
 
 ImGuiTexture::ImGuiTexture(VkSampler sampler, VkImageView imageView, ImVec2 size)
 {
