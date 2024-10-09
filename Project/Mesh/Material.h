@@ -32,7 +32,7 @@ public:
     //if so it removes it and adds the new one
     Shader* SetShader(const std::string& shaderPath, ShaderType shaderType);
 
-    //Adds a shader of the specified type without checking if one is allready present of the same type
+    //Adds a shader of the specified type without checking if one is already present of the same type
     Shader* AddShader(const std::string& shaderPath, ShaderType shaderType);
 
     void CreatePipeline();
@@ -46,6 +46,8 @@ public:
     [[nodiscard]] VkCullModeFlags GetCullModeBit() const;
     void SetCullMode(VkCullModeFlags cullMode);
 
+    [[nodiscard]] bool GetDepthOnly() const;
+    void SetDepthOnly(bool depthOnly);
 private:
 	friend class MaterialManager;
 
@@ -62,4 +64,6 @@ private:
 
 
     VkCullModeFlags m_CullMode = VK_CULL_MODE_BACK_BIT;
+
+    bool m_IsDepthOnly = false;
 };

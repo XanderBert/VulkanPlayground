@@ -117,6 +117,16 @@ void Material::SetCullMode(VkCullModeFlags cullMode) {
     m_CullMode = cullMode;
 }
 
+bool Material::GetDepthOnly() const
+{
+    return m_IsDepthOnly;
+}
+
+void Material::SetDepthOnly(bool depthOnly)
+{
+    m_IsDepthOnly = depthOnly;
+}
+
 void Material::CreatePipeline()
 {
 	m_pGraphicsPipeline->CreatePipeline(m_pContext, this);

@@ -66,6 +66,7 @@ void VulkanBase::createSyncObjects()
 
 }
 
+
 void VulkanBase::drawFrame()
 {
 	const VkDevice device = m_pContext->device;
@@ -91,30 +92,22 @@ void VulkanBase::drawFrame()
 	CommandBufferManager::BeginCommandBufferRecording(commandBuffer, false, false);
 
 
-	tools::InsertImageMemoryBarrier(
-		commandBuffer.Handle,
-		SwapChain::Image(static_cast<uint8_t>(imageIndex)),
-		VK_IMAGE_LAYOUT_UNDEFINED,
-		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-		VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 });
 
 
-    //TODO: Make this VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL when we have a separate subpass for depth
-	tools::InsertImageMemoryBarrier(
-		commandBuffer.Handle,
-		DepthResource::GetImage(),
-		VK_IMAGE_LAYOUT_UNDEFINED,
-		VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-		VkImageSubresourceRange{ VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 1 });
+
+
+
+
+
+
+
+
+
+
+
 
 	drawFrame(imageIndex);
 
-	tools::InsertImageMemoryBarrier(
-		commandBuffer.Handle,
-		SwapChain::Image(static_cast<uint8_t>(imageIndex)),
-		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-		VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-		VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 });
 
 
 	CommandBufferManager::EndCommandBufferRecording(commandBuffer);

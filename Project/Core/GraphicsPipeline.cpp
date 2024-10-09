@@ -35,13 +35,19 @@ void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline,
     LogInfo("Layout Created For: " + material->GetMaterialName());
 
 	//Create dynamic rendering structure
-	const VkPipelineRenderingCreateInfoKHR pipelineRenderingCreateInfo
+	VkPipelineRenderingCreateInfoKHR pipelineRenderingCreateInfo
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR,
         .colorAttachmentCount = 1,
         .pColorAttachmentFormats = &SwapChain::Format(),
         .depthAttachmentFormat = DepthResource::GetFormat(),
     };
+
+    if(material->GetDepthOnly())
+    {
+        pipelineRenderingCreateInfo.colorAttachmentCount = 0;
+        pipelineRenderingCreateInfo.pColorAttachmentFormats = VK_NULL_HANDLE;
+    }
 
 
     const VkPipelineRasterizationStateCreateInfo rasterizer
@@ -62,15 +68,25 @@ void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline,
         .blendEnable = VK_FALSE,
         .colorWriteMask =  VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
     };
-    const VkPipelineColorBlendStateCreateInfo colorBlending
+
+    VkPipelineColorBlendStateCreateInfo colorBlending
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
         .logicOpEnable = VK_FALSE,
         .logicOp = VK_LOGIC_OP_COPY,
-        .attachmentCount = 1,
-        .pAttachments = &colorBlendAttachment,
         .blendConstants = { 0.0f, 0.0f, 0.0f, 0.0f }
     };
+
+    if(material->GetDepthOnly())
+    {
+        colorBlending.attachmentCount = 0;
+        colorBlending.pAttachments = VK_NULL_HANDLE;
+    }else
+    {
+        colorBlending.attachmentCount = 1;
+        colorBlending.pAttachments = &colorBlendAttachment;
+    }
+
 
 
 	const std::vector dynamicStates =

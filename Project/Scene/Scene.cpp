@@ -21,6 +21,10 @@ Scene::Scene(VulkanContext* vulkanContext)
     //
     //Create Materials
     //
+    std::shared_ptr<Material> depthMaterial = MaterialManager::CreateMaterial(vulkanContext, "depth.vert", "depth.frag", "DepthOnlyMaterial");
+    depthMaterial->SetDepthOnly(true);
+
+
     std::shared_ptr<Material> PBR_Material = MaterialManager::CreateMaterial(vulkanContext, "shader.vert", "shader.frag", "PBR_Material");
     auto* ubo = PBR_Material->GetDescriptorSet()->AddUniformBuffer(0);
     ubo->AddVariable(glm::vec4{1});
@@ -58,7 +62,7 @@ Scene::Scene(VulkanContext* vulkanContext)
 
     //Create the cubmap last so its rendered last
     //with a simple shader & depthmap trick we can make it only over the fragments that are not yet written to
-    m_Meshes.push_back(std::make_unique<Mesh>("Cube.obj", skyboxMaterial, "CubeMap"));
+    m_Meshes.push_back(std::make_unique<Mesh>("Cube.obj", skyboxMaterial, depthMaterial, "CubeMap"));
     m_Meshes.back()->SetRotation(glm::vec3{-90,0,0});
 
     //
@@ -81,6 +85,15 @@ Scene::Scene(VulkanContext* vulkanContext)
     LogInfo("Scene Made");
 }
 
+
+void Scene::RenderDepth(VkCommandBuffer commandBuffer) const
+{
+    for (const auto& mesh : m_Meshes)
+    {
+        mesh->BindDepth(commandBuffer);
+        mesh->Render(commandBuffer);
+    }
+}
 
 void Scene::Render(VkCommandBuffer commandBuffer) const
 {
@@ -131,7 +144,6 @@ void Scene::Render(VkCommandBuffer commandBuffer) const
     Camera::Update();
 	Camera::OnImGui();
 
-
 	for (const auto& mesh : m_Meshes)
 	{
 	    mesh->Bind(commandBuffer);
@@ -147,7 +159,6 @@ void Scene::Render(VkCommandBuffer commandBuffer) const
 
 
     ImGui::Render();
-
 }
 
 void Scene::CleanUp() const

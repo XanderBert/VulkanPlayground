@@ -19,10 +19,11 @@
 
 
 Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices,
-           const std::shared_ptr<Material> &material, std::string  meshName, uint32_t firstDrawIndex, int32_t vertexOffset)
+           const std::shared_ptr<Material> &material, const std::shared_ptr<Material> &depthMaterial, std::string  meshName, uint32_t firstDrawIndex, int32_t vertexOffset)
 	: m_FirstDrawIndex(firstDrawIndex)
     , m_VertexOffset(vertexOffset)
 	, m_pMaterial(material)
+    , m_pDepthMaterial(depthMaterial)
     , m_MeshName(std::move(meshName))
 {
 	m_pContext = ServiceLocator::GetService<VulkanContext>();
@@ -30,14 +31,16 @@ Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& ind
 	CreateIndexBuffer(indices);
 }
 
-Mesh::Mesh(const std::string& modelPath, const std::shared_ptr<Material> &material, const std::string& meshName)
+Mesh::Mesh(const std::string& modelPath, const std::shared_ptr<Material> &material, const std::shared_ptr<Material> &depthMaterial,  const std::string& meshName)
 	:m_pMaterial(material)
+    ,m_pDepthMaterial(depthMaterial)
 {
 	m_MeshName = meshName.empty() ? m_MeshName = modelPath : m_MeshName = meshName;
 
 	std::vector<Vertex> vertices;
 	std::vector<uint32_t> indices;
 
+    //TODO: also support gltf in this function
 	ObjLoader::LoadObj(modelPath, vertices, indices);
 
 	m_pContext = ServiceLocator::GetService<VulkanContext>();
@@ -64,6 +67,21 @@ void Mesh::Bind(VkCommandBuffer commandBuffer)
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 	vkCmdBindIndexBuffer(commandBuffer, m_IndexBuffer, 0, VK_INDEX_TYPE_UINT32);
 }
+
+void Mesh::BindDepth(VkCommandBuffer commandBuffer)
+{
+    if (!m_Visible) return;
+
+    GlobalDescriptor::Bind(m_pContext, commandBuffer, m_pDepthMaterial->GetPipelineLayout());
+    m_pDepthMaterial->Bind(commandBuffer, m_ModelMatrix);
+
+    const VkBuffer vertexBuffers[] = { m_VertexBuffer };
+    constexpr VkDeviceSize offsets[] = { 0 };
+
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+    vkCmdBindIndexBuffer(commandBuffer, m_IndexBuffer, 0, VK_INDEX_TYPE_UINT32);
+}
+
 
 void Mesh::OnImGui()
 {

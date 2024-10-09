@@ -19,7 +19,7 @@ public:
 	Scene(Scene&&) = delete;
 	Scene& operator=(Scene&&) = delete;
 
-
+    void RenderDepth(VkCommandBuffer commandBuffer) const;
 	void Render(VkCommandBuffer commandBuffer) const;
 
 

@@ -10,39 +10,6 @@
 void VulkanBase::drawFrame(uint32_t imageIndex) const
 {
     VkExtent2D& swapChainExtent = SwapChain::Extends();
-
-    VkRenderingAttachmentInfoKHR colorAttachmentInfo{};
-    colorAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
-    colorAttachmentInfo.pNext = VK_NULL_HANDLE;
-    colorAttachmentInfo.imageView = SwapChain::ImageViews()[imageIndex];
-    colorAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    colorAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    colorAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    colorAttachmentInfo.clearValue = {{0.83f, 0.75f, 0.83f, 1.0f}};
-
-
-    VkRenderingAttachmentInfoKHR depthAttachmentInfo{};
-    depthAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
-    depthAttachmentInfo.pNext = VK_NULL_HANDLE;
-    depthAttachmentInfo.imageView = DepthResource::GetImageView();
-    depthAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-    depthAttachmentInfo.resolveMode = VK_RESOLVE_MODE_NONE;
-    depthAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    depthAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    depthAttachmentInfo.clearValue = {{1.0f, 0.0f}};
-
-
-    VkRenderingAttachmentInfoKHR depthAttatchements[1] = { depthAttachmentInfo};
-    VkRenderingInfoKHR renderInfo{};
-    renderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
-    renderInfo.renderArea = { 0, 0, swapChainExtent };
-    renderInfo.layerCount = 1;
-    renderInfo.colorAttachmentCount = 1;
-    renderInfo.pColorAttachments = &colorAttachmentInfo;
-    renderInfo.pDepthAttachment = depthAttatchements;
-    renderInfo.pStencilAttachment = VK_NULL_HANDLE;
-
-
     //Set the viewport
     VkViewport viewport{};
     viewport.x = 0.0f;
@@ -61,10 +28,103 @@ void VulkanBase::drawFrame(uint32_t imageIndex) const
     vkCmdSetScissor(commandBuffer.Handle, 0, 1, &scissor);
 
 
+
+    // ======================= First Pass: Depth-Only ============================
+    tools::InsertImageMemoryBarrier(
+        commandBuffer.Handle,
+        DepthResource::GetImage(),
+        VK_IMAGE_LAYOUT_UNDEFINED,
+        VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+        VkImageSubresourceRange{ VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 1 });
+
+
+
+
+    VkRenderingAttachmentInfoKHR depthAttachmentInfo{};
+    depthAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
+    depthAttachmentInfo.pNext = VK_NULL_HANDLE;
+    depthAttachmentInfo.imageView = DepthResource::GetImageView();
+    depthAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    depthAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    depthAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    depthAttachmentInfo.clearValue = {{1.0f, 0.0f}};  // Clear depth to 1 (far)
+
+    // Create rendering info (no color attachment, only depth)
+    VkRenderingInfoKHR depthRenderInfo{};
+    depthRenderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
+    depthRenderInfo.renderArea = {0, 0, swapChainExtent};
+    depthRenderInfo.layerCount = 1;
+    depthRenderInfo.colorAttachmentCount = 0;  // No color attachment
+    depthRenderInfo.pDepthAttachment = &depthAttachmentInfo;
+
+    vkCmdBeginRenderingKHR(commandBuffer.Handle, &depthRenderInfo);
+    //SceneManager::RenderDepthOnly(commandBuffer.Handle);  // Render only depth
+    SceneManager::RenderDepth(commandBuffer.Handle);
+    vkCmdEndRenderingKHR(commandBuffer.Handle);
+
+
+    // Transition depth buffer to be used in the color pass
+    tools::InsertImageMemoryBarrier(
+        commandBuffer.Handle,
+        DepthResource::GetImage(),
+        VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+        VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,  // Make it readable for color pass
+        VkImageSubresourceRange{VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 1});
+
+
+
+
+
+
+    // ======================= Second Pass: Final Color Rendering ============================
+    VkRenderingAttachmentInfoKHR colorAttachmentInfo{};
+    colorAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
+    colorAttachmentInfo.pNext = VK_NULL_HANDLE;
+    colorAttachmentInfo.imageView = SwapChain::ImageViews()[imageIndex];
+    colorAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    colorAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    colorAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    colorAttachmentInfo.clearValue = {{0.83f, 0.75f, 0.83f, 1.0f}};
+
+
+    depthAttachmentInfo.imageView = DepthResource::GetImageView();
+    depthAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;  // Already filled
+
+
+    VkRenderingInfoKHR renderInfo{};
+    renderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
+    renderInfo.renderArea = { 0, 0, swapChainExtent };
+    renderInfo.layerCount = 1;
+    renderInfo.colorAttachmentCount = 1;
+    renderInfo.pColorAttachments = &colorAttachmentInfo;
+    renderInfo.pDepthAttachment = &depthAttachmentInfo;
+    renderInfo.pStencilAttachment = VK_NULL_HANDLE;
+
+
+
+
+
+    tools::InsertImageMemoryBarrier(
+            commandBuffer.Handle,
+            SwapChain::Image(static_cast<uint8_t>(imageIndex)),
+            VK_IMAGE_LAYOUT_UNDEFINED,
+            VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 });
+
+
+
     vkCmdBeginRenderingKHR(commandBuffer.Handle, &renderInfo);
     SceneManager::Render(commandBuffer.Handle);
     ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer.Handle);
     vkCmdEndRenderingKHR(commandBuffer.Handle);
+
+
+    tools::InsertImageMemoryBarrier(
+        commandBuffer.Handle,
+        SwapChain::Image(static_cast<uint8_t>(imageIndex)),
+        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+        VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 });
 }
 
 void VulkanBase::pickPhysicalDevice()

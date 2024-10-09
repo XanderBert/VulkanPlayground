@@ -157,7 +157,7 @@ namespace GLTFLoader {
             // Get the correct material
             size_t materialIndex = startMaterial + submeshMaterialIndex;
             // Create the Mesh
-            std::unique_ptr<Mesh> newmesh = std::make_unique<Mesh>(vertices, indices, MaterialManager::GetMaterials()[materialIndex], mesh.name.c_str(), 0, 0);
+            std::unique_ptr<Mesh> newmesh = std::make_unique<Mesh>(vertices, indices, MaterialManager::GetMaterials()[materialIndex], MaterialManager::GetMaterials()[0], mesh.name.c_str(), 0, 0);
             createdMeshes.push_back(newmesh.get());
             scene->AddMesh(std::move(newmesh));
         }

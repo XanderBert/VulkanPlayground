@@ -19,11 +19,11 @@ struct Vertex;
 class Mesh final
 {
 public:
-    Mesh(const std::vector<Vertex> &vertices, const std::vector<uint32_t> &indices, const std::shared_ptr<Material> &material, std::string meshName, uint32_t firstDrawIndex = 0, int32_t vertexOffset = 0);
+    Mesh(const std::vector<Vertex> &vertices, const std::vector<uint32_t> &indices, const std::shared_ptr<Material> &material, const std::shared_ptr<Material> &depthMaterial, std::string meshName, uint32_t firstDrawIndex = 0, int32_t vertexOffset = 0);
+    Mesh(const std::string& modelPath, const std::shared_ptr<Material> &material, const std::shared_ptr<Material> &depthMaterial, const std::string& meshName = "");
 
 
-    Mesh(const std::string& modelPath, const std::shared_ptr<Material> &material, const std::string& meshName = "");
-	~Mesh() = default;
+    ~Mesh() = default;
 
 	Mesh(const Mesh&) = delete;
 	explicit Mesh(Mesh&& other) noexcept = delete;
@@ -31,6 +31,8 @@ public:
 	Mesh& operator=(Mesh&&) = delete;
 
 	void Bind(VkCommandBuffer commandBuffer);
+	void BindDepth(VkCommandBuffer commandBuffer);
+
 	void OnImGui();
 	void Render(VkCommandBuffer commandBuffer);
 	void CleanUp();
@@ -67,6 +69,7 @@ private:
 	uint32_t m_IndexCount;
 
 	std::shared_ptr<Material> m_pMaterial;
+    std::shared_ptr<Material> m_pDepthMaterial;
 
 	std::vector<uint16_t> m_VariableHandles;
 

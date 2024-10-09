@@ -16,6 +16,7 @@ public:
     SceneManager& operator=(SceneManager&&) = delete;
 
     static void Render(VkCommandBuffer commandBuffer);
+    static void RenderDepth(VkCommandBuffer commandBuffer);
     static void AddScene(std::unique_ptr<Scene> scene);
     static Scene *GetActiveScene();
     static void CleanUp();
