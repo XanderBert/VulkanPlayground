@@ -29,7 +29,7 @@ void VulkanBase::drawFrame(uint32_t imageIndex) const
 
 
 
-    // ======================= First Pass: Depth-Only ============================
+    // ======================= Depth-Only Pass ============================
     tools::InsertImageMemoryBarrier(
         commandBuffer.Handle,
         DepthResource::GetImage(),
@@ -58,7 +58,6 @@ void VulkanBase::drawFrame(uint32_t imageIndex) const
     depthRenderInfo.pDepthAttachment = &depthAttachmentInfo;
 
     vkCmdBeginRenderingKHR(commandBuffer.Handle, &depthRenderInfo);
-    //SceneManager::RenderDepthOnly(commandBuffer.Handle);  // Render only depth
     SceneManager::RenderDepth(commandBuffer.Handle);
     vkCmdEndRenderingKHR(commandBuffer.Handle);
 
@@ -68,15 +67,17 @@ void VulkanBase::drawFrame(uint32_t imageIndex) const
         commandBuffer.Handle,
         DepthResource::GetImage(),
         VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-        VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,  // Make it readable for color pass
+        //VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,  // Make it readable for color pass
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,  // Make it readable for color pass
         VkImageSubresourceRange{VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 1});
 
 
+    // ======================= Compute SSAO Pass ============================
 
 
 
 
-    // ======================= Second Pass: Final Color Rendering ============================
+    // ======================= Final Color Rendering Pass ============================
     VkRenderingAttachmentInfoKHR colorAttachmentInfo{};
     colorAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
     colorAttachmentInfo.pNext = VK_NULL_HANDLE;
@@ -88,7 +89,8 @@ void VulkanBase::drawFrame(uint32_t imageIndex) const
 
 
     depthAttachmentInfo.imageView = DepthResource::GetImageView();
-    depthAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;  // Already filled
+    //depthAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    depthAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 
 
     VkRenderingInfoKHR renderInfo{};

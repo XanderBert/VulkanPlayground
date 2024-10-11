@@ -4,6 +4,8 @@
 #include "Core/VmaUsage.h"
 #include "vulkanbase/VulkanTypes.h"
 
+class ImGuiTexture;
+
 class DepthResource
 {
 public:
@@ -18,11 +20,17 @@ public:
 	static VkFormat GetFormat();
 	static VkImage GetImage();
 
+    static void DebugRenderDepthResource(const VulkanContext* vulkanContext);
+
 private:
 	inline static VkImage m_Image;
 	inline static VmaAllocation m_Memory;
 	inline static VkImageView m_ImageView;
 	inline static VkFormat m_Format;
+
+
+    inline static VkSampler m_Sampler{VK_NULL_HANDLE};
+    inline static std::unique_ptr<ImGuiTexture> m_ImGuiTexture{};
 };
 
 class DepthResourceBuilder

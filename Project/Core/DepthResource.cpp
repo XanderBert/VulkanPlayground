@@ -3,11 +3,13 @@
 #include "ImGuiWrapper.h"
 #include "Logger.h"
 #include "SwapChain.h"
+#include "Camera/Camera.h"
 
 void DepthResource::Recreate(const VulkanContext* vulkanContext)
 {
 	Cleanup(vulkanContext);
     DepthResourceBuilder::Build(vulkanContext, m_Image, m_ImageView, m_Memory, m_Format);
+    Image::CreateSampler(vulkanContext, m_Sampler, 1);
 }
 
 void DepthResource::Init(const VulkanContext* vulkanContext)
@@ -17,12 +19,17 @@ void DepthResource::Init(const VulkanContext* vulkanContext)
     {
         Recreate(vulkanContext);
     });
+
+    Image::CreateSampler(vulkanContext, m_Sampler, 1);
 }
 
 void DepthResource::Cleanup(const VulkanContext* vulkanContext)
 {
 	vkDestroyImageView(vulkanContext->device, m_ImageView, nullptr);
     vmaDestroyImage(Allocator::VmaAllocator, m_Image, m_Memory);
+
+    if(m_Sampler != VK_NULL_HANDLE)
+    vkDestroySampler(vulkanContext->device, m_Sampler, nullptr);
 }
 
 VkPipelineDepthStencilStateCreateInfo DepthResource::GetDepthPipelineInfo(VkBool32 depthTestEnable, VkBool32 depthWriteEnable)
@@ -50,6 +57,25 @@ VkFormat DepthResource::GetFormat()
 
 VkImage DepthResource::GetImage() { return m_Image; }
 
+void DepthResource::DebugRenderDepthResource(const VulkanContext *vulkanContext)
+{
+    //Remove the ImGuiTexture if it exists
+    if(m_ImGuiTexture.get())
+    {
+        m_ImGuiTexture->Cleanup();
+    }
+
+    //Create a new updated ImGuiTexture for the depthmap
+    const auto extends = SwapChain::Extends();
+    m_ImGuiTexture = std::make_unique<ImGuiTexture>(m_Sampler, m_ImageView, ImVec2(extends.width / 5.0f, extends.height / 5.0f));
+
+
+    //Render the DepthMap
+    ImGui::Begin("Depth Resource");
+    m_ImGuiTexture->OnImGui();
+    ImGui::End();
+}
+
 void DepthResourceBuilder::Build(const VulkanContext* vulkanContext, VkImage& image, VkImageView& imageView , VmaAllocation& memory, VkFormat& format)
 {
     format = FindDepthFormat(vulkanContext);
@@ -74,7 +100,7 @@ void DepthResourceBuilder::CreateDepthResources(const VulkanContext* vulkanConte
 
 	//Create Image
     //VK_IMAGE_USAGE_SAMPLED_BIT must be added to allow the depth image to be used as a texture (Shadow Mapping)
-	Image::CreateImage(SwapChain::Extends().width, SwapChain::Extends().height, 1, VK_SAMPLE_COUNT_1_BIT, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, image, memory, TextureType::TEXTURE_2D);
+	Image::CreateImage(SwapChain::Extends().width, SwapChain::Extends().height, 1, VK_SAMPLE_COUNT_1_BIT, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, image, memory, TextureType::TEXTURE_2D);
 
 
 	VkImageAspectFlags aspectMaskFlags = VK_IMAGE_ASPECT_DEPTH_BIT;

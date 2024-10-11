@@ -2,6 +2,7 @@
 
 #include <implot.h>
 
+#include "Core/DepthResource.h"
 #include "Mesh/Mesh.h"
 #include "Mesh/ModelLoader.h"
 #include "Mesh/Vertex.h"
@@ -99,8 +100,10 @@ void Scene::Render(VkCommandBuffer commandBuffer) const
 {
 	GameTimer::UpdateDelta();
 
+    VulkanContext* pContext = ServiceLocator::GetService<VulkanContext>();
+
     //TODO: This check should only happen on events / not in the hot code path
-    ShaderManager::ReloadNeededShaders(ServiceLocator::GetService<VulkanContext>());
+    ShaderManager::ReloadNeededShaders(pContext);
     ShaderEditor::Render();
 
 	const ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -112,7 +115,7 @@ void Scene::Render(VkCommandBuffer commandBuffer) const
     ImGui::SameLine();
     if(ImGui::Button("Generate Memory Layout"))
     {
-        Allocator::GenerateMemoryLayout(ServiceLocator::GetService<VulkanContext>());
+        Allocator::GenerateMemoryLayout(pContext);
     }
     // if(Allocator::MemoryLayoutTexture.has_value())
     // {
@@ -143,6 +146,8 @@ void Scene::Render(VkCommandBuffer commandBuffer) const
 
     Camera::Update();
 	Camera::OnImGui();
+
+    DepthResource::DebugRenderDepthResource(pContext);
 
 	for (const auto& mesh : m_Meshes)
 	{

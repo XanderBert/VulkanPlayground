@@ -19,6 +19,7 @@ public:
 	Scene(Scene&&) = delete;
 	Scene& operator=(Scene&&) = delete;
 
+    //TODO: A Scene Should store a list of passes
     void RenderDepth(VkCommandBuffer commandBuffer) const;
 	void Render(VkCommandBuffer commandBuffer) const;
 
