@@ -68,5 +68,6 @@ private:
     VkCullModeFlags m_CullMode = VK_CULL_MODE_BACK_BIT;
 
     bool m_IsDepthOnly = false;
-    bool m_IsCompute = false;
+
+    PipelineType m_PipelineType = PipelineType::Graphics;
 };

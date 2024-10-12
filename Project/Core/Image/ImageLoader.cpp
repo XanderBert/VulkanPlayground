@@ -166,6 +166,7 @@ ktxVulkanTexture ktx::CreateImage(const std::filesystem::path &path)
     LogAssert(errorCode == KTX_SUCCESS, "Failed to load texture image!", true)
     LogAssert(texture != nullptr, "The KTX Texture is not valid", true)
 
+    //TODO: Find a way how to control the VkFormat
     ktxVulkanTexture kTexture;
     errorCode = ktxTexture_VkUploadEx(texture, &vdi, &kTexture,
                                   VK_IMAGE_TILING_OPTIMAL,

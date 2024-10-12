@@ -41,9 +41,10 @@ void Material::Bind(const VkCommandBuffer commandBuffer, const glm::mat4x4 &push
     m_pGraphicsPipeline->BindPushConstant(commandBuffer, pushConstantMatrix);
 
     //TODO: maybe create a different "material" for depth and compute shaders
-    PipelineType pipelineType = m_IsCompute ? PipelineType::Compute : PipelineType::Graphics;
-    m_pGraphicsPipeline->BindPipeline(commandBuffer, pipelineType);
-    m_DescriptorSet.Bind(m_pContext, commandBuffer, m_pGraphicsPipeline->GetPipelineLayout(), 1);
+
+
+    m_pGraphicsPipeline->BindPipeline(commandBuffer, m_PipelineType);
+    m_DescriptorSet.Bind(m_pContext, commandBuffer, m_pGraphicsPipeline->GetPipelineLayout(), 1, m_PipelineType);
 
     // TODO: This would be a better solution:
     //  for each material
@@ -77,7 +78,7 @@ Shader * Material::AddShader(const std::string& shaderPath, const ShaderType sha
 {
     if(shaderType == ShaderType::ComputeShader)
     {
-        m_IsCompute = true;
+        m_PipelineType = PipelineType::Compute;
     }
 
 	m_Shaders.push_back(ShaderManager::CreateShader(m_pContext, shaderPath, shaderType, this));
@@ -132,7 +133,7 @@ bool Material::GetDepthOnly() const
 
 bool Material::IsCompute() const
 {
-    return m_IsCompute;
+    return m_PipelineType == PipelineType::Compute;
 }
 
 void Material::SetDepthOnly(bool depthOnly)

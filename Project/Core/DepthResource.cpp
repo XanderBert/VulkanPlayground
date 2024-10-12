@@ -57,6 +57,8 @@ VkFormat DepthResource::GetFormat()
 
 VkImage DepthResource::GetImage() { return m_Image; }
 
+VkSampler DepthResource::GetSampler() { return m_Sampler; }
+
 void DepthResource::DebugRenderDepthResource(const VulkanContext *vulkanContext)
 {
     //TODO: I think syncing is not done correctly here
@@ -81,7 +83,7 @@ void DepthResource::DebugRenderDepthResource(const VulkanContext *vulkanContext)
 void DepthResourceBuilder::Build(const VulkanContext* vulkanContext, VkImage& image, VkImageView& imageView , VmaAllocation& memory, VkFormat& format)
 {
     format = FindDepthFormat(vulkanContext);
-    CreateDepthResources(vulkanContext, image, imageView, memory);
+    CreateDepthResources(vulkanContext, image, imageView, memory, format);
 }
 
 VkFormat DepthResourceBuilder::FindDepthFormat(const VulkanContext* vulkanContext)
@@ -96,24 +98,22 @@ VkFormat DepthResourceBuilder::FindDepthFormat(const VulkanContext* vulkanContex
 	return FindSupportedFormat(vulkanContext, depthFormatPriorityList, true);
 }
 
-void DepthResourceBuilder::CreateDepthResources(const VulkanContext* vulkanContext, VkImage& image, VkImageView& imageView , VmaAllocation& memory)
+void DepthResourceBuilder::CreateDepthResources(const VulkanContext* vulkanContext, VkImage& image, VkImageView& imageView , VmaAllocation& memory, const VkFormat& format)
 {
-	const VkFormat depthFormat = FindDepthFormat(vulkanContext);
-
 	//Create Image
     //VK_IMAGE_USAGE_SAMPLED_BIT must be added to allow the depth image to be used as a texture (Shadow Mapping)
-	Image::CreateImage(SwapChain::Extends().width, SwapChain::Extends().height, 1, VK_SAMPLE_COUNT_1_BIT, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, image, memory, TextureType::TEXTURE_2D);
+	Image::CreateImage(SwapChain::Extends().width, SwapChain::Extends().height, 1, VK_SAMPLE_COUNT_1_BIT, format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, image, memory, TextureType::TEXTURE_2D);
 
 
 	VkImageAspectFlags aspectMaskFlags = VK_IMAGE_ASPECT_DEPTH_BIT;
 
 	// Stencil aspect should only be set on depth + stencil formats (VK_FORMAT_D16_UNORM_S8_UINT..VK_FORMAT_D32_SFLOAT_S8_UINT
-	if (depthFormat >= VK_FORMAT_D16_UNORM_S8_UINT)
+	if (format >= VK_FORMAT_D16_UNORM_S8_UINT)
 	{
 		aspectMaskFlags |= VK_IMAGE_ASPECT_STENCIL_BIT;
 	}
 
-	Image::CreateImageView(vulkanContext->device, image, depthFormat, aspectMaskFlags, imageView, TextureType::TEXTURE_2D);
+	Image::CreateImageView(vulkanContext->device, image, format, aspectMaskFlags, imageView, TextureType::TEXTURE_2D);
 }
 
 VkFormat DepthResourceBuilder::FindSupportedFormat(const VulkanContext* vulkanContext, const std::vector<VkFormat>& candidates, bool isDepthOnly)

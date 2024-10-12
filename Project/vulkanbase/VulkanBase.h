@@ -47,7 +47,7 @@ private:
 
 
     void pickPhysicalDevice();
-    int rateDeviceSuitability(VkPhysicalDevice device);
+    static int rateDeviceSuitability(VkPhysicalDevice device);
     static bool isDeviceSuitable(VkPhysicalDevice device);
 	void createLogicalDevice();
 	void setupDebugMessenger();

@@ -11,19 +11,22 @@ layout(set = 0, binding = 0) uniform UniformBufferObject
     vec4 viewPos;
 } ubo;
 
-layout(set = 1, binding = 0) buffer uniformMaterial
-{
-    mat4 identity[]; // Change to an array to allow indexing
-} comp;
+layout(set = 1, binding = 1) uniform sampler2D depthResource;
+layout(set = 1, binding = 2, rgba8) uniform image2D ssaoOutput;
 
-// Each compute shader workgroup processes a certain number of elements
-layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+layout (local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+// SSAO Parameters
+const int KERNEL_SIZE = 64;
+const float RADIUS = 0.5;
+const float BIAS = 0.025;
 
 void main()
 {
-    // Get the index of the current invocation
-    uint idx = gl_GlobalInvocationID.x;
+    ivec2 texCoord = ivec2(gl_GlobalInvocationID.xy);
+    //vec2 texSize = vec2(imageSize(ssaoOutput));
+    vec2 texSize = vec2(1920, 1080);
 
-    // Store the push constant value (model matrix) in the output buffer
-    comp.identity[idx] = push.model;
+    //write something to the image
+    imageStore(ssaoOutput, texCoord, vec4(1.0, 0.0, 0.0, 1.0));
 }

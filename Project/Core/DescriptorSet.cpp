@@ -3,15 +3,15 @@
 #include <algorithm>
 #include <ranges>
 
+#include "DepthResource.h"
 #include "DynamicUniformBuffer.h"
 #include "Image/ImageLoader.h"
 
 DynamicBuffer *DescriptorSet::AddBuffer(int binding, DescriptorType type)
 {
-    // check if the binding already exists in the texture map
-    if (const auto it = m_Textures.find(binding); it != m_Textures.end())
+    if (IsBindingUsedForTextures(binding) || IsBindingUsedForDepthTexture(binding))
     {
-        LogError("Texture already exists at binding " + std::to_string(binding));
+        LogError("(Depth)Texture already exists at binding " + std::to_string(binding));
         return nullptr;
     }
 
@@ -46,12 +46,11 @@ DynamicBuffer *DescriptorSet::GetBuffer(int binding)
     return &it->second;
 }
 
-void DescriptorSet::AddTexture(int binding, const std::variant<std::filesystem::path, ImageInMemory> &pathOrImage,
-        VulkanContext *pContext, ColorType colorType, TextureType textureType) {
-    // Check if the binding already exists in the uniform buffer map
-    if (const auto it = m_Buffers.find(binding); it != m_Buffers.end())
+void DescriptorSet::AddTexture(int binding, const std::variant<std::filesystem::path, ImageInMemory> &pathOrImage, VulkanContext *pContext, ColorType colorType, TextureType textureType) {
+
+    if(IsBindingUsedForBuffers(binding) || IsBindingUsedForDepthTexture(binding))
     {
-        LogError("Binding at: " + std::to_string(binding) + " is already used for a UniformBuffer");
+        LogError("Binding at:" + std::to_string(binding) + " is already used for a Buffer or DepthTexture");
         return;
     }
 
@@ -62,12 +61,53 @@ void DescriptorSet::AddTexture(int binding, const std::variant<std::filesystem::
     const auto [iterator, isEmplaced] = m_Textures.try_emplace(binding, std::move(texture));
     if (!isEmplaced)
     {
-        LogError("Binding at:" + std::to_string(binding) + " is allready used for a Texture");
+        LogError("Binding at:" + std::to_string(binding) + " is already used for a Texture");
         return;
     }
 
     m_DescriptorBuilder.AddBinding(binding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 }
+
+void DescriptorSet::AddDepthTexture(int binding)
+{
+    if(IsBindingUsedForBuffers(binding) || IsBindingUsedForTextures(binding))
+    {
+        LogError("Binding at:" + std::to_string(binding) + " is already used for a Buffer or Texture");
+        return;
+    }
+
+    //Add a new depth texture at binding x
+    m_DepthTextureBinding = binding;
+
+    m_DescriptorBuilder.AddBinding(binding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+}
+
+Texture* DescriptorSet::CreateOutputTexture(int binding, VulkanContext *pContext, const glm::ivec2 &extent,
+        ColorType colorType, TextureType textureType)
+{
+    if(IsBindingUsedForBuffers(binding) || IsBindingUsedForDepthTexture(binding))
+    {
+        LogError("Binding at:" + std::to_string(binding) + " is already used for a Buffer, Texture or DepthTexture");
+        return nullptr;
+    }
+
+    //Create a new texture
+    std::unique_ptr<Texture> texture = std::make_unique<Texture>(pContext, extent, colorType, textureType);
+    texture->SetDescriptorImageType(DescriptorImageType::STORAGE_IMAGE);
+
+    //Add a new texture at binding x
+    const auto [iterator, isEmplaced] = m_Textures.try_emplace(binding, std::move(texture));
+    if (!isEmplaced)
+    {
+        LogError("Binding at:" + std::to_string(binding) + " is already used for a Texture");
+        return nullptr;
+    }
+
+    m_DescriptorBuilder.AddBinding(binding, static_cast<VkDescriptorType>(DescriptorImageType::STORAGE_IMAGE));
+
+    return m_Textures[binding].get();
+}
+
 
 
 void DescriptorSet::Initialize(const VulkanContext *pContext)
@@ -80,13 +120,14 @@ void DescriptorSet::Initialize(const VulkanContext *pContext)
     m_DescriptorSetLayout = m_DescriptorBuilder.Build(pContext->device, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_COMPUTE_BIT);
 }
 
-void DescriptorSet::Bind(VulkanContext *pContext, const VkCommandBuffer &commandBuffer, const VkPipelineLayout &pipelineLayout, int descriptorSetIndex, bool fullRebind )
+void DescriptorSet::Bind(VulkanContext *pContext, const VkCommandBuffer& commandBuffer, const VkPipelineLayout & pipelineLayout, int descriptorSetIndex, PipelineType pipelineType, bool fullRebind)
 {
 
     m_DescriptorSet = Descriptor::DescriptorManager::Allocate(pContext->device, m_DescriptorSetLayout, 0);
     m_DescriptorWriter.Cleanup();
 
     // Update the data of all the ubo's
+    //Then bind them
     for (auto &[binding, ubo]: m_Buffers)
     {
         if(fullRebind)
@@ -99,13 +140,20 @@ void DescriptorSet::Bind(VulkanContext *pContext, const VkCommandBuffer &command
         }
     }
 
+    //Bind all textures
     for (auto &[binding, texture]: m_Textures) {
         texture->ProperBind(binding, m_DescriptorWriter);
     }
 
+    //Bind DepthResource if needed
+    if(m_DepthTextureBinding != -1)
+    {
+        m_DescriptorWriter.WriteImage(m_DepthTextureBinding, DepthResource::GetImageView(), DepthResource::GetSampler(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    }
+
     m_DescriptorWriter.UpdateSet(pContext->device, m_DescriptorSet);
 
-    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, descriptorSetIndex, 1,
+    vkCmdBindDescriptorSets(commandBuffer, static_cast<VkPipelineBindPoint>(pipelineType), pipelineLayout, descriptorSetIndex, 1,
                             &m_DescriptorSet, 0, nullptr);
 }
 
@@ -159,4 +207,21 @@ void DescriptorSet::OnImGui()
             ubo.OnImGui();
         }
     }
+}
+
+bool DescriptorSet::IsBindingUsedForBuffers(int binding) const
+{
+    const auto it = m_Buffers.find(binding);
+    return it != m_Buffers.end();
+}
+
+bool DescriptorSet::IsBindingUsedForTextures(int binding) const
+{
+    const auto it = m_Textures.find(binding);
+    return it != m_Textures.end();
+}
+
+bool DescriptorSet::IsBindingUsedForDepthTexture(int binding) const
+{
+    return m_DepthTextureBinding == binding;
 }

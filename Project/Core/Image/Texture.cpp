@@ -18,6 +18,20 @@ Texture::Texture(const std::variant<std::filesystem::path,ImageInMemory>& pathOr
     std::visit([this](auto&& arg){ this->InitTexture(arg);}, pathOrImage);
 }
 
+Texture::Texture(VulkanContext *vulkanContext,const glm::ivec2& extent, ColorType colorType, TextureType textureType)
+: m_pContext(vulkanContext)
+, m_ImageSize(extent)
+, m_TextureType(textureType)
+, m_ColorType(colorType)
+{
+    InitEmptyTexture();
+}
+
+
+void Texture::SetDescriptorImageType(DescriptorImageType descriptorImageType)
+{
+    m_DescriptorImageType = descriptorImageType;
+}
 
 void Texture::OnImGui()
 {
@@ -56,12 +70,15 @@ void Texture::OnImGui()
 
 
     ImGui::SameLine();
+
+
     m_ImGuiTexture->OnImGui();
 }
 
 void Texture::ProperBind(int bindingNumber, Descriptor::DescriptorWriter &descriptorWriter) const
 {
-    descriptorWriter.WriteImage(bindingNumber, m_ImageView, m_Sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    //TODO: check if texture is writeable
+    descriptorWriter.WriteImage(bindingNumber, m_ImageView, m_Sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, static_cast<VkDescriptorType>(m_DescriptorImageType));
 }
 
 
@@ -142,6 +159,37 @@ void Texture::InitTexture(const std::filesystem::path &path)
     InitTexture(textureData);
 }
 
+void Texture::InitEmptyTexture()
+{
+    m_MipLevels = 1;
+    VmaAllocation allocation{};
+
+    // Create an image that is writable by compute shaders
+    Image::CreateImage(m_ImageSize.x, m_ImageSize.y, m_MipLevels,
+                       VK_SAMPLE_COUNT_1_BIT,
+                       static_cast<VkFormat>(m_ColorType),
+                       VK_IMAGE_TILING_OPTIMAL,
+                       VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,  // Allow both storage and sampling
+                       m_Image, allocation, m_TextureType);
+
+    m_ImageMemory = allocation;
+
+    // Create an image view for the image
+    Image::CreateImageView(m_pContext->device, m_Image, static_cast<VkFormat>(m_ColorType), VK_IMAGE_ASPECT_COLOR_BIT, m_ImageView, m_TextureType);
+
+    // Create a sampler for the image if needed
+    Image::CreateSampler(m_pContext, m_Sampler, m_MipLevels);
+
+    // Transition the image to VK_IMAGE_LAYOUT_GENERAL for compute shaders to write
+    TransitionToWritableImageLayout();
+
+    // Setup the ImGui texture if not a cubemap
+    if (m_TextureType != TextureType::TEXTURE_CUBE)
+    {
+        m_ImGuiTexture = std::make_unique<ImGuiTexture>(m_Sampler, m_ImageView, ImVec2(250, 250));
+    }
+}
+
 void Texture::TransitionAndCopyImageBuffer(VkBuffer srcBuffer) const
 {
     // Create Command Buffer
@@ -186,6 +234,26 @@ void Texture::TransitionAndCopyImageBuffer(VkBuffer srcBuffer) const
     // Transition the image to shader read
     tools::InsertImageMemoryBarrier(commandBuffer.Handle, m_Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresourceRange);
 
+
+    CommandBufferManager::EndCommandBufferSingleUse(m_pContext, commandBuffer);
+}
+
+void Texture::TransitionToWritableImageLayout() const
+{
+    CommandBuffer commandBuffer{};
+    CommandBufferManager::CreateCommandBufferSingleUse(m_pContext, commandBuffer);
+
+    VkImageSubresourceRange subresourceRange = {};
+    subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    subresourceRange.baseMipLevel = 0;
+    subresourceRange.levelCount = m_MipLevels;
+    subresourceRange.layerCount = 1;
+
+    // Transition the image to VK_IMAGE_LAYOUT_GENERAL, which is suitable for compute shader writes
+    tools::InsertImageMemoryBarrier(commandBuffer.Handle, m_Image,
+                                    VK_IMAGE_LAYOUT_UNDEFINED,
+                                    VK_IMAGE_LAYOUT_GENERAL,
+                                    subresourceRange);
 
     CommandBufferManager::EndCommandBufferSingleUse(m_pContext, commandBuffer);
 }

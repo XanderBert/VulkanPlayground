@@ -19,6 +19,7 @@ public:
 	static VkImageView GetImageView();
 	static VkFormat GetFormat();
 	static VkImage GetImage();
+    static VkSampler GetSampler();
 
     static void DebugRenderDepthResource(const VulkanContext* vulkanContext);
 
@@ -27,9 +28,8 @@ private:
 	inline static VmaAllocation m_Memory;
 	inline static VkImageView m_ImageView;
 	inline static VkFormat m_Format;
-
-
     inline static VkSampler m_Sampler{VK_NULL_HANDLE};
+
     inline static std::unique_ptr<ImGuiTexture> m_ImGuiTexture{};
 };
 
@@ -39,6 +39,6 @@ public:
     static void Build(const VulkanContext* vulkanContext, VkImage& image, VkImageView& imageView , VmaAllocation& memory, VkFormat& format);
 private:
     static VkFormat FindDepthFormat(const VulkanContext* vulkanContext);
-    static  void CreateDepthResources(const VulkanContext* vulkanContext, VkImage& image, VkImageView& imageView , VmaAllocation& memory);
+    static  void CreateDepthResources(const VulkanContext* vulkanContext, VkImage& image, VkImageView& imageView , VmaAllocation& memory, const VkFormat& format);
     static VkFormat FindSupportedFormat(const VulkanContext* vulkanContext, const std::vector<VkFormat>& candidates, bool isDepthOnly);
 };

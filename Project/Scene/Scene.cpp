@@ -41,13 +41,15 @@ Scene::Scene(VulkanContext* vulkanContext)
     skyboxMaterial->GetDescriptorSet()->AddTexture(1, "cubemap_vulkan.ktx", vulkanContext, ColorType::SRGB, TextureType::TEXTURE_CUBE);
     skyboxMaterial->SetCullMode(VK_CULL_MODE_FRONT_BIT);
 
-
-
-    auto identity = glm::identity<glm::mat4>();
+    //auto identity = glm::identity<glm::mat4>();
     std::shared_ptr<Material> computeMaterial = MaterialManager::CreateMaterial(vulkanContext, "ComputeMaterial");
     computeMaterial->AddShader("test.comp", ShaderType::ComputeShader);
-    auto computeUbo = computeMaterial->GetDescriptorSet()->AddBuffer(0, DescriptorType::StorageBuffer);
-    computeUbo->AddVariable(identity);
+    computeMaterial->GetDescriptorSet()->AddDepthTexture(1);
+    Texture* outputTexture = computeMaterial->GetDescriptorSet()->CreateOutputTexture(2, vulkanContext, glm::ivec2{512,512}, ColorType::LINEAR, TextureType::TEXTURE_2D);
+
+
+    //auto computeUbo = computeMaterial->GetDescriptorSet()->AddBuffer(0, DescriptorType::StorageBuffer);
+    //computeUbo->AddVariable(identity);
 
 
 
