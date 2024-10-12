@@ -75,7 +75,7 @@ void VulkanBase::drawFrame(uint32_t imageIndex) const
     // ======================= Compute SSAO Pass ============================
 
 
-
+    SceneManager::ExecuteComputePass(commandBuffer.Handle);
 
     // ======================= Final Color Rendering Pass ============================
     VkRenderingAttachmentInfoKHR colorAttachmentInfo{};
@@ -131,29 +131,53 @@ void VulkanBase::drawFrame(uint32_t imageIndex) const
 
 void VulkanBase::pickPhysicalDevice()
 {
-	uint32_t deviceCount = 0;
+    uint32_t deviceCount = 0;
+    vkEnumeratePhysicalDevices(m_pContext->instance, &deviceCount, nullptr);
+    LogAssert(deviceCount > 0, "failed to find GPUs with Vulkan support!", true);
 
-	vkEnumeratePhysicalDevices(m_pContext->instance, &deviceCount, nullptr);
-	LogAssert(deviceCount > 0, "failed to find GPUs with Vulkan support!", true);
+    std::vector<VkPhysicalDevice> devices{ deviceCount };
+    vkEnumeratePhysicalDevices(m_pContext->instance, &deviceCount, devices.data());
+    LogAssert(deviceCount > 0, "failed to find GPUs with Vulkan support!", true);
 
+    VkPhysicalDevice bestDevice = VK_NULL_HANDLE;
+    int bestScore = -1;
 
-	std::vector<VkPhysicalDevice> devices{ deviceCount };
-	vkEnumeratePhysicalDevices(m_pContext->instance, &deviceCount, devices.data());
+    for (const auto& device : devices)
+    {
+        int score = rateDeviceSuitability(device);
+        if (score > bestScore && isDeviceSuitable(device))
+        {
+            bestDevice = device;
+            bestScore = score;
+        }
+    }
 
-	LogAssert(deviceCount > 0, "failed to find GPUs with Vulkan support!", true);
-
-
-	for (const auto& device : devices) 
-	{
-		if (isDeviceSuitable(device)) 
-		{ 
-			m_pContext->physicalDevice = device;
-			break;
-		}
-	}
-
-	LogAssert(m_pContext->physicalDevice != VK_NULL_HANDLE, "failed to find a suitable GPU!", true);
+    m_pContext->physicalDevice = bestDevice;
+    LogAssert(m_pContext->physicalDevice != VK_NULL_HANDLE, "failed to find a suitable GPU!", true);
 }
+
+int VulkanBase::rateDeviceSuitability(VkPhysicalDevice device)
+{
+    VkPhysicalDeviceProperties deviceProperties;
+    VkPhysicalDeviceFeatures deviceFeatures;
+    vkGetPhysicalDeviceProperties(device, &deviceProperties);
+    vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+
+    int score{};
+
+
+    if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)  score += 1000;
+
+    // Maximum possible texture dimensions affect overall graphics quality
+    score += deviceProperties.limits.maxImageDimension2D;
+
+    if (!deviceFeatures.samplerAnisotropy)  return 0;
+
+
+    //TODO: add other criteria, like memory, queues, etc.
+    return score;
+}
+
 
 bool VulkanBase::isDeviceSuitable(VkPhysicalDevice device)
 {
@@ -190,12 +214,24 @@ void VulkanBase::createLogicalDevice()
 	//Set the device features
 	VkPhysicalDeviceFeatures deviceFeatures{};
 	deviceFeatures.samplerAnisotropy = VK_TRUE;
+    deviceFeatures.fragmentStoresAndAtomics = VK_TRUE;
+    deviceFeatures.vertexPipelineStoresAndAtomics = VK_TRUE;
+
 
 	//Set the Dynamic Rendering Extension
 	VkPhysicalDeviceDynamicRenderingFeaturesKHR dynamicRenderingFeature{};
 	dynamicRenderingFeature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR;
 	dynamicRenderingFeature.dynamicRendering = VK_TRUE;
 
+    //VkPhysicalDeviceTimelineSemaphoreFeaturesKHR timelineSemaphoreFeatures{};
+    //timelineSemaphoreFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES_KHR;
+    //timelineSemaphoreFeatures.timelineSemaphore = VK_TRUE;
+    //timelineSemaphoreFeatures.pNext = &dynamicRenderingFeature;
+
+    //VkPhysicalDeviceBufferDeviceAddressFeatures bufferDeviceAddressFeatures{};
+    //bufferDeviceAddressFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
+    //bufferDeviceAddressFeatures.bufferDeviceAddress = VK_TRUE;
+    //bufferDeviceAddressFeatures.pNext = &timelineSemaphoreFeatures;
 
 	VkDeviceCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;

@@ -47,7 +47,8 @@ private:
 
 
     void pickPhysicalDevice();
-	bool isDeviceSuitable(VkPhysicalDevice device);
+    int rateDeviceSuitability(VkPhysicalDevice device);
+    static bool isDeviceSuitable(VkPhysicalDevice device);
 	void createLogicalDevice();
 	void setupDebugMessenger();
     static bool checkDeviceExtensionSupport(VkPhysicalDevice device);

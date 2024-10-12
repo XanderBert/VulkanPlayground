@@ -16,13 +16,15 @@ set(BASE_SHADER_BIN_DIR ${CMAKE_CURRENT_BINARY_DIR}/shaders)
 file(GLOB BASE_SHADERS
 "${BASE_SHADERS_DIR}/*frag"
 "${BASE_SHADERS_DIR}/*vert"
-"${SHADER_SOURCE_DIR}/*.glsl")
+"${SHADER_SOURCE_DIR}/*.glsl"
+"${SHADER_SOURCE_DIR}/*.comp")
 
 file(COPY ${BASE_SHADERS} DESTINATION ${BASE_SHADER_BIN_DIR})
 
 file(GLOB_RECURSE GLSL_SOURCE_FILES
     "${SHADER_SOURCE_DIR}/*.frag"
     "${SHADER_SOURCE_DIR}/*.vert"
+    "${SHADER_SOURCE_DIR}/*.comp"
 )
 
 
@@ -54,7 +56,7 @@ set(SOURCES
     "shaders/Logic/Shader.h"
     "shaders/Logic/Shader.cpp" 
     "Patterns/Singleton.h"
-        "shaders/Logic/ShaderFactory.h"
+    "shaders/Logic/ShaderFactory.h"
     "shaders/Logic/SpirvHelper.h"
     "shaders/Logic/ShaderFileWatcher.h" 
     "Mesh/Vertex.h" 

@@ -59,10 +59,12 @@ VkImage DepthResource::GetImage() { return m_Image; }
 
 void DepthResource::DebugRenderDepthResource(const VulkanContext *vulkanContext)
 {
+    //TODO: I think syncing is not done correctly here
+    // sometimes i feel like writing the depthmap is not yet done at this point
     //Remove the ImGuiTexture if it exists
     if(m_ImGuiTexture.get())
     {
-        m_ImGuiTexture->Cleanup();
+       m_ImGuiTexture->Cleanup();
     }
 
     //Create a new updated ImGuiTexture for the depthmap

@@ -11,6 +11,10 @@ void SceneManager::RenderDepth(VkCommandBuffer commandBuffer) {
     m_ActiveScene->RenderDepth(commandBuffer);
 }
 
+void SceneManager::ExecuteComputePass(VkCommandBuffer commandBuffer){
+    m_ActiveScene->ExecuteComputePass(commandBuffer);
+}
+
 void SceneManager::AddScene(std::unique_ptr<Scene> scene) {
     m_Scenes.push_back(std::move(scene));
     if (m_ActiveScene == nullptr)

@@ -92,16 +92,6 @@ public:
 		}
 	}
 
-	static void SetCurrentBoundPipeline(GraphicsPipeline* pipeline)
-	{
-		m_CurrentBoundPipeline = pipeline;
-	}
-
-	static GraphicsPipeline* GetCurrentBoundPipeline()
-	{
-		return m_CurrentBoundPipeline;
-	}
-
     static std::vector<std::string> GetMaterialNames()
     {
 	    return m_MaterialNames;
@@ -122,5 +112,4 @@ public:
 private:
     inline static std::vector<std::string> m_MaterialNames;
 	inline static std::vector<std::shared_ptr<Material>> m_ActiveMaterials;
-	inline static GraphicsPipeline* m_CurrentBoundPipeline = nullptr;
 };

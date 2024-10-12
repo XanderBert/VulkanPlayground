@@ -308,7 +308,7 @@ namespace GLTFLoader {
         for (const fastgltf::Material &mat: gltf.materials)
         {
             auto newMaterial = MaterialManager::CreateMaterial(vulkanContext, "shader.vert", "PBR_Graypacked.frag", mat.name.c_str());
-            auto *ubo = newMaterial->GetDescriptorSet()->AddUniformBuffer(0);
+            auto *ubo = newMaterial->GetDescriptorSet()->AddBuffer(0, DescriptorType::UniformBuffer);
             ubo->AddVariable(glm::vec4{1});
             ubo->AddVariable(glm::vec4{1});
 

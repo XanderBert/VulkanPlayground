@@ -6,12 +6,19 @@
 #include "vulkanbase/VulkanTypes.h"
 #include "Core/VmaUsage.h"
 
+enum class DescriptorType;
+
 namespace Descriptor
 {
 	class DescriptorWriter;
 	class DescriptorBuilder;
 }
 
+enum class BufferType
+{
+    UniformBuffer = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+    StorageBuffer = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+};
 
 //TODO: pad the dynamic buffer to 256 bytes
 //TODO: return actual pointers to the data instead of the handle, Or make a handle struct
@@ -23,24 +30,10 @@ public:
 
 	DynamicBuffer& operator=(const DynamicBuffer&) = delete;
 	DynamicBuffer(const DynamicBuffer&) = delete;
+    DynamicBuffer(DynamicBuffer&& other) noexcept;
+    DynamicBuffer& operator=(DynamicBuffer&& other) noexcept = delete;
 
-    DynamicBuffer(DynamicBuffer&& other) noexcept
-    {
-	    if(this != &other)
-        {
-            m_Data = std::move(other.m_Data);
-            m_UniformBuffer = other.m_UniformBuffer;
-            m_UniformBuffersMemory = other.m_UniformBuffersMemory;
-            m_UniformBuffersMapped = other.m_UniformBuffersMapped;
-
-            other.m_UniformBuffer = nullptr;
-            other.m_UniformBuffersMemory = nullptr;
-            other.m_UniformBuffersMapped = nullptr;
-        }
-	}
-	DynamicBuffer& operator=(DynamicBuffer&& other) noexcept = delete;
-
-	void Init(VulkanContext* vulkanContext);
+	void Init();
 	void ProperBind(int bindingNumber, Descriptor::DescriptorWriter& descriptorWriter) const;
     void FullRebind(int bindingNumber, const VkDescriptorSet& descriptorSet, Descriptor::DescriptorWriter& descriptorWriter, VulkanContext* vulkanContext) const;
     void Cleanup(VkDevice device) const;
@@ -51,16 +44,22 @@ public:
 	void UpdateVariable(uint16_t handle, const glm::vec4& value);
 
     void OnImGui();
+
+    void SetDescriptorType(DescriptorType descriptorType);
+
 private:
-	const float* GetData() const;
-	size_t GetSize() const;
+	[[nodiscard]] const float* GetData() const;
+	[[nodiscard]] size_t GetSize() const;
 
 	uint16_t Insert(const float* dataPtr, uint8_t size);
 	void Update(uint16_t handle, const float* dataPtr, uint8_t size);
 	std::vector<float> m_Data;
 
 
-	VkBuffer m_UniformBuffer;
-	VmaAllocation m_UniformBuffersMemory;
-	void* m_UniformBuffersMapped;
+	VkBuffer m_UniformBuffer{};
+	VmaAllocation m_UniformBuffersMemory{};
+	void* m_UniformBuffersMapped{};
+
+    BufferType m_BufferType{};
+    DescriptorType m_DescriptorType{};
 };

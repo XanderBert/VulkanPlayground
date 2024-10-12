@@ -6,52 +6,78 @@
 #include "DynamicUniformBuffer.h"
 #include "Image/ImageLoader.h"
 
-DynamicBuffer *DescriptorSet::AddUniformBuffer(int binding) {
+DynamicBuffer *DescriptorSet::AddBuffer(int binding, DescriptorType type)
+{
     // check if the binding already exists in the texture map
-    if (const auto it = m_Textures.find(binding); it != m_Textures.end()) {
+    if (const auto it = m_Textures.find(binding); it != m_Textures.end())
+    {
         LogError("Texture already exists at binding " + std::to_string(binding));
         return nullptr;
     }
 
-    // Add a new uniform buffer at binding x
-    const auto [iterator, isEmplaced] = m_UniformBuffers.try_emplace(binding, std::move(DynamicBuffer()));
+
+    // Add a new Buffer at binding x
+    const auto [iterator, isEmplaced] = m_Buffers.try_emplace(binding, std::move(DynamicBuffer()));
 
     if (!isEmplaced)
     {
-        LogError("Uniform buffer already exists at binding " + std::to_string(binding));
+        LogError("Buffer already exists at binding " + std::to_string(binding));
         return nullptr;
     }
 
-    m_DescriptorBuilder.AddBinding(binding, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+    m_DescriptorBuilder.AddBinding(binding, static_cast<VkDescriptorType>(type));
 
+    iterator->second.SetDescriptorType(type);
 
     return &iterator->second;
 }
-DynamicBuffer *DescriptorSet::GetUniformBuffer(int binding)
+DynamicBuffer *DescriptorSet::GetBuffer(int binding)
 {
     //find the uniform buffer at binding x
     //  return nullptr if it does not exist
-    const auto it = m_UniformBuffers.find(binding);
+    const auto it = m_Buffers.find(binding);
 
-    if(it == m_UniformBuffers.end())
+    if(it == m_Buffers.end())
     {
-        LogWarning("Tried To Acces Uniform buffer at binding: " + std::to_string(binding) + " but it does not exist");
+        LogWarning("Tried To Access Uniform buffer at binding: " + std::to_string(binding) + " but it does not exist");
         return nullptr;
     }
 
     return &it->second;
 }
 
-
-
-void DescriptorSet::Initialize(VulkanContext *pContext)
-{
-    for (auto &[binding, ubo]: m_UniformBuffers)
+void DescriptorSet::AddTexture(int binding, const std::variant<std::filesystem::path, ImageInMemory> &pathOrImage,
+        VulkanContext *pContext, ColorType colorType, TextureType textureType) {
+    // Check if the binding already exists in the uniform buffer map
+    if (const auto it = m_Buffers.find(binding); it != m_Buffers.end())
     {
-        ubo.Init(pContext);
+        LogError("Binding at: " + std::to_string(binding) + " is already used for a UniformBuffer");
+        return;
     }
 
-    m_DescriptorSetLayout = m_DescriptorBuilder.Build(pContext->device, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+    //Create a new texture
+    std::unique_ptr<Texture> texture = std::make_unique<Texture>(pathOrImage, pContext, colorType, textureType);
+
+    //Add a new texture at binding x
+    const auto [iterator, isEmplaced] = m_Textures.try_emplace(binding, std::move(texture));
+    if (!isEmplaced)
+    {
+        LogError("Binding at:" + std::to_string(binding) + " is allready used for a Texture");
+        return;
+    }
+
+    m_DescriptorBuilder.AddBinding(binding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+}
+
+
+void DescriptorSet::Initialize(const VulkanContext *pContext)
+{
+    for (auto &[binding, ubo]: m_Buffers)
+    {
+        ubo.Init();
+    }
+
+    m_DescriptorSetLayout = m_DescriptorBuilder.Build(pContext->device, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_COMPUTE_BIT);
 }
 
 void DescriptorSet::Bind(VulkanContext *pContext, const VkCommandBuffer &commandBuffer, const VkPipelineLayout &pipelineLayout, int descriptorSetIndex, bool fullRebind )
@@ -61,7 +87,7 @@ void DescriptorSet::Bind(VulkanContext *pContext, const VkCommandBuffer &command
     m_DescriptorWriter.Cleanup();
 
     // Update the data of all the ubo's
-    for (auto &[binding, ubo]: m_UniformBuffers)
+    for (auto &[binding, ubo]: m_Buffers)
     {
         if(fullRebind)
         {
@@ -83,11 +109,11 @@ void DescriptorSet::Bind(VulkanContext *pContext, const VkCommandBuffer &command
                             &m_DescriptorSet, 0, nullptr);
 }
 
-VkDescriptorSetLayout &DescriptorSet::GetLayout(VulkanContext* pContext)
+VkDescriptorSetLayout &DescriptorSet::GetLayout(const VulkanContext* pContext)
 {
     if(m_DescriptorSetLayout == VK_NULL_HANDLE)
     {
-        LogWarning("The Descriptor Set Layout is VK_NULL_HANDLE! Did you call DescriptorSet::Initialize(VulkanContext *pContext)?");
+        //LogWarning("The Descriptor Set Layout is VK_NULL_HANDLE! Did you call DescriptorSet::Initialize(VulkanContext *pContext)?");
         LogInfo("Initializing Descriptor Set Layout...");
         Initialize(pContext);
     }
@@ -98,7 +124,7 @@ VkDescriptorSetLayout &DescriptorSet::GetLayout(VulkanContext* pContext)
 
 void DescriptorSet::CleanUp(VkDevice device) {
     // Cleanup the uniform buffers
-    for (auto &[binding, ubo]: m_UniformBuffers) {
+    for (auto &[binding, ubo]: m_Buffers) {
         ubo.Cleanup(device);
     }
 
@@ -124,11 +150,11 @@ void DescriptorSet::OnImGui()
         }
     }
 
-    if(!m_UniformBuffers.empty())
+    if(!m_Buffers.empty())
     {
         ImGui::Separator();
         ImGui::Text("Uniform Buffers:");
-        for(auto& [binding, ubo] : m_UniformBuffers)
+        for(auto& [binding, ubo] : m_Buffers)
         {
             ubo.OnImGui();
         }

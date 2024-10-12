@@ -14,6 +14,7 @@
 #include "Input/Input.h"
 #include "Core/GlobalDescriptor.h"
 #include "Patterns/ServiceLocator.h"
+#include "glm/ext/matrix_transform.hpp"
 #include "shaders/Logic/ShaderEditor.h"
 
 
@@ -22,12 +23,12 @@ Scene::Scene(VulkanContext* vulkanContext)
     //
     //Create Materials
     //
-    std::shared_ptr<Material> depthMaterial = MaterialManager::CreateMaterial(vulkanContext, "depth.vert", "depth.frag", "DepthOnlyMaterial");
+    std::shared_ptr<Material> depthMaterial = MaterialManager::CreateMaterial(vulkanContext, "DepthOnlyMaterial");
     depthMaterial->SetDepthOnly(true);
-
+    depthMaterial->AddShader("depth.vert", ShaderType::VertexShader);
 
     std::shared_ptr<Material> PBR_Material = MaterialManager::CreateMaterial(vulkanContext, "shader.vert", "shader.frag", "PBR_Material");
-    auto* ubo = PBR_Material->GetDescriptorSet()->AddUniformBuffer(0);
+    auto* ubo = PBR_Material->GetDescriptorSet()->AddBuffer(0, DescriptorType::UniformBuffer);
     ubo->AddVariable(glm::vec4{1});
     ubo->AddVariable(glm::vec4{1});
     PBR_Material->GetDescriptorSet()->AddTexture(1, "Robot_Albedo.jpg", vulkanContext, ColorType::SRGB);
@@ -41,6 +42,12 @@ Scene::Scene(VulkanContext* vulkanContext)
     skyboxMaterial->SetCullMode(VK_CULL_MODE_FRONT_BIT);
 
 
+
+    auto identity = glm::identity<glm::mat4>();
+    std::shared_ptr<Material> computeMaterial = MaterialManager::CreateMaterial(vulkanContext, "ComputeMaterial");
+    computeMaterial->AddShader("test.comp", ShaderType::ComputeShader);
+    auto computeUbo = computeMaterial->GetDescriptorSet()->AddBuffer(0, DescriptorType::StorageBuffer);
+    computeUbo->AddVariable(identity);
 
 
 
@@ -100,7 +107,7 @@ void Scene::Render(VkCommandBuffer commandBuffer) const
 {
 	GameTimer::UpdateDelta();
 
-    VulkanContext* pContext = ServiceLocator::GetService<VulkanContext>();
+    auto* pContext = ServiceLocator::GetService<VulkanContext>();
 
     //TODO: This check should only happen on events / not in the hot code path
     ShaderManager::ReloadNeededShaders(pContext);
@@ -166,6 +173,18 @@ void Scene::Render(VkCommandBuffer commandBuffer) const
     ImGui::Render();
 }
 
+void Scene::ExecuteComputePass(VkCommandBuffer commandBuffer) const
+{
+    for (const auto& mesh : m_Meshes)
+    {
+       if(mesh->GetMaterial()->IsCompute())
+        {
+           mesh->Bind(commandBuffer);
+           vkCmdDispatch(commandBuffer, 1, 1, 1);
+       }
+    }
+}
+
 void Scene::CleanUp() const
 {
     for (const auto &mesh: m_Meshes) {
@@ -175,4 +194,14 @@ void Scene::CleanUp() const
 void Scene::AddMesh(std::unique_ptr<Mesh> mesh)
 {
     m_Meshes.push_back(std::move(mesh));
+}
+
+std::vector<Mesh *> Scene::GetMeshes() const {
+    std::vector<Mesh*> meshes{};
+    meshes.reserve(m_Meshes.size());
+    for (const auto& mesh : m_Meshes)
+    {
+        meshes.push_back(mesh.get());
+    }
+    return meshes;
 }

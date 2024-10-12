@@ -22,23 +22,14 @@ public:
     //TODO: A Scene Should store a list of passes
     void RenderDepth(VkCommandBuffer commandBuffer) const;
 	void Render(VkCommandBuffer commandBuffer) const;
+    void ExecuteComputePass(VkCommandBuffer commandBuffer) const;
 
 
 	void CleanUp() const;
 
     void AddMesh(std::unique_ptr<Mesh> mesh);
 
-
-	std::vector<Mesh*> GetMeshes() const
-	{
-		std::vector<Mesh*> meshes{};
-		meshes.reserve(m_Meshes.size());
-		for (const auto& mesh : m_Meshes)
-		{
-			meshes.push_back(mesh.get());
-		}
-		return meshes;
-	}
+	[[nodiscard]] std::vector<Mesh*> GetMeshes() const;
 
 private:
 	std::vector<std::unique_ptr<Mesh>> m_Meshes{};

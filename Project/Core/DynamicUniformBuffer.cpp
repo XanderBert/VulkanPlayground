@@ -7,19 +7,37 @@
 
 #include "Buffer.h"
 #include "Descriptor.h"
+#include "DescriptorSet.h"
 #include "Core/VmaUsage.h"
 #include "Patterns/ServiceLocator.h"
-
 
 //---------------------------------------------------------------
 //-------------------------DynamicBuffer-------------------------
 //---------------------------------------------------------------
-void DynamicBuffer::Init(VulkanContext* vulkanContext)
+DynamicBuffer::DynamicBuffer(DynamicBuffer &&other) noexcept {
+    if(this != &other)
+    {
+        m_Data = std::move(other.m_Data);
+        m_UniformBuffer = other.m_UniformBuffer;
+        m_UniformBuffersMemory = other.m_UniformBuffersMemory;
+        m_UniformBuffersMapped = other.m_UniformBuffersMapped;
+        m_BufferType = other.m_BufferType;
+        m_DescriptorType = other.m_DescriptorType;
+
+        other.m_UniformBuffer = nullptr;
+        other.m_UniformBuffersMemory = nullptr;
+        other.m_UniformBuffersMapped = nullptr;
+    }
+}
+
+
+
+void DynamicBuffer::Init()
 {
 	//Log the size of the buffer in bytes
 	LogInfo("Initializing Dynamic buffer with size: " + std::to_string(GetSize()) + " bytes");
 
-	Core::Buffer::CreateBuffer(GetSize(), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, m_UniformBuffer, m_UniformBuffersMemory, true, true);
+	Core::Buffer::CreateBuffer(GetSize(), static_cast<VkBufferUsageFlags>(m_BufferType), m_UniformBuffer, m_UniformBuffersMemory, true, true);
 
     VmaAllocationInfo allocInfo;
     vmaGetAllocationInfo(Allocator::VmaAllocator, m_UniformBuffersMemory, &allocInfo);
@@ -31,14 +49,14 @@ void DynamicBuffer::ProperBind(int bindingNumber, Descriptor::DescriptorWriter &
     memcpy(m_UniformBuffersMapped, GetData(), GetSize());
 
     //Write the buffer to the descriptor set
-    descriptorWriter.WriteBuffer(bindingNumber, m_UniformBuffer, GetSize(), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+    descriptorWriter.WriteBuffer(bindingNumber, m_UniformBuffer, GetSize(), 0, static_cast<VkDescriptorType>(m_DescriptorType));
 }
 void DynamicBuffer::FullRebind(int bindingNumber, const VkDescriptorSet &descriptorSet, Descriptor::DescriptorWriter &descriptorWriter, VulkanContext *vulkanContext) const
 {
     memcpy(m_UniformBuffersMapped, GetData(), GetSize());
 
     descriptorWriter.Cleanup();
-    descriptorWriter.WriteBuffer(bindingNumber, m_UniformBuffer, GetSize(), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+    descriptorWriter.WriteBuffer(bindingNumber, m_UniformBuffer, GetSize(), 0, static_cast<VkDescriptorType>(m_DescriptorType));
     descriptorWriter.UpdateSet(vulkanContext->device, descriptorSet);
 }
 
@@ -75,7 +93,7 @@ void DynamicBuffer::OnImGui()
     {
         const std::string label = std::to_string(i) + labelAddition;
 
-        //Get pointer to Those 4 floats  floats
+        //Get pointer to Those 4 floats
         float* dataPtr = m_Data.data() + i;
         ImGui::ColorEdit4(label.c_str(), dataPtr);
     }
@@ -85,7 +103,7 @@ void DynamicBuffer::OnImGui()
     {
         AddVariable(glm::vec4{0});
         Cleanup(ServiceLocator::GetService<VulkanContext>()->device);
-        Init(ServiceLocator::GetService<VulkanContext>());
+        Init();
     }
 
     std::string labelAddMat4 = "Add Mat4" + labelAddition;
@@ -93,8 +111,14 @@ void DynamicBuffer::OnImGui()
     {
         AddVariable(glm::mat4{1});
         Cleanup(ServiceLocator::GetService<VulkanContext>()->device);
-        Init(ServiceLocator::GetService<VulkanContext>());
+        Init();
     }
+}
+
+void DynamicBuffer::SetDescriptorType(DescriptorType descriptorType)
+{
+    m_DescriptorType = descriptorType;
+    m_BufferType = m_DescriptorType == DescriptorType::UniformBuffer ? BufferType::UniformBuffer : BufferType::StorageBuffer;
 }
 
 void DynamicBuffer::UpdateVariable(uint16_t handle, const glm::mat4& value)

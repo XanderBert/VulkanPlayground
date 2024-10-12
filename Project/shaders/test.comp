@@ -1,0 +1,29 @@
+#version 450
+
+layout(push_constant) uniform constants
+{
+    mat4 model;
+} push;
+
+layout(set = 0, binding = 0) uniform UniformBufferObject
+{
+    mat4 viewProjection;
+    vec4 viewPos;
+} ubo;
+
+layout(set = 1, binding = 0) buffer uniformMaterial
+{
+    mat4 identity[]; // Change to an array to allow indexing
+} comp;
+
+// Each compute shader workgroup processes a certain number of elements
+layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+void main()
+{
+    // Get the index of the current invocation
+    uint idx = gl_GlobalInvocationID.x;
+
+    // Store the push constant value (model matrix) in the output buffer
+    comp.identity[idx] = push.model;
+}

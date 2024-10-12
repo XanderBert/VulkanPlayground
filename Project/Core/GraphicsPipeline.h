@@ -6,6 +6,14 @@
 class Material;
 class VulkanContext;
 class Shader;
+
+enum class PipelineType
+{
+    Graphics = VK_PIPELINE_BIND_POINT_GRAPHICS,
+    Compute = VK_PIPELINE_BIND_POINT_COMPUTE,
+    RayTracing = VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR
+};
+
 class GraphicsPipeline final
 {
 public:
@@ -22,7 +30,7 @@ public:
 
 	void BindPushConstant(const VkCommandBuffer commandBuffer, const glm::mat4x4& matrix) const;
 
-	void BindPipeline(const VkCommandBuffer& commandBuffer) const;
+	void BindPipeline(const VkCommandBuffer& commandBuffer, PipelineType pipeline = PipelineType::Graphics) const;
 
 	void Cleanup(const VkDevice& device) const
 	{

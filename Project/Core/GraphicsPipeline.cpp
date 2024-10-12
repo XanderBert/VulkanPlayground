@@ -15,12 +15,12 @@ void GraphicsPipeline::CreatePipeline(const VulkanContext* vulkanContext,Materia
 void GraphicsPipeline::BindPushConstant(const VkCommandBuffer commandBuffer, const glm::mat4x4& matrix) const
 {
     //vertex and fragment
-	vkCmdPushConstants(commandBuffer, m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT , 0, sizeof(glm::mat4x4), &matrix);
+	vkCmdPushConstants(commandBuffer, m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_COMPUTE_BIT , 0, sizeof(glm::mat4x4), &matrix);
 }
 
-void GraphicsPipeline::BindPipeline(const VkCommandBuffer& commandBuffer) const
+void GraphicsPipeline::BindPipeline(const VkCommandBuffer& commandBuffer, PipelineType pipeline) const
 {
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
+	vkCmdBindPipeline(commandBuffer, static_cast<VkPipelineBindPoint>(pipeline), m_GraphicsPipeline);
 }
 
 
@@ -62,7 +62,6 @@ void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline,
         .lineWidth = 1.0f,
     };
 
-
 	constexpr VkPipelineColorBlendAttachmentState colorBlendAttachment
     {
         .blendEnable = VK_FALSE,
@@ -86,8 +85,6 @@ void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline,
         colorBlending.attachmentCount = 1;
         colorBlending.pAttachments = &colorBlendAttachment;
     }
-
-
 
 	const std::vector dynamicStates =
 	{
@@ -126,8 +123,15 @@ void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline,
 		shaderStages.push_back(shader->GetStageInfo());
 	}
 
-    const VkGraphicsPipelineCreateInfo pipelineInfo
+    LogInfo("Creating Pipeline For: " + material->GetMaterialName());
+
+
+
+
+    if(!material->IsCompute())
     {
+        VkGraphicsPipelineCreateInfo pipelineInfo
+        {
         .sType =  VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .pNext = &pipelineRenderingCreateInfo,
         .stageCount = static_cast<uint32_t>(shaderStages.size()),
@@ -144,11 +148,22 @@ void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline,
         .renderPass = VK_NULL_HANDLE,
         .subpass = 0,
         .basePipelineHandle = VK_NULL_HANDLE,
-        .basePipelineIndex = -1
-    };
+        .basePipelineIndex = -1,
+        };
 
-    LogInfo("Creating Pipeline For: " + material->GetMaterialName());
-    VulkanCheck(vkCreateGraphicsPipelines(vulkanContext->device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline.m_GraphicsPipeline), "Failed to create graphics pipeline!")
+        VulkanCheck(vkCreateGraphicsPipelines(vulkanContext->device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline.m_GraphicsPipeline), "Failed to create graphics pipeline!")
+    }
+    else
+    {
+        VkComputePipelineCreateInfo pipelineInfo{};
+        pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+        pipelineInfo.stage = shaderStages[0];
+        pipelineInfo.layout = graphicsPipeline.m_PipelineLayout;
+        pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
+        pipelineInfo.basePipelineIndex = -1;
+        VulkanCheck(vkCreateComputePipelines(vulkanContext->device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline.m_GraphicsPipeline), "Failed to create compute pipeline!")
+    }
+
 
     LogInfo("Pipeline Created For: " + material->GetMaterialName());
 }

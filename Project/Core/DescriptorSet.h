@@ -12,7 +12,13 @@
 
 class VulkanContext;
 
-//For now we will assume ubo's will only bind to the vertex shader and textures will only bind to the fragment shader
+enum class DescriptorType
+{
+    UniformBuffer = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+    StorageBuffer = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+};
+
+
 class DescriptorSet
 {
 public:
@@ -24,43 +30,22 @@ public:
     DescriptorSet(DescriptorSet&&) = delete;
     DescriptorSet& operator=(DescriptorSet&&) = delete;
 
-    DynamicBuffer* AddUniformBuffer(int binding);
-    DynamicBuffer* GetUniformBuffer(int binding);
+    DynamicBuffer* AddBuffer(int binding, DescriptorType type);
+    [[nodiscard]] DynamicBuffer* GetBuffer(int binding);
 
-    void AddTexture(int binding, const std::variant<std::filesystem::path,ImageInMemory>& pathOrImage, VulkanContext* pContext, ColorType colorType = ColorType::LINEAR, TextureType textureType = TextureType::TEXTURE_2D)
-    {
-        // Check if the binding already exists in the uniform buffer map
-        if (const auto it = m_UniformBuffers.find(binding); it != m_UniformBuffers.end())
-        {
-            LogError("Binding at: " + std::to_string(binding) + " is allready used for a UniformBuffer");
-            return;
-        }
+    void AddTexture(int binding, const std::variant<std::filesystem::path,ImageInMemory>& pathOrImage, VulkanContext* pContext, ColorType colorType = ColorType::LINEAR, TextureType textureType = TextureType::TEXTURE_2D);
 
-        //Create a new texture
-        std::unique_ptr<Texture> texture = std::make_unique<Texture>(pathOrImage, pContext, colorType, textureType);
-
-        //Add a new texture at binding x
-        const auto [iterator, isEmplaced] = m_Textures.try_emplace(binding, std::move(texture));
-        if (!isEmplaced)
-        {
-            LogError("Binding at:" + std::to_string(binding) + " is allready used for a Texture");
-            return;
-        }
-
-        m_DescriptorBuilder.AddBinding(binding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-    }
-
-    void Initialize(VulkanContext* pContext);
+    void Initialize(const VulkanContext* pContext);
     void Bind(VulkanContext *pContext, const VkCommandBuffer& commandBuffer, const VkPipelineLayout & pipelineLayout, int descriptorSetIndex, bool fullRebind = false);
 
     //Layout to specify in the pipeline layout
-    VkDescriptorSetLayout &GetLayout(VulkanContext* pContext);
+    VkDescriptorSetLayout &GetLayout(const VulkanContext* pContext);
 
     void CleanUp(VkDevice device);
 
     void OnImGui();
 private:
-    std::unordered_map<int, DynamicBuffer> m_UniformBuffers{};
+    std::unordered_map<int, DynamicBuffer> m_Buffers{};
     std::unordered_map<int, std::unique_ptr<Texture>> m_Textures{};
 
     VkDescriptorSetLayout m_DescriptorSetLayout{};

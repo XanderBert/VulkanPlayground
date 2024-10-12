@@ -91,24 +91,7 @@ void VulkanBase::drawFrame()
 	CommandBufferManager::ResetCommandBuffer(commandBuffer);
 	CommandBufferManager::BeginCommandBufferRecording(commandBuffer, false, false);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 	drawFrame(imageIndex);
-
-
 
 	CommandBufferManager::EndCommandBufferRecording(commandBuffer);
 

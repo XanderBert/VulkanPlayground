@@ -14,6 +14,17 @@ enum class ShaderType
 	VertexShader = VK_SHADER_STAGE_VERTEX_BIT,
 	FragmentShader = VK_SHADER_STAGE_FRAGMENT_BIT,
 	GeometryShader = VK_SHADER_STAGE_GEOMETRY_BIT,
+    ComputeShader = VK_SHADER_STAGE_COMPUTE_BIT,
+    TessellationControlShader = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT,
+    TessellationEvaluationShader = VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT,
+    RayGenShader = VK_SHADER_STAGE_RAYGEN_BIT_KHR,
+    AnyHitShader = VK_SHADER_STAGE_ANY_HIT_BIT_KHR,
+    ClosestHitShader = VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
+    MissShader = VK_SHADER_STAGE_MISS_BIT_KHR,
+    IntersectionShader = VK_SHADER_STAGE_INTERSECTION_BIT_KHR,
+    CallableShader = VK_SHADER_STAGE_CALLABLE_BIT_KHR,
+    TaskShader = VK_SHADER_STAGE_TASK_BIT_NV,
+    MeshShader = VK_SHADER_STAGE_MESH_BIT_NV,
 };
 
 class Shader final

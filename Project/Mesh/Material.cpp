@@ -39,7 +39,10 @@ void Material::Bind(const VkCommandBuffer commandBuffer, const glm::mat4x4 &push
 
     // Update model matrix
     m_pGraphicsPipeline->BindPushConstant(commandBuffer, pushConstantMatrix);
-    m_pGraphicsPipeline->BindPipeline(commandBuffer);
+
+    //TODO: maybe create a different "material" for depth and compute shaders
+    PipelineType pipelineType = m_IsCompute ? PipelineType::Compute : PipelineType::Graphics;
+    m_pGraphicsPipeline->BindPipeline(commandBuffer, pipelineType);
     m_DescriptorSet.Bind(m_pContext, commandBuffer, m_pGraphicsPipeline->GetPipelineLayout(), 1);
 
     // TODO: This would be a better solution:
@@ -72,6 +75,11 @@ Shader *Material::SetShader(const std::string &shaderPath, ShaderType shaderType
 
 Shader * Material::AddShader(const std::string& shaderPath, const ShaderType shaderType)
 {
+    if(shaderType == ShaderType::ComputeShader)
+    {
+        m_IsCompute = true;
+    }
+
 	m_Shaders.push_back(ShaderManager::CreateShader(m_pContext, shaderPath, shaderType, this));
 	return m_Shaders.back();
 }
@@ -91,7 +99,7 @@ VkPipelineLayoutCreateInfo Material::GetPipelineLayoutCreateInfo() {
     static VkPushConstantRange pushConstantRange{};
     pushConstantRange.offset = 0;
     pushConstantRange.size = sizeof(glm::mat4x4);
-    pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+    pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_COMPUTE_BIT;
 
     m_SetLayouts =
     {
@@ -120,6 +128,11 @@ void Material::SetCullMode(VkCullModeFlags cullMode) {
 bool Material::GetDepthOnly() const
 {
     return m_IsDepthOnly;
+}
+
+bool Material::IsCompute() const
+{
+    return m_IsCompute;
 }
 
 void Material::SetDepthOnly(bool depthOnly)

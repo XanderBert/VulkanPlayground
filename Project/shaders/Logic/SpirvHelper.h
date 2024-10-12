@@ -145,6 +145,15 @@ struct SpirvHelper
         if(extension == ".comp") return shaderc_glsl_compute_shader;
         if(extension == ".tesc") return shaderc_glsl_tess_control_shader;
         if(extension == ".tese") return shaderc_glsl_tess_evaluation_shader;
+        if(extension == ".mesh") return shaderc_glsl_mesh_shader;
+        if(extension == ".task") return shaderc_glsl_task_shader;
+        if(extension == ".rgen") return shaderc_glsl_raygen_shader;
+        if(extension == ".rint") return shaderc_glsl_intersection_shader;
+        if(extension == ".rahit") return shaderc_glsl_anyhit_shader;
+        if(extension == ".rchit") return shaderc_glsl_closesthit_shader;
+        if(extension == ".rmiss") return shaderc_glsl_miss_shader;
+        if(extension == ".rcall") return shaderc_glsl_callable_shader;
+
 
         return shaderc_glsl_infer_from_source;
     }

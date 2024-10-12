@@ -41,12 +41,14 @@ public:
     [[nodiscard]] const VkPipelineLayout& GetPipelineLayout() const;
     [[nodiscard]] VkPipelineLayoutCreateInfo GetPipelineLayoutCreateInfo();
     [[nodiscard]] std::string GetMaterialName() const;
+
     [[nodiscard]] DescriptorSet* GetDescriptorSet();
 
     [[nodiscard]] VkCullModeFlags GetCullModeBit() const;
     void SetCullMode(VkCullModeFlags cullMode);
 
     [[nodiscard]] bool GetDepthOnly() const;
+    [[nodiscard]] bool IsCompute() const;
     void SetDepthOnly(bool depthOnly);
 private:
 	friend class MaterialManager;
@@ -66,4 +68,5 @@ private:
     VkCullModeFlags m_CullMode = VK_CULL_MODE_BACK_BIT;
 
     bool m_IsDepthOnly = false;
+    bool m_IsCompute = false;
 };
