@@ -114,6 +114,10 @@ set(SOURCES
         shaders/Logic/ShaderEditor.h
         vulkanbase/VulkanBase.cpp
         vulkanbase/VulkanTypes.cpp
+        Core/GBuffer.cpp
+        Core/GBuffer.h
+        Core/ColorAttachment.cpp
+        Core/ColorAttachment.h
 )
 
 

@@ -2,6 +2,7 @@
 #include "Core/DepthResource.h"
 #include "Core/Descriptor.h"
 #include "Core/SwapChain.h"
+#include "shaders/Logic/Shader.h"
 #include "vulkanbase/VulkanBase.h"
 
 
@@ -69,8 +70,11 @@ void VulkanBase::createSyncObjects()
 
 void VulkanBase::drawFrame()
 {
-	const VkDevice device = m_pContext->device;
+	VkDevice device = m_pContext->device;
 	vkWaitForFences(device, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
+
+    //TODO: This check should only happen on events / not in the hot code path
+    ShaderManager::ReloadNeededShaders(m_pContext);
 
 	uint32_t imageIndex;
 	const VkResult nextImageResult = vkAcquireNextImageKHR(m_pContext->device, SwapChain::GetSwapChain(), UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
@@ -85,7 +89,6 @@ void VulkanBase::drawFrame()
 	}
 
 	Descriptor::DescriptorManager::ClearPools(m_pContext->device);
-
 	vkResetFences(device, 1, &inFlightFence);
 
 	CommandBufferManager::ResetCommandBuffer(commandBuffer);
@@ -110,9 +113,8 @@ void VulkanBase::drawFrame()
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signalSemaphores;
 
-	VulkanCheck(vkQueueSubmit(m_pContext->graphicsQueue, 1, &submitInfo, inFlightFence), "Failed To Submit Queue.");
 
-	CommandBufferManager::SubmitCommandBuffer(commandBuffer);
+	CommandBufferManager::SubmitCommandBuffer(m_pContext, commandBuffer, &submitInfo, inFlightFence);
 
 
 	VkPresentInfoKHR presentInfo{};

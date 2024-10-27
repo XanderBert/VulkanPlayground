@@ -2,10 +2,9 @@
 #include <ktxvulkan.h>
 #include <optional>
 
-
-#include "vulkanbase/VulkanTypes.h"
 #include "Texture.h"
-
+#include "vk_mem_alloc.h"
+#include "vulkanbase/VulkanTypes.h"
 
 
 enum class TextureType : uint8_t;

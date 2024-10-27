@@ -1,0 +1,105 @@
+#include "ColorAttachment.h"
+
+#include "SwapChain.h"
+#include "Image/ImageLoader.h"
+#include "vulkanbase/VulkanUtil.h"
+
+void ColorAttachment::Init(const VulkanContext *vulkanContext, VkFormat format, VkClearColorValue clearColor)
+{
+	m_Format = format;
+
+	Setup(vulkanContext, clearColor);
+	SwapChain::OnSwapChainRecreated.AddLambda([&](const VulkanContext *vulkanContext)
+	{
+		Recreate(vulkanContext, clearColor);
+	});
+}
+
+void ColorAttachment::Recreate(const VulkanContext *vulkanContext, VkClearColorValue clearColor)
+{
+	Cleanup(vulkanContext);
+	Setup(vulkanContext, clearColor);
+}
+
+void ColorAttachment::Cleanup(const VulkanContext *vulkanContext)
+{
+	vkDestroyImageView(vulkanContext->device, m_ImageView, nullptr);
+	vmaDestroyImage(Allocator::VmaAllocator, m_Image, m_Memory);
+
+	if(m_Sampler != VK_NULL_HANDLE) vkDestroySampler(vulkanContext->device, m_Sampler, nullptr);
+
+	if(m_DebugTexture)
+	{
+		m_DebugTexture->Cleanup();
+		m_DebugTexture.reset();
+	}
+}
+
+VkRenderingAttachmentInfoKHR* ColorAttachment::GetRenderingAttachmentInfo()
+{
+	return &m_ColorAttachmentInfo;
+}
+
+void ColorAttachment::ResetImageLayout()
+{
+	m_CurrentImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+}
+
+void ColorAttachment::TransitionToWrite(VkCommandBuffer commandBuffer)
+{
+	tools::InsertImageMemoryBarrier(
+   commandBuffer,
+   m_Image,
+   m_CurrentImageLayout,
+   VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+   VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+
+	m_CurrentImageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+}
+
+void ColorAttachment::TransitionToRead(VkCommandBuffer commandBuffer)
+{
+	tools::InsertImageMemoryBarrier(
+	   commandBuffer,
+	   m_Image,
+	   m_CurrentImageLayout,
+	   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+	   VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+
+	m_CurrentImageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+}
+
+void ColorAttachment::OnImGui()
+{
+	if(!m_DebugTexture.get())
+	{
+		//Create a new updated ImGuiTexture for the depthmap
+		const auto extends = SwapChain::Extends();
+		m_DebugTexture = std::make_unique<ImGuiTexture>(m_Sampler, m_ImageView, ImVec2(extends.width / 5.0f, extends.height / 5.0f));
+	}
+
+	m_DebugTexture->OnImGui();
+}
+void ColorAttachment::Setup(const VulkanContext *vulkanContext, VkClearColorValue clearColor)
+{
+	m_CurrentImageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	Image::CreateImage(SwapChain::Extends().width, SwapChain::Extends().height,
+		1,
+		VK_SAMPLE_COUNT_1_BIT,
+		m_Format,
+		VK_IMAGE_TILING_OPTIMAL,
+		VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+		m_Image, m_Memory, TextureType::TEXTURE_2D);
+
+	Image::CreateImageView(vulkanContext->device, m_Image, m_Format, VK_IMAGE_ASPECT_COLOR_BIT, m_ImageView, TextureType::TEXTURE_2D);
+	Image::CreateSampler(vulkanContext, m_Sampler, 1);
+
+	m_ColorAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
+	m_ColorAttachmentInfo.pNext = nullptr;
+	m_ColorAttachmentInfo.imageView = m_ImageView;
+	m_ColorAttachmentInfo.imageLayout = m_CurrentImageLayout;
+	m_ColorAttachmentInfo.clearValue.color = clearColor;
+	m_ColorAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	m_ColorAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+}

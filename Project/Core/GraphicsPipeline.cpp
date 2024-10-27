@@ -2,6 +2,7 @@
 
 #include "DepthResource.h"
 #include "Descriptor.h"
+#include "GBuffer.h"
 #include "GlobalDescriptor.h"
 #include "Mesh/Material.h"
 #include "SwapChain.h"
@@ -40,7 +41,7 @@ void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline,
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR,
         .colorAttachmentCount = 1,
         .pColorAttachmentFormats = &SwapChain::Format(),
-        .depthAttachmentFormat = DepthResource::GetFormat(),
+        .depthAttachmentFormat = GBuffer::GetDepthAttachment()->GetFormat(),
     };
 
     if(material->GetDepthOnly())
@@ -114,7 +115,7 @@ void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline,
     };
 
     const auto inputAssemblyState = ShaderManager::GetInputAssemblyStateInfo();
-    const VkPipelineDepthStencilStateCreateInfo depthStencilState = DepthResource::GetDepthPipelineInfo(VK_TRUE, VK_TRUE);
+    const VkPipelineDepthStencilStateCreateInfo depthStencilState = DepthAttachment::GetDepthPipelineInfo(VK_TRUE, VK_TRUE);
     const auto vertexInputState = ShaderManager::GetVertexInputStateInfo();
 
 	std::vector<VkPipelineShaderStageCreateInfo> shaderStages;

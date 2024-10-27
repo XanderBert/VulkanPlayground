@@ -11,13 +11,14 @@
 #include "shaders/Logic/ShaderEditor.h"
 #include "VulkanTypes.h"
 #include "Core/DepthResource.h"
+#include "Core/GBuffer.h"
 
 
 void VulkanBase::run()
 {
     ServiceConfigurator::Configure();
     initVulkan();
-    ImGuiWrapper::Initialize(m_pContext->graphicsQueue);
+	ImGuiWrapper::Initialize(m_pContext->graphicsQueue);
     ShaderEditor::Init();
     SceneManager::AddScene(std::make_unique<Scene>(m_pContext));
     Input::SetupInput(m_pContext->window.Get());
@@ -40,8 +41,12 @@ void VulkanBase::initVulkan()
     Allocator::CreateAllocator(m_pContext);
 
     SwapChain::Init(m_pContext);
-    DepthResource::Init(m_pContext);
-    Camera::Init();
+
+
+
+	GBuffer::Init(m_pContext);
+
+	Camera::Init();
 
     // Since we use an extension, we need to expliclity load the function pointers for extension related Vulkan commands
     vkCmdBeginRenderingKHR = reinterpret_cast<PFN_vkCmdBeginRenderingKHR>(vkGetDeviceProcAddr(m_pContext->device, "vkCmdBeginRenderingKHR"));
@@ -64,7 +69,7 @@ void VulkanBase::mainLoop()
 
     while (!window.ShouldClose())
     {
-        window.PollEvents();
+        Window::PollEvents();
 
         if(window.IsMinimized())
         {
@@ -90,7 +95,7 @@ void VulkanBase::cleanup() const
     vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
     vkDestroyFence(device, inFlightFence, nullptr);
 
-    DepthResource::Cleanup(m_pContext);
+	GBuffer::Cleanup(m_pContext);
 
     if (enableValidationLayers)
     {

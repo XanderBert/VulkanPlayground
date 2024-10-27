@@ -37,7 +37,8 @@ public:
 
     void AddTexture(int binding, const std::variant<std::filesystem::path,ImageInMemory>& pathOrImage, VulkanContext* pContext, ColorType colorType = ColorType::LINEAR, TextureType textureType = TextureType::TEXTURE_2D);
     void AddDepthTexture(int binding);
-   [[nodiscard]] Texture* CreateOutputTexture(int binding,VulkanContext* pContext, const glm::ivec2& extent, ColorType colorType = ColorType::LINEAR, TextureType textureType = TextureType::TEXTURE_2D);
+    Texture* CreateOutputTexture(int binding,VulkanContext* pContext, const glm::ivec2& extent, ColorType colorType = ColorType::LINEAR, TextureType textureType = TextureType::TEXTURE_2D);
+    [[nodiscard]] std::vector<Texture*> GetTextures();
 
     void Initialize(const VulkanContext* pContext);
     void Bind(VulkanContext *pContext, const VkCommandBuffer& commandBuffer, const VkPipelineLayout & pipelineLayout, int descriptorSetIndex, PipelineType pipelineType, bool fullRebind = false);

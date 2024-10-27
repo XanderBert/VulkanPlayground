@@ -15,18 +15,53 @@ layout(set = 1, binding = 1) uniform sampler2D depthResource;
 layout(set = 1, binding = 2, rgba8) uniform image2D ssaoOutput;
 
 layout (local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
-
-// SSAO Parameters
-const int KERNEL_SIZE = 64;
-const float RADIUS = 0.5;
-const float BIAS = 0.025;
-
 void main()
 {
+    // Get global pixel coordinate
     ivec2 texCoord = ivec2(gl_GlobalInvocationID.xy);
-    //vec2 texSize = vec2(imageSize(ssaoOutput));
-    vec2 texSize = vec2(1920, 1080);
 
-    //write something to the image
-    imageStore(ssaoOutput, texCoord, vec4(1.0, 0.0, 0.0, 1.0));
+    // Get dimensions of the output image
+    ivec2 ssaoSize = imageSize(ssaoOutput);
+
+    // Ensure texCoord is within image bounds
+    if (texCoord.x >= ssaoSize.x || texCoord.y >= ssaoSize.y)
+    return;
+
+    // Define the size of the blur kernel (3x3)
+    int kernelSize = 1;
+
+    // Initialize depth sum and sample count
+    float depthSum = 0.0;
+    int samples = 0;
+
+    // Loop over the 3x3 neighborhood around the current texCoord
+    for (int x = -kernelSize; x <= kernelSize; x++)
+    {
+        for (int y = -kernelSize; y <= kernelSize; y++)
+        {
+            // Get the neighboring texCoord
+            ivec2 neighborCoord = texCoord + ivec2(x, y);
+
+            // Ensure the neighbor is within image bounds
+            if (neighborCoord.x >= 0 && neighborCoord.x < ssaoSize.x &&
+            neighborCoord.y >= 0 && neighborCoord.y < ssaoSize.y)
+            {
+                // Sample depth from the depthResource texture
+                float neighborDepth = texture(depthResource, vec2(neighborCoord) / vec2(ssaoSize)).r;
+
+                // Accumulate depth values
+                depthSum += neighborDepth;
+                samples++;
+            }
+        }
+    }
+
+    // Compute the average depth value
+    float averageDepth = depthSum / float(samples);
+
+    // Output color using the average depth value (blurred)
+    vec4 outputColor = vec4(averageDepth, averageDepth, averageDepth, 1.0);
+
+    // Write the output color to ssaoOutput image at the current texCoord
+    imageStore(ssaoOutput, texCoord, outputColor);
 }

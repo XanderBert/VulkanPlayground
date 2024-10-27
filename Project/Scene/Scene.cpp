@@ -2,30 +2,37 @@
 
 #include <implot.h>
 
+#include "Core/CommandBuffer.h"
 #include "Core/DepthResource.h"
+#include "Core/GBuffer.h"
+#include "Core/GlobalDescriptor.h"
+#include "Core/ImGuiWrapper.h"
+#include "Core/Logger.h"
+#include "Core/SwapChain.h"
+#include "Input/Input.h"
+#include "Mesh/MaterialManager.h"
 #include "Mesh/Mesh.h"
 #include "Mesh/ModelLoader.h"
 #include "Mesh/Vertex.h"
-#include "shaders/Logic/ShaderFactory.h"
-#include "Core/ImGuiWrapper.h"
-#include "Core/Logger.h"
-#include "Mesh/MaterialManager.h"
-#include "Timer/GameTimer.h"
-#include "Input/Input.h"
-#include "Core/GlobalDescriptor.h"
 #include "Patterns/ServiceLocator.h"
+#include "Timer/GameTimer.h"
 #include "glm/ext/matrix_transform.hpp"
 #include "shaders/Logic/ShaderEditor.h"
+#include "shaders/Logic/ShaderFactory.h"
 
 
 Scene::Scene(VulkanContext* vulkanContext)
 {
+	auto [width, height] = SwapChain::Extends();
+
     //
     //Create Materials
     //
     std::shared_ptr<Material> depthMaterial = MaterialManager::CreateMaterial(vulkanContext, "DepthOnlyMaterial");
     depthMaterial->SetDepthOnly(true);
-    depthMaterial->AddShader("depth.vert", ShaderType::VertexShader);
+	depthMaterial->AddShader("depth.vert", ShaderType::VertexShader);
+	depthMaterial->AddShader("depth.frag", ShaderType::FragmentShader);
+
 
     std::shared_ptr<Material> PBR_Material = MaterialManager::CreateMaterial(vulkanContext, "shader.vert", "shader.frag", "PBR_Material");
     auto* ubo = PBR_Material->GetDescriptorSet()->AddBuffer(0, DescriptorType::UniformBuffer);
@@ -41,32 +48,16 @@ Scene::Scene(VulkanContext* vulkanContext)
     skyboxMaterial->GetDescriptorSet()->AddTexture(1, "cubemap_vulkan.ktx", vulkanContext, ColorType::SRGB, TextureType::TEXTURE_CUBE);
     skyboxMaterial->SetCullMode(VK_CULL_MODE_FRONT_BIT);
 
-    //auto identity = glm::identity<glm::mat4>();
-    std::shared_ptr<Material> computeMaterial = MaterialManager::CreateMaterial(vulkanContext, "ComputeMaterial");
+	std::shared_ptr<Material> computeMaterial = MaterialManager::CreateMaterial(vulkanContext, "ComputeMaterial");
     computeMaterial->AddShader("test.comp", ShaderType::ComputeShader);
     computeMaterial->GetDescriptorSet()->AddDepthTexture(1);
-    Texture* outputTexture = computeMaterial->GetDescriptorSet()->CreateOutputTexture(2, vulkanContext, glm::ivec2{512,512}, ColorType::LINEAR, TextureType::TEXTURE_2D);
-
-
-    //auto computeUbo = computeMaterial->GetDescriptorSet()->AddBuffer(0, DescriptorType::StorageBuffer);
-    //computeUbo->AddVariable(identity);
+    computeMaterial->GetDescriptorSet()->CreateOutputTexture(2, vulkanContext, {width, height});
 
 
 
-   //GLTFLoader::LoadGLTF("FlightHelmet.gltf", this, vulkanContext);
-   //GLTFLoader::LoadGLTF("Assets/CesiumMan.gltf", this, vulkanContext);
-   //GLTFLoader::LoadGLTF("Assets/sponza.gltf", this, vulkanContext);
+	//Load model
+	GLTFLoader::LoadGLTF("FlightHelmet.gltf", this, vulkanContext);
 
-
-
-
-    //
-    // Create Meshes
-    //
-	// m_Meshes.push_back(std::make_unique<Mesh>("Robot.obj", PBR_Material, "Robot"));
-	// m_Meshes.back()->SetPosition(glm::vec3{ -1.0f, 2.6f,0.f });
-	// m_Meshes.back()->SetRotation(glm::vec3{ 90.f, 0.f, 0.f });
-	// m_Meshes.back()->SetScale(glm::vec3(0.1f));
 
 
 
@@ -110,9 +101,6 @@ void Scene::Render(VkCommandBuffer commandBuffer) const
 	GameTimer::UpdateDelta();
 
     auto* pContext = ServiceLocator::GetService<VulkanContext>();
-
-    //TODO: This check should only happen on events / not in the hot code path
-    ShaderManager::ReloadNeededShaders(pContext);
     ShaderEditor::Render();
 
 	const ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -155,8 +143,8 @@ void Scene::Render(VkCommandBuffer commandBuffer) const
 
     Camera::Update();
 	Camera::OnImGui();
-
-    DepthResource::DebugRenderDepthResource(pContext);
+	
+	GBuffer::OnImGui();
 
 	for (const auto& mesh : m_Meshes)
 	{
@@ -177,12 +165,35 @@ void Scene::Render(VkCommandBuffer commandBuffer) const
 
 void Scene::ExecuteComputePass(VkCommandBuffer commandBuffer) const
 {
-    for (const auto& mesh : m_Meshes)
+
+    for (const auto& material : MaterialManager::GetMaterials())
     {
-       if(mesh->GetMaterial()->IsCompute())
+       if(material->IsCompute())
         {
-           mesh->Bind(commandBuffer);
-           vkCmdDispatch(commandBuffer, 1, 1, 1);
+            std::vector<Texture*> textures = material->GetDescriptorSet()->GetTextures();
+
+
+       		//Transition the output texture to writable
+            for(auto* texture : textures)
+            {
+                if(texture->IsOutputTexture())
+                    texture->TransitionToWritableImageLayout(commandBuffer);
+            }
+
+
+
+
+           material->Bind(commandBuffer, glm::identity<glm::mat4>());
+           vkCmdDispatch(commandBuffer, SwapChain::Extends().width / 16.0f, SwapChain::Extends().height / 16.0f	, 1);
+
+
+
+       		//transition the output texture to readable
+       		for(auto* texture : textures)
+           {
+               if(texture->IsOutputTexture())
+                   texture->TransitionToReadableImageLayout(commandBuffer);
+           }
        }
     }
 }

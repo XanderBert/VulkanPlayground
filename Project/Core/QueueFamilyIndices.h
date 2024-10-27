@@ -17,10 +17,11 @@ struct QueueFamilyIndices
 		std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
 		vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, queueFamilies.data());
 
-		int i = 0;
+		int i{};
 		for (const auto& queueFamily : queueFamilies)
 		{
-			if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)indices.graphicsFamily = i;
+			if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT && queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT)
+				indices.graphicsFamily = i;
 
 			VkBool32 presentSupport = false;
 			vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface, &presentSupport);
@@ -34,7 +35,7 @@ struct QueueFamilyIndices
 		return indices;
 	}
 
-	bool isComplete() const
+	[[nodiscard]] bool isComplete() const
 	{
 		return graphicsFamily.has_value() && presentFamily.has_value();
 	}

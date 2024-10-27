@@ -65,10 +65,12 @@ void CommandBufferManager::EndCommandBufferRecording(CommandBuffer& commandBuffe
 	commandBuffer.State = CommandBufferState::RecordingEnded;
 }
 
-void CommandBufferManager::SubmitCommandBuffer(CommandBuffer& commandBuffer)
+void CommandBufferManager::SubmitCommandBuffer(const VulkanContext* vulkanContext, CommandBuffer& commandBuffer,const VkSubmitInfo* submitInfo, VkFence fence)
 {
 	LogAssert(commandBuffer.State == CommandBufferState::RecordingEnded, "Command buffer not ready for submission", true)
 	commandBuffer.State = CommandBufferState::Submitted;
+	
+	VulkanCheck(vkQueueSubmit(vulkanContext->graphicsQueue, 1, submitInfo, fence), "Failed To Submit Queue.");
 }
 
 void CommandBufferManager::ResetCommandBuffer(CommandBuffer& commandBuffer)

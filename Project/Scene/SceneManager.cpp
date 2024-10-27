@@ -7,7 +7,8 @@ void SceneManager::Render(VkCommandBuffer commandBuffer) {
     m_ActiveScene->Render(commandBuffer);
 }
 
-void SceneManager::RenderDepth(VkCommandBuffer commandBuffer) {
+void SceneManager::RenderDepth(VkCommandBuffer commandBuffer)
+{
     m_ActiveScene->RenderDepth(commandBuffer);
 }
 

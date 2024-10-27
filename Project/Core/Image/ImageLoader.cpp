@@ -1,10 +1,10 @@
 #include "ImageLoader.h"
 
 #define STB_IMAGE_IMPLEMENTATION
-#include <stb/stb_image.h>
+#include <ImGuiFileDialog.h>
 #include <ktx.h>
 #include <ktxvulkan.h>
-#include <ImGuiFileDialog.h>
+#include <stb/stb_image.h>
 
 #include "Texture.h"
 #include "Core/Logger.h"
@@ -13,9 +13,7 @@
 
 namespace Image
 {
-	void CreateImage(uint32_t width, uint32_t height, uint32_t mipLevels,
-		VkSampleCountFlagBits numSamples, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage,
-		VkImage& image, VmaAllocation& imageMemory, TextureType textureType)
+	void CreateImage(const uint32_t width, const uint32_t height, const uint32_t mipLevels, const VkSampleCountFlagBits numSamples, const VkFormat format, const VkImageTiling tiling, const VkImageUsageFlags usage,VkImage& image, VmaAllocation& imageMemory, const TextureType textureType)
 	{
 		VkImageCreateInfo imageInfo{};
 		imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -42,12 +40,12 @@ namespace Image
 	    props.usage = VMA_MEMORY_USAGE_AUTO ;
 	    props.priority = 1.0f;
 
-	    //if the image size is big (greater then 1440p ) then we should use the dedicated memory
+	    //if the image size is big (greater than 1440p ) then we should use the dedicated memory
 	    //Use for:
 	    // ● Render targets, depth-stencil, UAV
         // ● Very large buffers and images (dozens of MiB)
         // ● Large allocations that may need to be resized (freed and reallocated) at run-time
-        if(constexpr int treshold = 2560 * 1440; width * height > treshold) props.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
+        if(constexpr int threshold = 2560 * 1440; width * height > threshold) props.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
 
         //Create the image
 	    VulkanCheck(vmaCreateImage(Allocator::VmaAllocator, &imageInfo, &props, &image, &imageMemory, nullptr), "Failed To Create Image");
@@ -105,7 +103,7 @@ namespace Image
 		VulkanCheck(vkCreateSampler(vulkanContext->device, &samplerInfo, nullptr, &sampler), "Failed to create texture sampler!")
 	}
 
-	bool HasStencilComponent(VkFormat format)
+	bool HasStencilComponent(const VkFormat format)
 	{
 		return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
 	}
@@ -200,7 +198,7 @@ ktxVulkanTexture ktx::CreateImage(const std::filesystem::path &path)
 std::pair<VkBuffer, VmaAllocation> ktx::CreateImageFromMemory(const std::uint8_t* data, size_t size, glm::ivec2 &imageSize, uint32_t &mipLevels, ktxTexture **texture)
 {
     // TODO: KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT -  should not be set, It should be directly loaded in the staging buffer
-    auto errorCode = ktxTexture_CreateFromMemory(data, size, KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, texture);
+    const auto errorCode = ktxTexture_CreateFromMemory(data, size, KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, texture);
     LogAssert(errorCode == KTX_SUCCESS, "Failed to load texture image!", true)
     LogAssert((*texture) != nullptr, "The KTX Texture is not valid", true)
 
@@ -208,8 +206,8 @@ std::pair<VkBuffer, VmaAllocation> ktx::CreateImageFromMemory(const std::uint8_t
     imageSize = {(*texture)->baseWidth, (*texture)->baseHeight};
     mipLevels = (*texture)->numLevels;
 
-    ktx_uint8_t *ktxTextureData = ktxTexture_GetData((*texture));
-    ktx_size_t ktxTextureSize = ktxTexture_GetSize((*texture));
+    const ktx_uint8_t *ktxTextureData = ktxTexture_GetData((*texture));
+    const ktx_size_t ktxTextureSize = ktxTexture_GetSize((*texture));
 
     VkBuffer stagingBuffer;
     VmaAllocation stagingBufferMemory;

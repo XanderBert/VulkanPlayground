@@ -37,7 +37,7 @@ public:
 	static void BeginCommandBufferRecording(CommandBuffer& commandBuffer, bool isRenderpassContinue, bool isSimultaneous, bool isSingeUse = false);
 	static void EndCommandBufferRecording(CommandBuffer& commandBuffer);
 
-	static void SubmitCommandBuffer(CommandBuffer& commandBuffer);
+	static void SubmitCommandBuffer(const VulkanContext* vulkanContext, CommandBuffer& commandBuffer,const VkSubmitInfo* submitInfo, VkFence fence);
 	static void ResetCommandBuffer(CommandBuffer& commandBuffer);
 
 	static void CreateCommandBufferSingleUse(const VulkanContext* vulkanContext, CommandBuffer& commandBuffer);

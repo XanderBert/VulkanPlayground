@@ -5,6 +5,7 @@
 
 #include "DepthResource.h"
 #include "DynamicUniformBuffer.h"
+#include "GBuffer.h"
 #include "Image/ImageLoader.h"
 
 DynamicBuffer *DescriptorSet::AddBuffer(int binding, DescriptorType type)
@@ -93,7 +94,6 @@ Texture* DescriptorSet::CreateOutputTexture(int binding, VulkanContext *pContext
 
     //Create a new texture
     std::unique_ptr<Texture> texture = std::make_unique<Texture>(pContext, extent, colorType, textureType);
-    texture->SetDescriptorImageType(DescriptorImageType::STORAGE_IMAGE);
 
     //Add a new texture at binding x
     const auto [iterator, isEmplaced] = m_Textures.try_emplace(binding, std::move(texture));
@@ -108,6 +108,17 @@ Texture* DescriptorSet::CreateOutputTexture(int binding, VulkanContext *pContext
     return m_Textures[binding].get();
 }
 
+std::vector<Texture*> DescriptorSet::GetTextures()
+{
+    std::vector<Texture*> textures{};
+    textures.reserve(m_Textures.size());
+    for (const auto& texture : m_Textures | std::views::values)
+    {
+        textures.push_back(texture.get());
+    }
+
+    return textures;
+}
 
 
 void DescriptorSet::Initialize(const VulkanContext *pContext)
@@ -146,9 +157,10 @@ void DescriptorSet::Bind(VulkanContext *pContext, const VkCommandBuffer& command
     }
 
     //Bind DepthResource if needed
+	//TODO: This is a bit hacky, maybe find a better way to do this
     if(m_DepthTextureBinding != -1)
     {
-        m_DescriptorWriter.WriteImage(m_DepthTextureBinding, DepthResource::GetImageView(), DepthResource::GetSampler(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    	GBuffer::GetDepthAttachment()->Bind(m_DescriptorWriter, m_DepthTextureBinding);
     }
 
     m_DescriptorWriter.UpdateSet(pContext->device, m_DescriptorSet);
@@ -170,18 +182,19 @@ VkDescriptorSetLayout &DescriptorSet::GetLayout(const VulkanContext* pContext)
     return m_DescriptorSetLayout;
 }
 
-void DescriptorSet::CleanUp(VkDevice device) {
+void DescriptorSet::CleanUp(VkDevice device)
+{
     // Cleanup the uniform buffers
-    for (auto &[binding, ubo]: m_Buffers) {
-        ubo.Cleanup(device);
+    for (auto &ubo : m_Buffers | std::views::values)
+    {
+	    ubo.Cleanup(device);
     }
 
     // Cleanup the textures
-    for (auto &[binding, texture]: m_Textures) {
-        texture->Cleanup(device);
+    for (auto &texture : m_Textures | std::views::values)
+    {
+	    texture->Cleanup(device);
     }
-
-
 
     // Cleanup the layout
     vkDestroyDescriptorSetLayout(device, m_DescriptorSetLayout, nullptr);

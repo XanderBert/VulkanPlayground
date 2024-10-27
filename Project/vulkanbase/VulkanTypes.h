@@ -43,7 +43,7 @@ public:
     [[nodiscard]] GLFWwindow* Get() const { return m_pWindow; }
 
     static void PollEvents();
-
+	static void SetViewportCmd(VkCommandBuffer commandBuffer);
 private:
 	GLFWwindow* m_pWindow{};
     std::string m_WindowName;

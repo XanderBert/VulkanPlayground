@@ -108,6 +108,7 @@ namespace tools
 			return VK_ACCESS_TRANSFER_WRITE_BIT;
 		case VK_IMAGE_LAYOUT_GENERAL:
 		    return VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+		    //return VK_ACCESS_SHADER_WRITE_BIT;
 		}
 		return 0;
 	}

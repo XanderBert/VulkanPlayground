@@ -4,33 +4,53 @@
 #include "Core/VmaUsage.h"
 #include "vulkanbase/VulkanTypes.h"
 
+namespace Descriptor
+{
+	class DescriptorWriter;
+}
+
 class ImGuiTexture;
 
-class DepthResource
+class DepthAttachment final
 {
 public:
 
-	static void Recreate(const VulkanContext* vulkanContext);
-	static void Init(const VulkanContext* vulkanContext);
-	static void Cleanup(const VulkanContext* vulkanContext);
+	DepthAttachment() = default;
+	~DepthAttachment() = default;
+	DepthAttachment(const DepthAttachment&) = delete;
+	DepthAttachment& operator=(const DepthAttachment&) = delete;
+	DepthAttachment(DepthAttachment&&) = delete;
+	DepthAttachment& operator=(DepthAttachment&&) = delete;
 
-	static  VkPipelineDepthStencilStateCreateInfo GetDepthPipelineInfo(VkBool32 depthTestEnable, VkBool32 depthWriteEnable);
+	void Init(const VulkanContext* vulkanContext);
+	void Cleanup(const VulkanContext* vulkanContext);
+	void Bind(Descriptor::DescriptorWriter& writer, int bindingNumber) const;
 
-	static VkImageView GetImageView();
-	static VkFormat GetFormat();
-	static VkImage GetImage();
-    static VkSampler GetSampler();
+	[[nodiscard]] VkRenderingAttachmentInfoKHR* GetRenderingAttachmentInfo();
+	[[nodiscard]] static VkPipelineDepthStencilStateCreateInfo GetDepthPipelineInfo(VkBool32 depthTestEnable, VkBool32 depthWriteEnable);
+	[[nodiscard]] VkImageLayout GetBindImageLayout();
+	[[nodiscard]] VkFormat GetFormat() const;
 
-    static void DebugRenderDepthResource(const VulkanContext* vulkanContext);
+    void OnImGui();
+
+    void TransitionToDepthResource(VkCommandBuffer commandBuffer);
+    void TransitionToShaderRead(VkCommandBuffer commandBuffer);
+    void TransitionToGeneralResource(VkCommandBuffer commandBuffer);
+    void ResetImageLayout();
 
 private:
-	inline static VkImage m_Image;
-	inline static VmaAllocation m_Memory;
-	inline static VkImageView m_ImageView;
-	inline static VkFormat m_Format;
-    inline static VkSampler m_Sampler{VK_NULL_HANDLE};
+	void Recreate(const VulkanContext* vulkanContext);
 
-    inline static std::unique_ptr<ImGuiTexture> m_ImGuiTexture{};
+	VkImage m_Image{};
+	VmaAllocation m_Memory{};
+	VkImageView m_ImageView{};
+	VkFormat m_Format{};
+    VkSampler m_Sampler{VK_NULL_HANDLE};
+
+    std::unique_ptr<ImGuiTexture> m_ImGuiTexture{};
+    VkImageLayout m_BindImageLayout{VK_IMAGE_LAYOUT_UNDEFINED};
+
+	VkRenderingAttachmentInfoKHR m_DepthAttachmentInfo{};
 };
 
 class DepthResourceBuilder

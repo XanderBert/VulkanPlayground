@@ -2,8 +2,10 @@
 #define VK_USE_PLATFORM_WIN32_KHR
 #define VMA_VULKAN_VERSION 1003000 // Vulkan 1.3
 #define VMA_IMPLEMENTATION
-#include <vk_mem_alloc.h>
+
 #include "VmaUsage.h"
+
+#include <vk_mem_alloc.h>
 
 #include "Image/Texture.h"
 #include "vulkanbase/VulkanTypes.h"
