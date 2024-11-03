@@ -18,12 +18,19 @@ public:
 	static void Init(const VulkanContext* vulkanContext);
 	static void Cleanup(const VulkanContext* vulkanContext);
 
+	static void Bind(Descriptor::DescriptorWriter& writer, int depthBinding, int normalBinding);
+	static void BindAlbedo(Descriptor::DescriptorWriter& writer, int albedoBinding);
+
 	static ColorAttachment* GetColorAttachmentNormal();
 	static DepthAttachment* GetDepthAttachment();
+
+	static ColorAttachment* GetAlbedoAttachment();
 
 	static void OnImGui();
 
 private:
 	inline static ColorAttachment m_ColorAttachmentNormal;
 	inline static DepthAttachment m_DepthAttachment;
+
+	inline static ColorAttachment m_AlbedoAttachment;
 };

@@ -2,11 +2,17 @@
 #include <memory>
 #include <vulkan/vulkan.h>
 #include "Core/VmaUsage.h"
+#include "glm/vec2.hpp"
 
+
+namespace Descriptor
+{
+	class DescriptorWriter;
+}
 
 class ImGuiTexture;
 
-class ColorAttachment
+class ColorAttachment final
 {
 public:
 	ColorAttachment() = default;
@@ -16,20 +22,25 @@ public:
 	ColorAttachment(ColorAttachment&&) = delete;
 	ColorAttachment& operator=(ColorAttachment&&) = delete;
 
-	void Init(const VulkanContext *vulkanContext, VkFormat format, VkClearColorValue clearColor);
-	void Cleanup(const VulkanContext* vulkanContext);
+	void Init(const VulkanContext *vulkanContext, VkFormat format, VkClearColorValue clearColor,const glm::ivec2& extent);
+	void Recreate(const VulkanContext *vulkanContext, VkClearColorValue clearColor, const glm::ivec2& extent);
+
+	void Cleanup(VkDevice device);
+	void Bind(Descriptor::DescriptorWriter& writer, int bindingNumber) const;
 
 	[[nodiscard]] VkRenderingAttachmentInfoKHR* GetRenderingAttachmentInfo();
+	[[nodiscard]] VkFormat* GetFormat();
 
 	void ResetImageLayout();
 	void TransitionToWrite(VkCommandBuffer commandBuffer);
 	void TransitionToRead(VkCommandBuffer commandBuffer);
+	void TransitionToGeneralResource(VkCommandBuffer commandBuffer);
+
 
 	void OnImGui();
 private:
+	void Setup(const VulkanContext *vulkanContext, VkClearColorValue clearColor, const glm::ivec2& extent);
 
-	void Setup(const VulkanContext *vulkanContext, VkClearColorValue clearColor);
-	void Recreate(const VulkanContext *vulkanContext, VkClearColorValue clearColor);
 
 	VkRenderingAttachmentInfoKHR m_ColorAttachmentInfo;
 

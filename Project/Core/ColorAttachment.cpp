@@ -4,29 +4,24 @@
 #include "Image/ImageLoader.h"
 #include "vulkanbase/VulkanUtil.h"
 
-void ColorAttachment::Init(const VulkanContext *vulkanContext, VkFormat format, VkClearColorValue clearColor)
+void ColorAttachment::Init(const VulkanContext *vulkanContext, VkFormat format, VkClearColorValue clearColor, const glm::ivec2 &extent)
 {
 	m_Format = format;
-
-	Setup(vulkanContext, clearColor);
-	SwapChain::OnSwapChainRecreated.AddLambda([&](const VulkanContext *vulkanContext)
-	{
-		Recreate(vulkanContext, clearColor);
-	});
+	Setup(vulkanContext, clearColor, extent);
 }
 
-void ColorAttachment::Recreate(const VulkanContext *vulkanContext, VkClearColorValue clearColor)
+void ColorAttachment::Recreate(const VulkanContext *vulkanContext, VkClearColorValue clearColor, const glm::ivec2 &extent)
 {
-	Cleanup(vulkanContext);
-	Setup(vulkanContext, clearColor);
+	Cleanup(vulkanContext->device);
+	Setup(vulkanContext, clearColor, extent);
 }
 
-void ColorAttachment::Cleanup(const VulkanContext *vulkanContext)
+void ColorAttachment::Cleanup(VkDevice device)
 {
-	vkDestroyImageView(vulkanContext->device, m_ImageView, nullptr);
+	vkDestroyImageView(device, m_ImageView, nullptr);
 	vmaDestroyImage(Allocator::VmaAllocator, m_Image, m_Memory);
 
-	if(m_Sampler != VK_NULL_HANDLE) vkDestroySampler(vulkanContext->device, m_Sampler, nullptr);
+	if(m_Sampler != VK_NULL_HANDLE) vkDestroySampler(device, m_Sampler, nullptr);
 
 	if(m_DebugTexture)
 	{
@@ -35,9 +30,20 @@ void ColorAttachment::Cleanup(const VulkanContext *vulkanContext)
 	}
 }
 
+//Only Bind if we will use tha attachment in a descriptor set -> If it will need a binding number
+void ColorAttachment::Bind(Descriptor::DescriptorWriter &writer, int bindingNumber) const
+{
+	writer.WriteImage(bindingNumber, m_ImageView, m_Sampler, m_CurrentImageLayout, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+}
+
 VkRenderingAttachmentInfoKHR* ColorAttachment::GetRenderingAttachmentInfo()
 {
 	return &m_ColorAttachmentInfo;
+}
+
+VkFormat* ColorAttachment::GetFormat()
+{
+	return &m_Format;
 }
 
 void ColorAttachment::ResetImageLayout()
@@ -69,6 +75,18 @@ void ColorAttachment::TransitionToRead(VkCommandBuffer commandBuffer)
 	m_CurrentImageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 }
 
+void ColorAttachment::TransitionToGeneralResource(VkCommandBuffer commandBuffer)
+{
+	tools::InsertImageMemoryBarrier(
+	   commandBuffer,
+	   m_Image,
+	   m_CurrentImageLayout,
+	   VK_IMAGE_LAYOUT_GENERAL,
+	   VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+
+	m_CurrentImageLayout = VK_IMAGE_LAYOUT_GENERAL;
+}
+
 void ColorAttachment::OnImGui()
 {
 	if(!m_DebugTexture.get())
@@ -80,11 +98,12 @@ void ColorAttachment::OnImGui()
 
 	m_DebugTexture->OnImGui();
 }
-void ColorAttachment::Setup(const VulkanContext *vulkanContext, VkClearColorValue clearColor)
+
+void ColorAttachment::Setup(const VulkanContext *vulkanContext, VkClearColorValue clearColor, const glm::ivec2 &extent)
 {
 	m_CurrentImageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-	Image::CreateImage(SwapChain::Extends().width, SwapChain::Extends().height,
+	Image::CreateImage(extent.x, extent.y,
 		1,
 		VK_SAMPLE_COUNT_1_BIT,
 		m_Format,

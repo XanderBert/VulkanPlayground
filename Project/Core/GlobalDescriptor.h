@@ -20,23 +20,18 @@ struct GlobalDescriptor
 	static void Init(VulkanContext* vulkanContext);
 
 
-	static void Bind(VulkanContext* vulkanContext, const VkCommandBuffer commandBuffer, const VkPipelineLayout& pipelineLayout);
+	static void Bind(VulkanContext* vulkanContext, VkCommandBuffer commandBuffer, const VkPipelineLayout& pipelineLayout, PipelineType pipelineType = PipelineType::Graphics);
 	static VkDescriptorSetLayout& GetLayout();
 	static void Cleanup(VkDevice device);
 
-    static inline void OnImGui()
-    {
-        ImGui::Begin("Global Descriptor");
-        LightManager::OnImGui();
-        ImGui::End();
-    }
+    static void OnImGui();
 
 private:
 	static inline VkDescriptorSetLayout m_GlobalDescriptorSetLayout{};
 	static inline VkDescriptorSet m_GlobalDescriptorSet{};
 	static inline DynamicBuffer m_GlobalBuffer{};
 
-	static inline uint16_t projectionHandle = 0;
+	static inline uint16_t inverseProjectionHandle = 0;
 	static inline uint16_t viewProjectionHandle = 0;
 	static inline uint16_t cameraHandle = 0;
 	static inline uint16_t cameraPlaneHandle = 0;

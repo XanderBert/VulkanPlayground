@@ -1,8 +1,11 @@
 #include "DynamicUniformBuffer.h"
 
+#define GLM_ENABLE_EXPERIMENTAL
 #include <algorithm>
 #include <glm/vec4.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/type_aligned.hpp>
+
 #include <vulkanbase/VulkanTypes.h>
 
 #include "Buffer.h"
@@ -10,6 +13,7 @@
 #include "DescriptorSet.h"
 #include "Core/VmaUsage.h"
 #include "Patterns/ServiceLocator.h"
+
 
 //---------------------------------------------------------------
 //-------------------------DynamicBuffer-------------------------
@@ -66,6 +70,18 @@ void DynamicBuffer::Cleanup(VkDevice device) const
     vmaDestroyBuffer(Allocator::VmaAllocator, m_UniformBuffer, m_UniformBuffersMemory);
 }
 
+uint16_t DynamicBuffer::AddVariable(const float value)
+{
+	constexpr uint8_t size = sizeof(float) / sizeof(float);
+    return Insert(&value, size);
+}
+
+uint16_t DynamicBuffer::AddVariable(const glm::vec2 &value)
+{
+	constexpr uint8_t size = sizeof(glm::vec2) / sizeof(float);
+	return Insert(glm::value_ptr(value), size);
+}
+
 uint16_t DynamicBuffer::AddVariable(const glm::vec4& value)
 {
 	constexpr uint8_t size = sizeof(glm::vec4) / sizeof(float);
@@ -76,6 +92,18 @@ uint16_t DynamicBuffer::AddVariable(const glm::mat4& value)
 {
 	constexpr uint8_t size = sizeof(glm::mat4) / sizeof(float);
 	return Insert(glm::value_ptr(value), size);
+}
+
+void DynamicBuffer::UpdateVariable(uint16_t handle, const float value)
+{
+	constexpr uint8_t size = sizeof(float) / sizeof(float);
+	Update(handle, &value, size);
+}
+
+void DynamicBuffer::UpdateVariable(uint16_t handle, const glm::vec2 &value)
+{
+	constexpr uint8_t size = sizeof(glm::vec2) / sizeof(float);
+	Update(handle, glm::value_ptr(value), size);
 }
 
 void DynamicBuffer::UpdateVariable(uint16_t handle, const glm::vec4 &value) {

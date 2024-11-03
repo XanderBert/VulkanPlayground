@@ -236,10 +236,7 @@ void VulkanBase::createInstance()
 		createInfo.pNext = nullptr;
 	}
 
-	if (vkCreateInstance(&createInfo, nullptr, &m_pContext->instance) != VK_SUCCESS)
-	{
-		throw std::runtime_error("failed to create instance!");
-	}
+	VulkanCheck(vkCreateInstance(&createInfo, nullptr, &m_pContext->instance), "Failed to create instance!");
 }
 
 std::vector<const char*> VulkanBase::getRequiredExtensions()

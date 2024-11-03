@@ -136,9 +136,29 @@ bool Material::IsCompute() const
     return m_PipelineType == PipelineType::Compute;
 }
 
+bool Material::IsSSAO() const
+{
+	return m_IsSSAO;
+}
+
+bool Material::IsComposite() const
+{
+	return m_IsComposite;
+}
+
+void Material::SetIsComposite(bool isComposite)
+{
+	m_IsComposite = isComposite;
+}
+
 void Material::SetDepthOnly(bool depthOnly)
 {
     m_IsDepthOnly = depthOnly;
+}
+
+void Material::SetSSAOPass(bool isSSAO)
+{
+	m_IsSSAO = isSSAO;
 }
 
 void Material::CreatePipeline()

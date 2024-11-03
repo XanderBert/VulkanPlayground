@@ -31,8 +31,9 @@ public:
 
     static void Init();
 
-    static float GetNearPlane();
-    static float GetFarPlane();
+	[[nodiscard]] static glm::vec2 GetNearPlaneSizeAtDistance(float distance);
+    [[nodiscard]] static float GetNearPlane();
+    [[nodiscard]] static float GetFarPlane();
 
     static glm::mat4 GetViewMatrix();
     static glm::mat4 GetInvertedYProjectionMatrix();
@@ -57,6 +58,7 @@ public:
     static void Update();
 
     static void SetAspectRatio(float width, float height);
+	static float GetAspectRatio();
 private:
     inline static glm::vec2 m_DragStartPos = { 0.f, 0.f };
 
@@ -68,7 +70,7 @@ private:
     inline static glm::vec3 m_Target = { 0.f, -2.f, 0.f };
     inline static float m_MovementSmoothness = 0.02f;
 
-    inline static float m_NearPlane = 0.1f;
+    inline static float m_NearPlane = .1f;
     inline static float m_FarPlane = 1000.f;
 
     inline static glm::vec3 m_Forward = MathConstants::FORWARD;

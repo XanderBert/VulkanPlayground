@@ -20,6 +20,8 @@ enum class BufferType
     StorageBuffer = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
 };
 
+
+
 //TODO: pad the dynamic buffer to 256 bytes
 //TODO: return actual pointers to the data instead of the handle, Or make a handle struct
 class DynamicBuffer final
@@ -38,8 +40,13 @@ public:
     void FullRebind(int bindingNumber, const VkDescriptorSet& descriptorSet, Descriptor::DescriptorWriter& descriptorWriter, VulkanContext* vulkanContext) const;
     void Cleanup(VkDevice device) const;
 
+	uint16_t AddVariable(const float value);
+	uint16_t AddVariable(const glm::vec2& value);
 	uint16_t AddVariable(const glm::vec4& value);
 	uint16_t AddVariable(const glm::mat4& matrix);
+
+	void UpdateVariable(uint16_t handle, const float value);
+	void UpdateVariable(uint16_t handle, const glm::vec2& value);
 	void UpdateVariable(uint16_t handle, const glm::mat4& matrix);
 	void UpdateVariable(uint16_t handle, const glm::vec4& value);
 

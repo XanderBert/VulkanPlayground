@@ -132,6 +132,10 @@ public:
 		m_NeedsRecreation = false;
 	}
 
+
+
+	static void SetImageIndex(uint32_t index) { m_ImageIndex = index; }
+	static void Bind(Descriptor::DescriptorWriter& descriptorWriter, int binding);
 private:
 	struct SwapChainSupportDetails
 	{
@@ -140,7 +144,7 @@ private:
 		std::vector<VkPresentModeKHR> presentModes;
 	};
 
-
+	static inline uint32_t m_ImageIndex = 0;
 
 	static SwapChainSupportDetails GetSupportDetails(VkPhysicalDevice device)
 	{
@@ -242,3 +246,8 @@ private:
 	inline static std::vector<VkImage> m_SwapChainImages;
 	inline static std::vector<VkImageView> m_SwapChainImageViews;
 };
+
+inline void SwapChain::Bind(Descriptor::DescriptorWriter &descriptorWriter, int binding)
+{
+	descriptorWriter.WriteImage(binding, m_SwapChainImageViews[m_ImageIndex] , VK_NULL_HANDLE, VK_IMAGE_LAYOUT_GENERAL, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
+}

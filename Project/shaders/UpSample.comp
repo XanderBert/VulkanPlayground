@@ -1,0 +1,84 @@
+#version 450
+
+layout(push_constant) uniform constants {
+    mat4 viewMatrix;
+} push;
+
+layout(set = 0, binding = 0) uniform UniformBufferObject {
+    mat4 viewProjection;
+    vec4 viewPos;
+    vec4 cameraPlanes;  // x = near, y = far
+    vec4 lightPos;
+    vec4 lightColor;
+    mat4 inverseProjection;
+} ubo;
+
+layout(set = 1, binding = 0) uniform sampler2D normalGBuffer;
+layout(set = 1, binding = 1) uniform sampler2D depthGBuffer;
+layout(set = 1, binding = 2) uniform sampler2D downSampledSSAO;
+layout(set = 1, binding = 3, rgba8) uniform image2D ssaoOutput;
+
+layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
+
+float DepthNDCToView(float depthNdc) {
+    float near = ubo.cameraPlanes.x;
+    float far = ubo.cameraPlanes.y;
+    depthNdc = depthNdc * 2.0 - 1.0;
+    return (2.0 * near * far) / (far + near - depthNdc * (far - near));
+}
+
+void main() {
+    ivec2 texCoord = ivec2(gl_GlobalInvocationID.xy);
+    vec2 texCoordNormalized = (vec2(texCoord) + 0.5) / vec2(imageSize(ssaoOutput));
+
+    // Coordinates for bilinear sampling
+    vec2 texCoord00 = texCoordNormalized;
+    vec2 texCoord10 = texCoordNormalized + vec2(1.0 / textureSize(downSampledSSAO, 0).x, 0.0);
+    vec2 texCoord01 = texCoordNormalized + vec2(0.0, 1.0 / textureSize(downSampledSSAO, 0).y);
+    vec2 texCoord11 = texCoordNormalized + vec2(1.0 / textureSize(downSampledSSAO, 0).x, 1.0 / textureSize(downSampledSSAO, 0).y);
+
+    // Depth calculations
+    float depth = texture(depthGBuffer, texCoordNormalized).r;
+    depth = DepthNDCToView(depth);
+
+    vec4 depths_x4 = textureGather(downSampledSSAO, texCoordNormalized, 0);
+    vec4 depthDiffs = abs(depth - depths_x4);
+
+    // SSAO calculations using neighboring samples
+    vec4 ssao_x4 = textureGather(downSampledSSAO, texCoordNormalized, 0);
+
+    // Calculate weights based on distance from center pixel
+    vec2 imageCoord = texCoordNormalized * vec2(imageSize(ssaoOutput));
+    vec2 fractional = fract(imageCoord);
+
+    float a = (1.0 - fractional.x) * (1.0 - fractional.y);
+    float b = fractional.x * (1.0 - fractional.y);
+    float c = (1.0 - fractional.x) * fractional.y;
+    float d = fractional.x * fractional.y;
+
+    vec4 ssao = vec4(0.0);
+    float weightsSum = 0.0;
+
+    // Weighted SSAO accumulation
+    float weight00 = a / (depthDiffs.x + 0.001);
+    ssao += weight00 * ssao_x4.x;
+    weightsSum += weight00;
+
+    float weight10 = b / (depthDiffs.y + 0.001);
+    ssao += weight10 * ssao_x4.y;
+    weightsSum += weight10;
+
+    float weight01 = c / (depthDiffs.z + 0.001);
+    ssao += weight01 * ssao_x4.z;
+    weightsSum += weight01;
+
+    float weight11 = d / (depthDiffs.w + 0.001);
+    ssao += weight11 * ssao_x4.w;
+    weightsSum += weight11;
+
+    // Normalize SSAO output by total weight
+    ssao /= weightsSum;
+
+    // Store the result in the SSAO output image
+    imageStore(ssaoOutput, texCoord, vec4(ssao));
+}

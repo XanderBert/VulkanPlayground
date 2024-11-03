@@ -23,7 +23,7 @@
 #include "Mesh.h"
 #include "Vertex.h"
 #include "Scene/Scene.h"
-
+#include "Scene/SceneManager.h"
 
 
 namespace GLTFLoader {
@@ -44,7 +44,7 @@ namespace GLTFLoader {
         fastgltf::Asset &gltf = gltf_opt.value();
 
         // Create the materials
-        const size_t startMaterial = MaterialManager::GetMaterials().size();
+        //const size_t startMaterial = MaterialManager::GetMaterials().size();
         CreateMaterials(gltf, vulkanContext);
 
 
@@ -155,9 +155,11 @@ namespace GLTFLoader {
             //From a shared index and vertex buffer?
 
             // Get the correct material
-            size_t materialIndex = startMaterial + submeshMaterialIndex;
-            // Create the Mesh
-            std::unique_ptr<Mesh> newmesh = std::make_unique<Mesh>(vertices, indices, MaterialManager::GetMaterials()[materialIndex], MaterialManager::GetMaterials()[0], mesh.name.c_str(), 0, 0);
+            //size_t materialIndex = startMaterial + submeshMaterialIndex;
+
+        	// Create the Mesh
+        	auto depthMaterial = MaterialManager::GetMaterial("DepthOnlyMaterial");
+            std::unique_ptr<Mesh> newmesh = std::make_unique<Mesh>(vertices, indices, MaterialManager::GetMaterial(m_CreatedMaterialNames[submeshMaterialIndex]), depthMaterial, mesh.name.c_str(), 0, 0);
             createdMeshes.push_back(newmesh.get());
             scene->AddMesh(std::move(newmesh));
         }
@@ -247,6 +249,9 @@ namespace GLTFLoader {
 
     void CreateMaterials(const fastgltf::Asset &gltf, VulkanContext* vulkanContext)
     {
+    	m_CreatedMaterialNames.clear();
+
+
         // Load Textures
         std::vector<std::variant<std::filesystem::path, ImageInMemory>> images;
 
@@ -308,7 +313,9 @@ namespace GLTFLoader {
         for (const fastgltf::Material &mat: gltf.materials)
         {
             auto newMaterial = MaterialManager::CreateMaterial(vulkanContext, "shader.vert", "PBR_Graypacked.frag", mat.name.c_str());
-            auto *ubo = newMaterial->GetDescriptorSet()->AddBuffer(0, DescriptorType::UniformBuffer);
+        	m_CreatedMaterialNames.push_back(mat.name.c_str());
+
+        	auto *ubo = newMaterial->GetDescriptorSet()->AddBuffer(0, DescriptorType::UniformBuffer);
             ubo->AddVariable(glm::vec4{1});
             ubo->AddVariable(glm::vec4{1});
 
@@ -318,7 +325,7 @@ namespace GLTFLoader {
                 size_t img = gltf.textures[mat.pbrData.baseColorTexture.value().textureIndex].imageIndex.value();
                 newMaterial->GetDescriptorSet()->AddTexture(1, images[img], vulkanContext, ColorType::SRGB);
             }else{
-                newMaterial->GetDescriptorSet()->AddTexture(1, "Assets/white.ktx", vulkanContext, ColorType::LINEAR);
+                newMaterial->GetDescriptorSet()->AddTexture(1, "white.ktx", vulkanContext, ColorType::LINEAR);
             }
 
             // Load Normal
@@ -327,7 +334,7 @@ namespace GLTFLoader {
                 newMaterial->GetDescriptorSet()->AddTexture(2, images[img], vulkanContext, ColorType::LINEAR);
             }else
             {
-                newMaterial->GetDescriptorSet()->AddTexture(2, "Assets/white.ktx", vulkanContext, ColorType::LINEAR);
+                newMaterial->GetDescriptorSet()->AddTexture(2, "white.ktx", vulkanContext, ColorType::LINEAR);
             }
 
             // Load graypacked metal/roughness
@@ -338,12 +345,11 @@ namespace GLTFLoader {
                 newMaterial->GetDescriptorSet()->AddTexture(3, images[img], vulkanContext, ColorType::LINEAR);
             }else
             {
-                newMaterial->GetDescriptorSet()->AddTexture(3, "Assets/white.ktx", vulkanContext, ColorType::LINEAR);
+                newMaterial->GetDescriptorSet()->AddTexture(3, "white.ktx", vulkanContext, ColorType::LINEAR);
             }
 
-            // TODO: Scene->GetCubeMap();
             newMaterial->GetDescriptorSet()->AddTexture(4, "cubemap_vulkan.ktx", vulkanContext, ColorType::SRGB, TextureType::TEXTURE_CUBE);
-            newMaterial->CreatePipeline();
+        	newMaterial->CreatePipeline();
         }
     }
 

@@ -4,10 +4,15 @@
 #include <variant>
 
 
+
+
+#include "ColorAttachment.h"
 #include "Descriptor.h"
 #include "DynamicUniformBuffer.h"
 #include "Logger.h"
 #include "Image/Texture.h"
+
+
 
 
 enum class PipelineType;
@@ -32,13 +37,23 @@ public:
     DescriptorSet(DescriptorSet&&) = delete;
     DescriptorSet& operator=(DescriptorSet&&) = delete;
 
+	//=========UBO=========
     DynamicBuffer* AddBuffer(int binding, DescriptorType type);
     [[nodiscard]] DynamicBuffer* GetBuffer(int binding);
 
+	//=========Texture=========
     void AddTexture(int binding, const std::variant<std::filesystem::path,ImageInMemory>& pathOrImage, VulkanContext* pContext, ColorType colorType = ColorType::LINEAR, TextureType textureType = TextureType::TEXTURE_2D);
-    void AddDepthTexture(int binding);
-    Texture* CreateOutputTexture(int binding,VulkanContext* pContext, const glm::ivec2& extent, ColorType colorType = ColorType::LINEAR, TextureType textureType = TextureType::TEXTURE_2D);
-    [[nodiscard]] std::vector<Texture*> GetTextures();
+    void AddTexture(int binding, std::shared_ptr<Texture> texture, VulkanContext* pContext);
+	void AddGBuffer(int depthBinding, int normalBinding);
+
+
+
+	std::shared_ptr<Texture> CreateOutputTexture(int binding,VulkanContext* pContext, const glm::ivec2& extent, ColorType colorType = ColorType::LINEAR, TextureType textureType = TextureType::TEXTURE_2D);
+    [[nodiscard]] std::vector<std::shared_ptr<Texture>> GetTextures();
+
+	//TODO, Now a material owns the attachments -> It is a pass that should own the attachments
+	//=========Attachments=========
+	void AddColorAttachment(ColorAttachment* colorAttachment, int binding);
 
     void Initialize(const VulkanContext* pContext);
     void Bind(VulkanContext *pContext, const VkCommandBuffer& commandBuffer, const VkPipelineLayout & pipelineLayout, int descriptorSetIndex, PipelineType pipelineType, bool fullRebind = false);
@@ -57,8 +72,13 @@ private:
 
 
     std::unordered_map<int, DynamicBuffer> m_Buffers{};
-    std::unordered_map<int, std::unique_ptr<Texture>> m_Textures{};
+    std::unordered_map<int, std::shared_ptr<Texture>> m_Textures{};
+	std::unordered_map<int, ColorAttachment*> m_ColorAttachments{};
+
+	//G Buffer Bindings
+	//TODO: clean this up
     int m_DepthTextureBinding{-1};
+	int m_NormalTextureBinding{-1};
 
     VkDescriptorSetLayout m_DescriptorSetLayout{};
     VkDescriptorSet m_DescriptorSet{};

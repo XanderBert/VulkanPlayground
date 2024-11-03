@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <ranges>
 #include <vector>
 #include "Material.h"
 #include "Patterns/ServiceLocator.h"
@@ -14,6 +15,16 @@ public:
 	MaterialManager& operator=(const MaterialManager&) = delete;
 	MaterialManager(MaterialManager&&) = delete;
 	MaterialManager& operator=(MaterialManager&&) = delete;
+
+	static std::shared_ptr<Material> GetMaterial(const std::string& materialName)
+	{
+		return m_Materials[materialName];
+	}
+
+	static size_t GetSize()
+	{
+		return m_Materials.size();
+	}
 
 	static void OnImGui()
 	{
@@ -44,39 +55,36 @@ public:
 
 
 		ImGui::Begin("Active Materials");
-		ImGui::Text("Materials: %d", static_cast<int>(m_ActiveMaterials.size()));
-		for (const auto& material : m_ActiveMaterials)
+		ImGui::Text("Materials: %d", static_cast<int>(m_Materials.size()));
+		for (const auto& material : m_Materials)
 		{
-			if(ImGui::CollapsingHeader(material->GetMaterialName().c_str()))
+			if(ImGui::CollapsingHeader(material.first.c_str()))
 			{
-				material->OnImGui();
+				material.second->OnImGui();
 			}
-			
 		}
 		ImGui::End();
 	}
 
 	static std::shared_ptr<Material> CreateMaterial(VulkanContext* vulkanContext, const std::string& materialName)
 	{
-		m_ActiveMaterials.push_back(std::make_shared<Material>(vulkanContext, materialName));
-	    m_MaterialNames.push_back(materialName);
-		return m_ActiveMaterials.back();
+		m_Materials.insert({materialName, std::make_shared<Material>(vulkanContext, materialName)});
+		return m_Materials[materialName];
 	}
 
 	static std::shared_ptr<Material> CreateMaterial(VulkanContext* vulkanContext, const std::string& vertexShaderName, const std::string& fragmentShaderName, const std::string& materialName)
 	{
-		m_ActiveMaterials.push_back(std::make_shared<Material>(vulkanContext, materialName));
+		auto back = CreateMaterial(vulkanContext, materialName);
 
-		m_ActiveMaterials.back()->AddShader(vertexShaderName, ShaderType::VertexShader);
-		m_ActiveMaterials.back()->AddShader(fragmentShaderName, ShaderType::FragmentShader);
+		back->AddShader(vertexShaderName, ShaderType::VertexShader);
+		back->AddShader(fragmentShaderName, ShaderType::FragmentShader);
 
-	    m_MaterialNames.push_back(materialName);
-		return m_ActiveMaterials.back();
+		return back;
 	}
 
 	static void CreatePipelines()
 	{
-		for (const auto& material : m_ActiveMaterials)
+		for (const auto &material : m_Materials | std::views::values)
 		{
 			material->CreatePipeline();
 		}
@@ -86,7 +94,7 @@ public:
 
 	static void Cleanup()
 	{
-		for (const auto& material : m_ActiveMaterials)
+		for (const auto &material : m_Materials | std::views::values)
 		{
 			material->CleanUp();
 		}
@@ -94,22 +102,41 @@ public:
 
     static std::vector<std::string> GetMaterialNames()
     {
-	    return m_MaterialNames;
+		std::vector<std::string> names = {};
+		names.reserve(m_Materials.size());
+
+		for (const auto& material : m_Materials)
+		{
+			names.push_back(material.first);
+		}
+
+		return names;
 	}
 
     static std::vector<std::shared_ptr<Material>> GetMaterials()
     {
-	    return m_ActiveMaterials;
+		std::vector<std::shared_ptr<Material>> materials = {};
+		materials.reserve(m_Materials.size());
+
+		for (const auto& material : m_Materials)
+		{
+			materials.push_back(material.second);
+		}
+
+	    return materials;
 	}
 
     //TODO This needs to be moved to a more appropriate place
     static bool ImGuiMaterialGetter(void* data, int idx, const char** out_text)
     {
-	    *out_text = m_MaterialNames[idx].c_str();
-	    return true;
+		auto names = GetMaterialNames();
+
+		if (idx < 0 || idx >= static_cast<int>(names.size())) return false;
+
+		*out_text = names[idx].c_str();
+		return true;
 	}
 
 private:
-    inline static std::vector<std::string> m_MaterialNames;
-	inline static std::vector<std::shared_ptr<Material>> m_ActiveMaterials;
+	inline static std::unordered_map<std::string, std::shared_ptr<Material>> m_Materials;
 };

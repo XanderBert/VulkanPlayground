@@ -49,7 +49,13 @@ public:
 
     [[nodiscard]] bool GetDepthOnly() const;
     [[nodiscard]] bool IsCompute() const;
+	[[nodiscard]] bool IsSSAO() const;
+	[[nodiscard]] bool IsComposite() const;
+
     void SetDepthOnly(bool depthOnly);
+	void SetSSAOPass(bool isSSAO);
+	void SetIsComposite(bool isComposite);
+
 private:
 	friend class MaterialManager;
 
@@ -67,7 +73,11 @@ private:
 
     VkCullModeFlags m_CullMode = VK_CULL_MODE_BACK_BIT;
 
+	//TODO: Cleanup
     bool m_IsDepthOnly = false;
+	bool m_IsSSAO = false;
+	bool m_IsComposite = false;
+
 
     PipelineType m_PipelineType = PipelineType::Graphics;
 };

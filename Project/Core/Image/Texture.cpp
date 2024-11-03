@@ -74,7 +74,7 @@ void Texture::ProperBind(int bindingNumber, Descriptor::DescriptorWriter &descri
 }
 
 
-void Texture::Cleanup(VkDevice device) const
+void Texture::Cleanup(VkDevice device)
 {
 	if (m_TextureType != TextureType::TEXTURE_CUBE)
 	{
@@ -89,6 +89,8 @@ void Texture::Cleanup(VkDevice device) const
 
 	vkDestroySampler(device, m_Sampler, nullptr);
 	vkDestroyImageView(device, m_ImageView, nullptr);
+
+	m_IsPendingKill = true;
 }
 
 void Texture::InitTexture(const TextureData &loadedImage)
@@ -180,14 +182,14 @@ void Texture::InitEmptyTexture()
 	CommandBuffer commandBuffer{};
 	CommandBufferManager::CreateCommandBufferSingleUse(m_pContext, commandBuffer);
 
-	TransitionToWritableImageLayout(commandBuffer.Handle);
+	TransitionToGeneralImageLayout(commandBuffer.Handle);
 
 	CommandBufferManager::EndCommandBufferSingleUse(m_pContext, commandBuffer);
 
 	// Setup the ImGui texture if not a cubemap
 	if (m_TextureType != TextureType::TEXTURE_CUBE)
 	{
-		ImVec2 size = ImVec2(m_ImageSize.x / 5.0f, m_ImageSize.y / 5.0f);
+		ImVec2 size = ImVec2(m_ImageSize.x / 2.0f, m_ImageSize.y / 2.0f);
 		m_ImGuiTexture = std::make_unique<ImGuiTexture>(m_Sampler, m_ImageView, size);
 	}
 }
@@ -242,7 +244,8 @@ void Texture::TransitionAndCopyImageBuffer(VkBuffer srcBuffer)
 	m_BindImageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 }
 
-void Texture::TransitionToWritableImageLayout(VkCommandBuffer commandBuffer)
+//TODO Rename to TransitionToGeneralResource
+void Texture::TransitionToGeneralImageLayout(VkCommandBuffer commandBuffer)
 {
 	VkImageSubresourceRange subresourceRange = {};
 	subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -289,6 +292,11 @@ void Texture::ClearImage(VkCommandBuffer commandBuffer)
 	vkCmdClearColorImage(commandBuffer, m_Image, m_BindImageLayout, &clearColor, 1, &subresourceRange);
 }
 
+void Texture::SetOutputTexture(bool isOutputTexture)
+{
+	m_IsOutputTexture = isOutputTexture;
+}
+
 bool Texture::IsOutputTexture() const
 {
 	return m_IsOutputTexture;
@@ -297,6 +305,11 @@ bool Texture::IsOutputTexture() const
 DescriptorImageType Texture::GetDescriptorImageType() const
 {
 	return m_DescriptorImageType;
+}
+
+bool Texture::IsPendingKill() const
+{
+	return m_IsPendingKill;
 }
 
 

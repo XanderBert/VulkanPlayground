@@ -1,10 +1,11 @@
+#include <imgui_impl_vulkan.h>
 #include <set>
 #include "Core/SwapChain.h"
-#include <imgui_impl_vulkan.h>
 
 #include "Core/ColorAttachment.h"
 #include "Core/DepthResource.h"
 #include "Core/GBuffer.h"
+#include "Core/GlobalDescriptor.h"
 #include "Mesh/MaterialManager.h"
 #include "Scene/SceneManager.h"
 #include "vulkanbase/VulkanBase.h"
@@ -12,6 +13,8 @@
 
 void VulkanBase::drawFrame(uint32_t imageIndex) const
 {
+	SwapChain::SetImageIndex(imageIndex);
+
 	VkExtent2D& swapChainExtent = SwapChain::Extends();
 	Window::SetViewportCmd(commandBuffer.Handle);
 
@@ -36,55 +39,123 @@ void VulkanBase::drawFrame(uint32_t imageIndex) const
 	vkCmdEndRenderingKHR(commandBuffer.Handle);
 
 
-    // ======================= Compute SSAO Pass ============================
+    // ======================= Downsample Depth Pass ============================
 
     // Transition depth buffer to be used in the compute pass
 	GBuffer::GetDepthAttachment()->TransitionToGeneralResource(commandBuffer.Handle);
+	GBuffer::GetColorAttachmentNormal()->TransitionToGeneralResource(commandBuffer.Handle);
+
+	// Execute the compute pass
 	SceneManager::ExecuteComputePass(commandBuffer.Handle);
 
-
-
-
-    // ======================= Final Color Rendering Pass ============================
 	//Transition depth buffer to be used in the color pass
 	GBuffer::GetColorAttachmentNormal()->TransitionToRead(commandBuffer.Handle);
 	GBuffer::GetDepthAttachment()->TransitionToShaderRead(commandBuffer.Handle);
 
-	//TODO: Move to swapchain
-    VkRenderingAttachmentInfoKHR colorAttachmentInfo{};
-    colorAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
-    colorAttachmentInfo.pNext = VK_NULL_HANDLE;
-    colorAttachmentInfo.imageView = SwapChain::ImageViews()[imageIndex];
-    colorAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    colorAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    colorAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    colorAttachmentInfo.clearValue = {{0.83f, 0.75f, 0.83f, 1.0f}};
 
 
+
+
+	// ======================= Compute SSAO Pass ============================
+	// auto ssaoMaterial = MaterialManager::GetMaterial("SSAOMaterial");
+	// auto color = ssaoMaterial->GetDescriptorSet()->GetColorAttachment("SSAO");
+	// color->ResetImageLayout();
+	// color->TransitionToWrite(commandBuffer.Handle);
+	//
+	// VkRenderingInfoKHR ssaoRenderInfo{};
+	// ssaoRenderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
+	// ssaoRenderInfo.renderArea = { 0, 0, swapChainExtent };
+	// ssaoRenderInfo.layerCount = 1;
+	// ssaoRenderInfo.colorAttachmentCount = 1;
+	// ssaoRenderInfo.pColorAttachments = color->GetRenderingAttachmentInfo();
+	// ssaoRenderInfo.pDepthAttachment = GBuffer::GetDepthAttachment()->GetRenderingAttachmentInfo();
+	// ssaoRenderInfo.pStencilAttachment = VK_NULL_HANDLE;
+	//
+	// vkCmdBeginRenderingKHR(commandBuffer.Handle, &ssaoRenderInfo);
+	// SceneManager::ComputeSSAO(commandBuffer.Handle);
+	// vkCmdEndRenderingKHR(commandBuffer.Handle);
+	//
+	// color->TransitionToRead(commandBuffer.Handle);
+
+
+
+
+
+
+
+	// ======================= Final Color Rendering Pass ============================
     VkRenderingInfoKHR renderInfo{};
     renderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
     renderInfo.renderArea = { 0, 0, swapChainExtent };
     renderInfo.layerCount = 1;
     renderInfo.colorAttachmentCount = 1;
-    renderInfo.pColorAttachments = &colorAttachmentInfo;
+    renderInfo.pColorAttachments = GBuffer::GetAlbedoAttachment()->GetRenderingAttachmentInfo();
     renderInfo.pDepthAttachment = GBuffer::GetDepthAttachment()->GetRenderingAttachmentInfo();
     renderInfo.pStencilAttachment = VK_NULL_HANDLE;
 
 
-	//TODO: Move to swapchain
-    tools::InsertImageMemoryBarrier(
-            commandBuffer.Handle,
-            SwapChain::Image(static_cast<uint8_t>(imageIndex)),
-            VK_IMAGE_LAYOUT_UNDEFINED,
-            VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-            VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 });
 
 
+	GBuffer::GetAlbedoAttachment()->ResetImageLayout();
+	GBuffer::GetAlbedoAttachment()->TransitionToWrite(commandBuffer.Handle);
 
     vkCmdBeginRenderingKHR(commandBuffer.Handle, &renderInfo);
     SceneManager::Render(commandBuffer.Handle);
-    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer.Handle);
     vkCmdEndRenderingKHR(commandBuffer.Handle);
+
+	//Here we write to albedo
+	//Albedo should transition to read
+	GBuffer::GetAlbedoAttachment()->TransitionToRead(commandBuffer.Handle);
+
+
+	//TODO: Move to swapchain
+	tools::InsertImageMemoryBarrier(
+			commandBuffer.Handle,
+			SwapChain::Image(static_cast<uint8_t>(imageIndex)),
+			VK_IMAGE_LAYOUT_UNDEFINED,
+			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+			VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	//TODO: Move to swapchain
+	VkRenderingAttachmentInfoKHR colorAttachmentInfo{};
+	colorAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
+	colorAttachmentInfo.pNext = VK_NULL_HANDLE;
+	colorAttachmentInfo.imageView = SwapChain::ImageViews()[imageIndex];
+	colorAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	colorAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	colorAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	colorAttachmentInfo.clearValue = {{0.83f, 0.75f, 0.83f, 1.0f}};
+
+	VkRenderingInfoKHR presentInfo{};
+	presentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
+	presentInfo.renderArea = { 0, 0, swapChainExtent };
+	presentInfo.layerCount = 1;
+	presentInfo.colorAttachmentCount = 1;
+	presentInfo.pColorAttachments = &colorAttachmentInfo;
+	presentInfo.pDepthAttachment = GBuffer::GetDepthAttachment()->GetRenderingAttachmentInfo();
+	presentInfo.pStencilAttachment = VK_NULL_HANDLE;
+
+	vkCmdBeginRenderingKHR(commandBuffer.Handle, &presentInfo);
+	SceneManager::RenderPresent(commandBuffer.Handle);
+	//Take Albedo and SSAO as input -> Render to SwapChain
+	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer.Handle);
+	vkCmdEndRenderingKHR(commandBuffer.Handle);
 
 
 	//TODO: Move to swapchain

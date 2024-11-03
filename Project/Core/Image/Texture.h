@@ -58,14 +58,19 @@ public:
 
 	void OnImGui();
 	void ProperBind(int bindingNumber, Descriptor::DescriptorWriter &descriptorWriter) const;
-	void Cleanup(VkDevice device) const;
+	void Cleanup(VkDevice device);
 
-	void TransitionToWritableImageLayout(VkCommandBuffer commandBuffer);
+	void TransitionToGeneralImageLayout(VkCommandBuffer commandBuffer);
 	void TransitionToReadableImageLayout(VkCommandBuffer commandBuffer);
+	//void TransitionToWriteableImageLayout(VkCommandBuffer commandBuffer);
+
 	void ClearImage(VkCommandBuffer commandBuffer);
 
+	void SetOutputTexture(bool isOutputTexture);
 	[[nodiscard]] bool IsOutputTexture() const;
 	[[nodiscard]] DescriptorImageType GetDescriptorImageType() const;
+
+	[[nodiscard]] bool IsPendingKill() const;
 
 private:
 	void InitTexture(const TextureData &loadedImage);
@@ -99,4 +104,5 @@ private:
 	std::unique_ptr<ImGuiTexture> m_ImGuiTexture{};
 
 	bool m_IsOutputTexture{false};
+	bool m_IsPendingKill{false};
 };

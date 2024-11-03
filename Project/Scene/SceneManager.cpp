@@ -3,6 +3,12 @@
 //
 
 #include "SceneManager.h"
+
+void SceneManager::RenderPresent(VkCommandBuffer commandBuffer)
+{
+	m_ActiveScene->AlbedoRender(commandBuffer);
+}
+
 void SceneManager::Render(VkCommandBuffer commandBuffer) {
     m_ActiveScene->Render(commandBuffer);
 }
@@ -11,6 +17,7 @@ void SceneManager::RenderDepth(VkCommandBuffer commandBuffer)
 {
     m_ActiveScene->RenderDepth(commandBuffer);
 }
+
 
 void SceneManager::ExecuteComputePass(VkCommandBuffer commandBuffer){
     m_ActiveScene->ExecuteComputePass(commandBuffer);

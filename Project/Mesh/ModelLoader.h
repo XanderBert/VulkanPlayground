@@ -23,6 +23,7 @@ namespace ObjLoader
 namespace GLTFLoader
 {
     void LoadGLTF(std::string_view filePath, Scene* scene, VulkanContext *vulkanContext);
+	inline static std::vector<std::string> m_CreatedMaterialNames;
 
     std::optional<fastgltf::Asset> Load(std::string_view filePath);
     void CreateMaterials(const fastgltf::Asset& gltf, VulkanContext* vulkanContext);

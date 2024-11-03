@@ -40,15 +40,20 @@ void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline,
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR,
         .colorAttachmentCount = 1,
-        .pColorAttachmentFormats = &SwapChain::Format(),
+        .pColorAttachmentFormats = GBuffer::GetAlbedoAttachment()->GetFormat(),
         .depthAttachmentFormat = GBuffer::GetDepthAttachment()->GetFormat(),
     };
 
+	//TODO: Clean this the hell up
     if(material->GetDepthOnly())
     {
-        pipelineRenderingCreateInfo.colorAttachmentCount = 0;
-        pipelineRenderingCreateInfo.pColorAttachmentFormats = VK_NULL_HANDLE;
+        pipelineRenderingCreateInfo.pColorAttachmentFormats = GBuffer::GetColorAttachmentNormal()->GetFormat();
     }
+
+	if(material->IsComposite())
+	{
+		pipelineRenderingCreateInfo.pColorAttachmentFormats = &SwapChain::Format();
+	}
 
 
     const VkPipelineRasterizationStateCreateInfo rasterizer
@@ -74,18 +79,10 @@ void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline,
         .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
         .logicOpEnable = VK_FALSE,
         .logicOp = VK_LOGIC_OP_COPY,
-        .blendConstants = { 0.0f, 0.0f, 0.0f, 0.0f }
+    	.attachmentCount = 1,
+		.pAttachments = &colorBlendAttachment,
+        .blendConstants = { 0.0f, 0.0f, 0.0f, 0.0f },
     };
-
-    if(material->GetDepthOnly())
-    {
-        colorBlending.attachmentCount = 0;
-        colorBlending.pAttachments = VK_NULL_HANDLE;
-    }else
-    {
-        colorBlending.attachmentCount = 1;
-        colorBlending.pAttachments = &colorBlendAttachment;
-    }
 
 	const std::vector dynamicStates =
 	{

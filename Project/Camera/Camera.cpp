@@ -20,6 +20,14 @@ void Camera::Init()
     });
 }
 
+glm::vec2 Camera::GetNearPlaneSizeAtDistance(float distance)
+{
+	glm::vec2 nearPlaneSize{};
+	nearPlaneSize.y = 2.0f * distance * glm::tan( 0.5f * m_Fov);
+	nearPlaneSize.x = (m_Width / m_Height) * nearPlaneSize.y;
+	return nearPlaneSize;
+}
+
 float Camera::GetNearPlane() { return m_NearPlane; }
 float Camera::GetFarPlane() { return m_FarPlane; }
 glm::mat4 Camera::GetViewMatrix()
@@ -158,4 +166,9 @@ void Camera::SetAspectRatio(float width, float height)
 {
     m_Width = width;
     m_Height = height;
+}
+
+float Camera::GetAspectRatio()
+{
+	return m_Width / m_Height;
 }

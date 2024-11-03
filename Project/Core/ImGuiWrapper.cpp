@@ -138,8 +138,9 @@ void ImGuiWrapper::NewFrame()
             else
             {
                 //TODO: move to  OBJLoader::Load("FlightHelmet.obj", this, vulkanContext);
-                std::shared_ptr<Material> baseMaterial = MaterialManager::GetMaterials()[1];
-                std::shared_ptr<Material> depthMaterial = MaterialManager::GetMaterials()[0];
+                std::shared_ptr<Material> baseMaterial = MaterialManager::GetMaterial("PBR_Material");
+                std::shared_ptr<Material> depthMaterial = MaterialManager::GetMaterial("DepthOnlyMaterial");
+
                 std::unique_ptr<Mesh> newMesh = std::make_unique<Mesh>(filePathName, baseMaterial,depthMaterial,  filePathName);
                 SceneManager::GetActiveScene()->AddMesh(std::move(newMesh));
             }

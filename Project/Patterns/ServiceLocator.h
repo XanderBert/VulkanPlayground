@@ -1,9 +1,9 @@
 #pragma once 
+#include <cassert>
 #include <memory>
 #include <typeindex>
 #include <typeinfo>
 #include <unordered_map>
-#include <cassert>
 
 #include "Core/Logger.h"
 #include "vulkanbase/VulkanTypes.h"

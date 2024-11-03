@@ -1,67 +1,88 @@
 #version 450
 
-layout(push_constant) uniform constants
-{
-    mat4 model;
+#define PI              3.1415f
+#define TWO_PI          (2.0f * PI)
+#define GOLDEN_ANGLE    2.4f
+#define SAMPLES_COUNT   16
+#define CONTRAST        2.0f
+
+layout(push_constant) uniform constants {
+    mat4 viewMatrix;
 } push;
 
-layout(set = 0, binding = 0) uniform UniformBufferObject
-{
-    mat4 viewProjection;
-    vec4 viewPos;
+layout(set = 0, binding = 0) uniform UniformBufferObject {
+    mat4 inverseProjection;
 } ubo;
 
-layout(set = 1, binding = 1) uniform sampler2D depthResource;
-layout(set = 1, binding = 2, rgba8) uniform image2D ssaoOutput;
+layout(set = 1, binding = 0) uniform UniformBufferCompute {
+    vec4 nearPlaneSizeNormalized;
+    vec4 aspect;
+    vec4 radiusWorld;
+    vec4 maxRadiusScreen;
+} computeUbo;
 
-layout (local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+layout(set = 1, binding = 1) uniform sampler2D depthResource;
+layout(set = 1, binding = 2) uniform sampler2D normalResource;
+layout(set = 1, binding = 3, rgba8) uniform image2D ssaoOutput;
+layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
+
+vec3 Position_View(vec2 texCoord)
+{
+    vec3 position = vec3(texCoord, -1.0f);
+    position.xy -= 0.5f;
+    position.y *= -1.0f;
+    position.xy *= computeUbo.nearPlaneSizeNormalized.xy;
+    float depth = texture(depthResource, texCoord).x;
+    position *= -depth;
+    return position;
+}
+
+float InterleavedGradientNoise(vec2 position_screen) {
+    vec3 magic = vec3(0.06711056f, 4.0f * 0.00583715f, 52.9829189f);
+    return fract(magic.z * fract(dot(position_screen, magic.xy)));
+}
+
+vec2 VogelDiskOffset(int sampleIndex, float phi) {
+    float r = sqrt(float(sampleIndex) + 0.5f) / sqrt(float(SAMPLES_COUNT));
+    float theta = sampleIndex * GOLDEN_ANGLE + phi;
+    return r * vec2(cos(theta), sin(theta));
+}
+
 void main()
 {
-    // Get global pixel coordinate
     ivec2 texCoord = ivec2(gl_GlobalInvocationID.xy);
+    vec2 normalizedTexCoord = vec2(texCoord) / vec2(imageSize(ssaoOutput));
 
-    // Get dimensions of the output image
-    ivec2 ssaoSize = imageSize(ssaoOutput);
+    vec3 position = Position_View(normalizedTexCoord);
+    vec3 normal = texture(normalResource, normalizedTexCoord).xyz;
+    //normal = 2.0f * normal - 1.0f;
+    normal = mat3(push.viewMatrix) * normal;
 
-    // Ensure texCoord is within image bounds
-    if (texCoord.x >= ssaoSize.x || texCoord.y >= ssaoSize.y)
-    return;
+    float noise = InterleavedGradientNoise(texCoord.xy);
 
-    // Define the size of the blur kernel (3x3)
-    int kernelSize = 1;
+    vec2 radiusScreen = vec2(0.1 / position.z);
 
-    // Initialize depth sum and sample count
-    float depthSum = 0.0;
-    int samples = 0;
+    radiusScreen = min(radiusScreen, vec2(0.003));
+    radiusScreen.y *= computeUbo.aspect.x;
 
-    // Loop over the 3x3 neighborhood around the current texCoord
-    for (int x = -kernelSize; x <= kernelSize; x++)
-    {
-        for (int y = -kernelSize; y <= kernelSize; y++)
-        {
-            // Get the neighboring texCoord
-            ivec2 neighborCoord = texCoord + ivec2(x, y);
 
-            // Ensure the neighbor is within image bounds
-            if (neighborCoord.x >= 0 && neighborCoord.x < ssaoSize.x &&
-            neighborCoord.y >= 0 && neighborCoord.y < ssaoSize.y)
-            {
-                // Sample depth from the depthResource texture
-                float neighborDepth = texture(depthResource, vec2(neighborCoord) / vec2(ssaoSize)).r;
+    float ao = 0.0f;
 
-                // Accumulate depth values
-                depthSum += neighborDepth;
-                samples++;
-            }
-        }
+    for (int i = 0; i < SAMPLES_COUNT; i++) {
+        vec2 sampleOffset = VogelDiskOffset(i, TWO_PI * noise);
+        vec2 sampleTexCoord = normalizedTexCoord + (radiusScreen * sampleOffset);
+
+        vec3 samplePosition = Position_View(sampleTexCoord);
+        vec3 v = samplePosition - position;
+
+        ao += max(0.0f, dot(v, normal) + 0.002f * position.z) / (dot(v, v) + 0.001f);
     }
 
-    // Compute the average depth value
-    float averageDepth = depthSum / float(samples);
+    ao = clamp(ao / float(SAMPLES_COUNT), 0.0f, 1.0f);
+    //ao = 1 - ao;
 
-    // Output color using the average depth value (blurred)
-    vec4 outputColor = vec4(averageDepth, averageDepth, averageDepth, 1.0);
+    ao = pow(ao, CONTRAST);
 
-    // Write the output color to ssaoOutput image at the current texCoord
-    imageStore(ssaoOutput, texCoord, outputColor);
+    imageStore(ssaoOutput, texCoord, vec4(ao));
 }
+

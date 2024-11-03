@@ -21,6 +21,7 @@ public:
 
     //TODO: A Scene Should store a list of passes
     void RenderDepth(VkCommandBuffer commandBuffer) const;
+	void AlbedoRender(VkCommandBuffer commandBuffer) const;
 	void Render(VkCommandBuffer commandBuffer) const;
     void ExecuteComputePass(VkCommandBuffer commandBuffer) const;
 
@@ -33,6 +34,5 @@ public:
 
 private:
 	std::vector<std::unique_ptr<Mesh>> m_Meshes{};
-
 
 };
