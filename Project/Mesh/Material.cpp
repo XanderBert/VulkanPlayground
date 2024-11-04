@@ -81,11 +81,11 @@ Shader * Material::AddShader(const std::string& shaderPath, const ShaderType sha
         m_PipelineType = PipelineType::Compute;
     }
 
-	m_Shaders.push_back(ShaderManager::CreateShader(m_pContext, shaderPath, shaderType, this));
+	m_Shaders.emplace_back(ShaderManager::CreateShader(m_pContext, shaderPath, shaderType, this));
 	return m_Shaders.back();
 }
 
-std::vector<Shader *> Material::GetShaders() const
+const std::vector<Shader*>& Material::GetShaders() const
 {
     return m_Shaders;
 }

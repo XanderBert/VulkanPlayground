@@ -219,7 +219,7 @@ void Texture::TransitionAndCopyImageBuffer(VkBuffer srcBuffer)
 			region.imageExtent.height = m_ImageSize.y >> mipLevel;
 			region.imageExtent.depth = 1;
 
-			bufferCopyRegions.push_back(region);
+			bufferCopyRegions.emplace_back(region);
 		}
 	}
 

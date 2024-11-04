@@ -11,12 +11,12 @@ public:
 
     void Add(const FunctionType& function)
     {
-        m_Listeners.push_back(function);
+        m_Listeners.emplace_back(function);
     }
 
     void AddLambda(const std::function<void(Args...)>& function)
     {
-        m_Listeners.push_back(function);
+        m_Listeners.emplace_back(function);
     }
 
     void Remove(const FunctionType& function)

@@ -144,7 +144,7 @@ std::vector<std::shared_ptr<Texture>> DescriptorSet::GetTextures()
     textures.reserve(m_Textures.size());
     for (const auto& texture : m_Textures | std::views::values)
     {
-        textures.push_back(texture);
+        textures.emplace_back(texture);
     }
 
     return textures;

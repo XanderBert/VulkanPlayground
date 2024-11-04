@@ -84,15 +84,23 @@ Scene::Scene(VulkanContext* vulkanContext)
 		computeUbo->UpdateVariable(nearPlaneSizeHandle, glm::vec4{Camera::GetNearPlaneSizeAtDistance(1.0f), 0,0});
 	});
 
+	std::shared_ptr<Material> BlurMaterial = MaterialManager::CreateMaterial(vulkanContext, "Blur");
+	BlurMaterial->AddShader("Blur.comp", ShaderType::ComputeShader);
+	BlurMaterial->GetDescriptorSet()->AddTexture(0, SSAO, vulkanContext);
+	BlurMaterial->GetDescriptorSet()->AddTexture(1, downSampleTexture, vulkanContext);
+	std::shared_ptr<Texture> blurredSSAO = BlurMaterial->GetDescriptorSet()->CreateOutputTexture(2, vulkanContext, {width / 2.0f, height / 2.0f});
 
 
-
-
+	//Upsample
 	std::shared_ptr<Material> UpSampleMaterial = MaterialManager::CreateMaterial(vulkanContext, "UpSample");
 	UpSampleMaterial->AddShader("UpSample.comp", ShaderType::ComputeShader);
 	UpSampleMaterial->GetDescriptorSet()->AddGBuffer(0, 1);
-	UpSampleMaterial->GetDescriptorSet()->AddTexture(2, SSAO, vulkanContext);
+	UpSampleMaterial->GetDescriptorSet()->AddTexture(2, blurredSSAO, vulkanContext);
 	std::shared_ptr<Texture> upSampleTexture = UpSampleMaterial->GetDescriptorSet()->CreateOutputTexture(3, vulkanContext, {width, height});
+
+
+
+
 
 
 	//Composite Material
@@ -111,6 +119,10 @@ Scene::Scene(VulkanContext* vulkanContext)
 
 		LogWarning(std::to_string(extends.width) + " " + std::to_string(extends.height));
 	});
+
+
+
+
 
 
 
@@ -232,14 +244,15 @@ void Scene::ExecuteComputePass(VkCommandBuffer commandBuffer) const
 {
 	auto extends = SwapChain::Extends();
 	constexpr uint32_t groupSize = 32;
-	uint32_t fullscreenGroupCountX = (extends.width + groupSize - 1) / groupSize;
-	uint32_t fullscreenGroupCountY = (extends.height + groupSize - 1) / groupSize;
+	uint32_t fullscreenGroupCountX = (extends.width) / groupSize;
+	uint32_t fullscreenGroupCountY = (extends.height) / groupSize;
 
-	uint32_t quarterGroupCountX = (extends.width / 4 + groupSize - 1) / groupSize;
-	uint32_t quarterGroupCountY = (extends.height / 4 + groupSize - 1) / groupSize;
+	uint32_t quarterGroupCountX = (extends.width / 4) / groupSize;
+	uint32_t quarterGroupCountY = (extends.height / 4) / groupSize;
 
 	Texture* downSampleTexture{};
 	Texture* SSAO{};
+	Texture* BlurrSSAO{};
 
 
 
@@ -250,8 +263,8 @@ void Scene::ExecuteComputePass(VkCommandBuffer commandBuffer) const
 		//Transition the output texture to writable
 		for(const auto& texture : textures)
 		{
-			if(texture->IsOutputTexture())
-				downSampleTexture = texture.get();
+			if(texture->IsOutputTexture()) downSampleTexture = texture.get();
+			break;
 		}
 
 		downSampleTexture->TransitionToGeneralImageLayout(commandBuffer);
@@ -272,10 +285,11 @@ void Scene::ExecuteComputePass(VkCommandBuffer commandBuffer) const
        	//Transition the output texture to writable
         for(const auto& texture : textures)
 		{
-			if(texture->IsOutputTexture()) //But what if we pass a output texture as a input texture?
-				SSAO = texture.get();
-			SSAO->TransitionToGeneralImageLayout(commandBuffer);
+			if(texture->IsOutputTexture()) SSAO = texture.get();
+        	break;
         }
+
+    	SSAO->TransitionToGeneralImageLayout(commandBuffer);
 
 		GlobalDescriptor::Bind(ServiceLocator::GetService<VulkanContext>(), commandBuffer, ssaoMaterial->GetPipelineLayout(), PipelineType::Compute);
 		ssaoMaterial->Bind(commandBuffer, Camera::GetViewMatrix());
@@ -286,6 +300,31 @@ void Scene::ExecuteComputePass(VkCommandBuffer commandBuffer) const
     }
 
 
+	auto blurMaterial = MaterialManager::GetMaterial("Blur");
+	if(ssaoMaterial->IsCompute())
+	{
+		const auto& textures = blurMaterial->GetDescriptorSet()->GetTextures();
+		//Transition the output texture to writable
+		for(const auto& texture : textures)
+		{
+			if(texture->IsOutputTexture())
+			{
+				BlurrSSAO = texture.get();
+				break;
+			}
+		}
+
+		BlurrSSAO->TransitionToGeneralImageLayout(commandBuffer);
+
+		blurMaterial->Bind(commandBuffer, Camera::GetProjectionMatrix());
+		vkCmdDispatch(commandBuffer, quarterGroupCountX, quarterGroupCountY, 1);
+
+		BlurrSSAO->TransitionToReadableImageLayout(commandBuffer);
+		BlurrSSAO->SetOutputTexture(false);
+	}
+
+
+
 
 	auto upSampleMaterial = MaterialManager::GetMaterial("UpSample");
 	if(upSampleMaterial->IsCompute())
@@ -294,8 +333,7 @@ void Scene::ExecuteComputePass(VkCommandBuffer commandBuffer) const
 		//Transition the output texture to writable
 		for(const auto& texture : textures)
 		{
-			if(texture->IsOutputTexture())
-				texture->TransitionToGeneralImageLayout(commandBuffer);
+			if(texture->IsOutputTexture()) texture->TransitionToGeneralImageLayout(commandBuffer);
 		}
 
 		GlobalDescriptor::Bind(ServiceLocator::GetService<VulkanContext>(), commandBuffer, upSampleMaterial->GetPipelineLayout(), PipelineType::Compute);
@@ -305,13 +343,13 @@ void Scene::ExecuteComputePass(VkCommandBuffer commandBuffer) const
 		//transition the output texture to readable
 		for(const auto& texture : textures)
 		{
-			if(texture->IsOutputTexture())
-				texture->TransitionToReadableImageLayout(commandBuffer);
+			if(texture->IsOutputTexture()) texture->TransitionToReadableImageLayout(commandBuffer);
 		}
 	}
 
 	downSampleTexture->SetOutputTexture(true);
 	SSAO->SetOutputTexture(true);
+	BlurrSSAO->SetOutputTexture(true);
 }
 
 void Scene::CleanUp() const

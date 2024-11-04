@@ -107,7 +107,7 @@ public:
 
 		for (const auto& material : m_Materials)
 		{
-			names.push_back(material.first);
+			names.emplace_back(material.first);
 		}
 
 		return names;
@@ -120,7 +120,7 @@ public:
 
 		for (const auto& material : m_Materials)
 		{
-			materials.push_back(material.second);
+			materials.emplace_back(material.second);
 		}
 
 	    return materials;

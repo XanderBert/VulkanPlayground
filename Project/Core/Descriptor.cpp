@@ -24,8 +24,8 @@ namespace Descriptor
 		if(poolRatios.empty())
 		{
 			//TODO: Add more types
-			m_PoolSizeRatios.push_back({ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1.0f });
-			m_PoolSizeRatios.push_back({ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1.0f });
+			m_PoolSizeRatios.emplace_back(PoolSizeRatio{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1.0f });
+			m_PoolSizeRatios.emplace_back(PoolSizeRatio{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1.0f });
 		}
 		else
 		{
@@ -37,7 +37,7 @@ namespace Descriptor
 
 		setsPerPool = static_cast<uint32_t>(1.5f * static_cast<float>(maxSets)); //grow it next allocation
 
-		m_ReadyPools.push_back(newPool);
+		m_ReadyPools.emplace_back(newPool);
 	}
 
 	void DescriptorAllocator::ClearPools(VkDevice device)
@@ -51,7 +51,7 @@ namespace Descriptor
 		for (auto pool : m_FullPools) 
 		{
 			vkResetDescriptorPool(device, pool, 0);
-			m_ReadyPools.push_back(pool);
+			m_ReadyPools.emplace_back(pool);
 		}
 
 		m_FullPools.clear();
@@ -75,7 +75,7 @@ namespace Descriptor
 		//allocation failed. Try again
 		if (result == VK_ERROR_OUT_OF_POOL_MEMORY || result == VK_ERROR_FRAGMENTED_POOL) {
 
-			m_FullPools.push_back(poolToUse);
+			m_FullPools.emplace_back(poolToUse);
 
 			poolToUse = GrabPool(device);
 			allocInfo.descriptorPool = poolToUse;
@@ -83,7 +83,7 @@ namespace Descriptor
 			VulkanCheck(vkAllocateDescriptorSets(device, &allocInfo, &descriptorSet), "Failed To Allocate Descriptor Set!")
 		}
 
-		m_ReadyPools.push_back(poolToUse);
+		m_ReadyPools.emplace_back(poolToUse);
 		return descriptorSet;
 	}
 
@@ -188,7 +188,7 @@ namespace Descriptor
 	    write.descriptorType = type;
 	    write.pImageInfo = &info;
 
-	    m_Writes.push_back(write);
+	    m_Writes.emplace_back(write);
     }
 
 	void DescriptorWriter::WriteBuffer(int binding, VkBuffer buffer, size_t size, size_t offset, VkDescriptorType type)
@@ -210,7 +210,7 @@ namespace Descriptor
 		write.descriptorType = type;
 		write.pBufferInfo = &info;
 
-		m_Writes.push_back(write);
+		m_Writes.emplace_back(write);
 	}
 
 	void DescriptorWriter::UpdateSet(VkDevice device, VkDescriptorSet set)
@@ -271,7 +271,7 @@ namespace Descriptor
 		layoutBinding.stageFlags = VK_SHADER_STAGE_ALL;
 		layoutBinding.pImmutableSamplers = nullptr;
 
-		m_Bindings.push_back(layoutBinding);
+		m_Bindings.emplace_back(layoutBinding);
 	}
 
 	void DescriptorBuilder::Cleanup()

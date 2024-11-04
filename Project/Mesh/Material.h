@@ -37,7 +37,7 @@ public:
 
     void CreatePipeline();
 
-    [[nodiscard]] std::vector<Shader*> GetShaders() const;
+    [[nodiscard]] const std::vector<Shader*>& GetShaders() const;
     [[nodiscard]] const VkPipelineLayout& GetPipelineLayout() const;
     [[nodiscard]] VkPipelineLayoutCreateInfo GetPipelineLayoutCreateInfo();
     [[nodiscard]] std::string GetMaterialName() const;

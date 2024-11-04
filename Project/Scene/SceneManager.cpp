@@ -24,7 +24,7 @@ void SceneManager::ExecuteComputePass(VkCommandBuffer commandBuffer){
 }
 
 void SceneManager::AddScene(std::unique_ptr<Scene> scene) {
-    m_Scenes.push_back(std::move(scene));
+    m_Scenes.emplace_back(std::move(scene));
     if (m_ActiveScene == nullptr)
         m_ActiveScene = m_Scenes.back().get();
 }

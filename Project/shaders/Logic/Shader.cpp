@@ -18,7 +18,7 @@
 
 void Shader::AddMaterial(Material *material)
 {
-    m_pMaterials.push_back(material);
+    m_pMaterials.emplace_back(material);
 }
 
 void Shader::RemoveMaterial(Material *material)

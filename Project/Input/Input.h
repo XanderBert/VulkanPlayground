@@ -74,7 +74,7 @@ namespace Input
 
 	inline void AddMouseMovementListener(std::function<void(glm::vec2)>&& function)
 	{
-		mouseMovementListeners.push_back(std::move(function));
+		mouseMovementListeners.emplace_back(std::move(function));
 	}
 
 	inline void SetupInput(GLFWwindow* window)

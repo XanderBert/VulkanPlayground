@@ -118,7 +118,7 @@ void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline,
 	std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
 	for (const auto& shader : material->GetShaders())
 	{
-		shaderStages.push_back(shader->GetStageInfo());
+		shaderStages.emplace_back(shader->GetStageInfo());
 	}
 
     LogInfo("Creating Pipeline For: " + material->GetMaterialName());

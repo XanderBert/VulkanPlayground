@@ -77,7 +77,7 @@ namespace GLTFLoader {
                     //Add the indices to the indices vector
                     fastgltf::iterateAccessor<std::uint32_t>(gltf, indexaccessor, [&](std::uint32_t idx)
                     {
-                        indices.push_back(idx );
+                        indices.emplace_back(idx );
                     });
                 }
 
@@ -160,7 +160,7 @@ namespace GLTFLoader {
         	// Create the Mesh
         	auto depthMaterial = MaterialManager::GetMaterial("DepthOnlyMaterial");
             std::unique_ptr<Mesh> newmesh = std::make_unique<Mesh>(vertices, indices, MaterialManager::GetMaterial(m_CreatedMaterialNames[submeshMaterialIndex]), depthMaterial, mesh.name.c_str(), 0, 0);
-            createdMeshes.push_back(newmesh.get());
+            createdMeshes.emplace_back(newmesh.get());
             scene->AddMesh(std::move(newmesh));
         }
 
@@ -313,7 +313,7 @@ namespace GLTFLoader {
         for (const fastgltf::Material &mat: gltf.materials)
         {
             auto newMaterial = MaterialManager::CreateMaterial(vulkanContext, "shader.vert", "PBR_Graypacked.frag", mat.name.c_str());
-        	m_CreatedMaterialNames.push_back(mat.name.c_str());
+        	m_CreatedMaterialNames.emplace_back(mat.name.c_str());
 
         	auto *ubo = newMaterial->GetDescriptorSet()->AddBuffer(0, DescriptorType::UniformBuffer);
             ubo->AddVariable(glm::vec4{1});
@@ -465,7 +465,7 @@ namespace ObjLoader
 				if (!uniqueVertices.contains(vertex))
 				{
 					uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
-					vertices.push_back(vertex);
+					vertices.emplace_back(vertex);
 				}
 
 				indices.push_back(uniqueVertices[vertex]);
