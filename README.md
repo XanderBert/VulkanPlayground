@@ -4,7 +4,7 @@
 
 
 ## Some Features
-- Lua Script Support
+- Lua Script Support (Removed for now)
 - Runtime Shader Creation
 - Runtime Shader Compiling
 - Runtime Shader Changes watcher thread -> automatically compiles the changed shader in runtime
