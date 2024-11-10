@@ -131,7 +131,7 @@ Scene::Scene(VulkanContext* vulkanContext)
 
     //Create the cubmap last so its rendered last
     //with a simple shader & depthmap trick we can make it only over the fragments that are not yet written to
-    m_Meshes.push_back(std::make_unique<Mesh>("Cube.obj", skyboxMaterial, depthMaterial, "CubeMap"));
+    m_Meshes.push_back(std::make_unique<Mesh>("Cube.obj", "Skybox_Material", "CubeMap"));
     m_Meshes.back()->SetRotation(glm::vec3{-90,0,0});
 
     //
@@ -159,8 +159,7 @@ void Scene::RenderDepth(VkCommandBuffer commandBuffer) const
 {
     for (const auto& mesh : m_Meshes)
     {
-        mesh->BindDepth(commandBuffer);
-        mesh->Render(commandBuffer);
+        mesh->RenderDepth(commandBuffer);
     }
 }
 
@@ -224,7 +223,7 @@ void Scene::Render(VkCommandBuffer commandBuffer) const
 
 	for (const auto& mesh : m_Meshes)
 	{
-	    mesh->Bind(commandBuffer);
+		mesh->Render(commandBuffer);
 
 		ImGui::Begin("Mesh");
 		if(ImGui::CollapsingHeader(mesh->GetMeshName().c_str()))
@@ -232,12 +231,10 @@ void Scene::Render(VkCommandBuffer commandBuffer) const
 			mesh->OnImGui();
 		}
 		ImGui::End();
-		mesh->Render(commandBuffer);
 	}
 
 
     ImGui::Render();
-
 }
 
 void Scene::ExecuteComputePass(VkCommandBuffer commandBuffer) const

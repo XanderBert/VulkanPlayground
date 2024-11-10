@@ -28,7 +28,7 @@ void ImGuiWrapper::Initialize(VkQueue graphicsQueue)
 	{
         constexpr VkDescriptorPoolSize pool_sizes[] =
 		{
-			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2000 },
 		};
 
 		VkDescriptorPoolCreateInfo pool_info = {};
@@ -138,10 +138,7 @@ void ImGuiWrapper::NewFrame()
             else
             {
                 //TODO: move to  OBJLoader::Load("FlightHelmet.obj", this, vulkanContext);
-                std::shared_ptr<Material> baseMaterial = MaterialManager::GetMaterial("PBR_Material");
-                std::shared_ptr<Material> depthMaterial = MaterialManager::GetMaterial("DepthOnlyMaterial");
-
-                std::unique_ptr<Mesh> newMesh = std::make_unique<Mesh>(filePathName, baseMaterial,depthMaterial,  filePathName);
+                std::unique_ptr<Mesh> newMesh = std::make_unique<Mesh>(filePathName, "PBR_Material", filePathName);
                 SceneManager::GetActiveScene()->AddMesh(std::move(newMesh));
             }
         }

@@ -35,16 +35,12 @@ void Material::OnImGui()
     m_DescriptorSet.OnImGui();
 }
 
-void Material::Bind(const VkCommandBuffer commandBuffer, const glm::mat4x4 &pushConstantMatrix) {
-
-    // Update model matrix
+void Material::Bind(const VkCommandBuffer commandBuffer, const glm::mat4x4 &pushConstantMatrix)
+{
     m_pGraphicsPipeline->BindPushConstant(commandBuffer, pushConstantMatrix);
-
-    //TODO: maybe create a different "material" for depth and compute shaders
-
-
     m_pGraphicsPipeline->BindPipeline(commandBuffer, m_PipelineType);
     m_DescriptorSet.Bind(m_pContext, commandBuffer, m_pGraphicsPipeline->GetPipelineLayout(), 1, m_PipelineType);
+
 
     // TODO: This would be a better solution:
     //  for each material

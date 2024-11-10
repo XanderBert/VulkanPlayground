@@ -4,6 +4,31 @@
 #include "Core/VmaUsage.h"
 
 struct Vertex;
+
+struct Buffer
+{
+	int count;
+	VkBuffer buffer;
+	VmaAllocation bufferMemory;
+
+	inline void BindAsIndexBuffer(VkCommandBuffer commandBuffer) const
+	{
+		vkCmdBindIndexBuffer(commandBuffer, buffer, 0, VK_INDEX_TYPE_UINT32);
+	}
+
+	inline void BindAsVertexBuffer(VkCommandBuffer commandBuffer) const
+	{
+		VkDeviceSize offsets[] = { 0 };
+		vkCmdBindVertexBuffers(commandBuffer, 0, 1, &buffer, offsets);
+	}
+
+	inline void Cleanup() const
+	{
+		vmaDestroyBuffer(Allocator::VmaAllocator, buffer, bufferMemory);
+	}
+};
+
+
 namespace Core
 {
 	namespace Buffer
@@ -23,6 +48,5 @@ namespace Core
 		}
 
 		void CopyBuffer(VulkanContext* vulkanContext, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
-
 	}
 }

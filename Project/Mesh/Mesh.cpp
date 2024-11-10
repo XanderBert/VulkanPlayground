@@ -18,39 +18,62 @@
 #include "vulkanbase/VulkanTypes.h"
 
 
-Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices,
-           const std::shared_ptr<Material> &material, const std::shared_ptr<Material> &depthMaterial, std::string  meshName, uint32_t firstDrawIndex, int32_t vertexOffset)
+// Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices,
+//            const std::shared_ptr<Material> &material, const std::shared_ptr<Material> &depthMaterial, std::string  meshName, uint32_t firstDrawIndex, int32_t vertexOffset)
+// 	: m_FirstDrawIndex(firstDrawIndex)
+//     , m_VertexOffset(vertexOffset)
+// 	, m_pMaterial(material)
+//     , m_pDepthMaterial(depthMaterial)
+//     , m_MeshName(std::move(meshName))
+// {
+// 	m_pContext = ServiceLocator::GetService<VulkanContext>();
+// 	CreateVertexBuffer(vertices);
+// 	CreateIndexBuffer(indices);
+// }
+
+
+
+
+Mesh::Mesh(const std::vector<Vertex> &vertices, const std::vector<uint32_t> &indices, std::string meshName, const std::vector<Primitive> &primitives, uint32_t firstDrawIndex, int32_t vertexOffset)
 	: m_FirstDrawIndex(firstDrawIndex)
-    , m_VertexOffset(vertexOffset)
-	, m_pMaterial(material)
-    , m_pDepthMaterial(depthMaterial)
-    , m_MeshName(std::move(meshName))
+	, m_VertexOffset(vertexOffset)
+	, m_Primitives(primitives)
+	, m_pDepthMaterial(MaterialManager::GetMaterial("DepthOnlyMaterial"))
+	, m_MeshName(std::move(meshName))
 {
 	m_pContext = ServiceLocator::GetService<VulkanContext>();
+
+	m_IndexCount = indices.size();
+
 	CreateVertexBuffer(vertices);
 	CreateIndexBuffer(indices);
 }
 
-Mesh::Mesh(const std::string& modelPath, const std::shared_ptr<Material> &material, const std::shared_ptr<Material> &depthMaterial,  const std::string& meshName)
-	:m_pMaterial(material)
-    ,m_pDepthMaterial(depthMaterial)
+
+Mesh::Mesh(const std::string& modelPath,const std::string& materialName, const std::string& meshName)
+	: m_pDepthMaterial(MaterialManager::GetMaterial("DepthOnlyMaterial"))
+	, m_MeshName(std::move(meshName))
 {
+	m_pContext = ServiceLocator::GetService<VulkanContext>();
 	m_MeshName = meshName.empty() ? m_MeshName = modelPath : m_MeshName = meshName;
 
+	//Load the .obj file
 	std::vector<Vertex> vertices;
 	std::vector<uint32_t> indices;
-
-    //TODO: also support gltf in this function
 	ObjLoader::LoadObj(modelPath, vertices, indices);
 
-	m_pContext = ServiceLocator::GetService<VulkanContext>();
+	Primitive primitive{};
+	primitive.firstIndex = 0;
+	primitive.indexCount = static_cast<uint32_t>(indices.size());
+	primitive.material = MaterialManager::GetMaterial(materialName);
+	m_Primitives.push_back(primitive);
 
 	CreateVertexBuffer(vertices);
 	CreateIndexBuffer(indices);
 }
 
 
-void Mesh::Bind(VkCommandBuffer commandBuffer)
+void Mesh::Render(VkCommandBuffer commandBuffer)
 {
 	if(m_Rotate)
 	m_ModelMatrix = glm::rotate(m_ModelMatrix, GameTimer::GetDeltaTime() * glm::radians(m_RotationSpeed), MathConstants::UP);
@@ -58,28 +81,25 @@ void Mesh::Bind(VkCommandBuffer commandBuffer)
 	m_Visible = m_VisibleBuffer;
 	if (!m_Visible) return;
 
-    GlobalDescriptor::Bind(m_pContext, commandBuffer, m_pMaterial->GetPipelineLayout());
-	m_pMaterial->Bind(commandBuffer, m_ModelMatrix);
+	m_IndexBuffer.BindAsIndexBuffer(commandBuffer);
+	m_VertexBuffer.BindAsVertexBuffer(commandBuffer);
 
-	const VkBuffer vertexBuffers[] = { m_VertexBuffer };
-	constexpr VkDeviceSize offsets[] = { 0 }; 
-
-	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-	vkCmdBindIndexBuffer(commandBuffer, m_IndexBuffer, 0, VK_INDEX_TYPE_UINT32);
+	for(const auto& primitive: m_Primitives)
+	{
+		GlobalDescriptor::Bind(m_pContext, commandBuffer, primitive.material->GetPipelineLayout());
+		primitive.Render(commandBuffer, m_ModelMatrix);
+	}
 }
 
-void Mesh::BindDepth(VkCommandBuffer commandBuffer)
+void Mesh::RenderDepth(VkCommandBuffer commandBuffer)
 {
     if (!m_Visible) return;
 
     GlobalDescriptor::Bind(m_pContext, commandBuffer, m_pDepthMaterial->GetPipelineLayout());
     m_pDepthMaterial->Bind(commandBuffer, m_ModelMatrix);
-
-    const VkBuffer vertexBuffers[] = { m_VertexBuffer };
-    constexpr VkDeviceSize offsets[] = { 0 };
-
-    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-    vkCmdBindIndexBuffer(commandBuffer, m_IndexBuffer, 0, VK_INDEX_TYPE_UINT32);
+	m_IndexBuffer.BindAsIndexBuffer(commandBuffer);
+	m_VertexBuffer.BindAsVertexBuffer(commandBuffer);
+	vkCmdDrawIndexed(commandBuffer, m_IndexCount, 1, m_FirstDrawIndex, m_VertexOffset, 0);
 }
 
 
@@ -92,20 +112,21 @@ void Mesh::OnImGui()
 	if(ImGui::CollapsingHeader(Infolabel.c_str()))
 	{
 		ImGui::Text("Mesh Name: %s", m_MeshName.c_str());
-		ImGui::Text("Vertex Count: %d", m_VertexCount);
+		//ImGui::Text("Vertex Count: %d", m_VertexCount);
 		ImGui::Text("Index Count: %d", m_IndexCount);
-	    ImGui::Text("Active Material: %s", m_pMaterial->GetMaterialName().c_str());
+	    //ImGui::Text("Active Material: %s", m_pMaterial->GetMaterialName().c_str());
 
+		//TODO: Fix this
         //Get Dropdown menu with all material names
-	    auto materials = MaterialManager::GetMaterials();
-        int selectedMaterialIndex = -1;
-	    if(ImGui::ListBox("##Mateial:",&selectedMaterialIndex , MaterialManager::ImGuiMaterialGetter, materials.data(), materials.size()))
-	    {
-	        m_pMaterial = materials[selectedMaterialIndex];
-
-	        std::string log = "Material changed to: " + m_pMaterial->GetMaterialName() + "For Mesh: " + m_MeshName;
-	        LogInfo(log);
-	    }
+	    // auto materials = MaterialManager::GetMaterials();
+     //    int selectedMaterialIndex = -1;
+	    // if(ImGui::ListBox("##Mateial:",&selectedMaterialIndex , MaterialManager::ImGuiMaterialGetter, materials.data(), materials.size()))
+	    // {
+	    //     m_pMaterial = materials[selectedMaterialIndex];
+     //
+	    //     std::string log = "Material changed to: " + m_pMaterial->GetMaterialName() + "For Mesh: " + m_MeshName;
+	    //     LogInfo(log);
+	    // }
 	}
 
 	ImGui::Unindent();
@@ -138,16 +159,10 @@ void Mesh::OnImGui()
 }
 
 
-void Mesh::Render(VkCommandBuffer commandBuffer)
-{
-	if (!m_Visible) return;
-	vkCmdDrawIndexed(commandBuffer, m_IndexCount, 1, m_FirstDrawIndex, m_VertexOffset, 0);
-}
-
 void Mesh::CleanUp()
 {
-    vmaDestroyBuffer(Allocator::VmaAllocator, m_VertexBuffer, m_VertexBufferMemory);
-    vmaDestroyBuffer(Allocator::VmaAllocator, m_IndexBuffer, m_IndexBufferMemory);
+	m_IndexBuffer.Cleanup();
+	m_VertexBuffer.Cleanup();
 }
 
 void Mesh::SetPosition(const glm::vec3& position)
@@ -170,14 +185,14 @@ void Mesh::SetRotation(const glm::vec3 &rotation) {
 void Mesh::CreateVertexBuffer(const std::vector<Vertex>& vertices)
 {
 	//Store the vertex count
-	m_VertexCount = static_cast<uint32_t>(vertices.size());
+	m_VertexBuffer.count = static_cast<uint32_t>(vertices.size());
+
 
 	//Check if the mesh has at least 3 vertices
-	LogAssert(m_VertexCount >= 3,"Mesh has less then 3 vertices", false);
+	LogAssert(m_VertexBuffer.count >= 3,"Mesh has less then 3 vertices", false);
 
-	//Get the device and the buffer size
-	const VkDevice device = m_pContext->device;
-	const VkDeviceSize bufferSize = sizeof(vertices[0]) * (m_VertexCount);
+	//Get the buffer size
+	const VkDeviceSize bufferSize = sizeof(vertices[0]) * (m_VertexBuffer.count);
 
 	//Create a staging buffer
 	VkBuffer stagingBuffer;
@@ -186,21 +201,20 @@ void Mesh::CreateVertexBuffer(const std::vector<Vertex>& vertices)
 
 
 	//Create a Vertex buffer
-	Core::Buffer::CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, m_VertexBuffer, m_VertexBufferMemory);
+	Core::Buffer::CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, m_VertexBuffer.buffer, m_VertexBuffer.bufferMemory);
 
 	//Copy the staging buffer to the vertex buffer
-	Core::Buffer::CopyBuffer(m_pContext, stagingBuffer, m_VertexBuffer, bufferSize);
+	Core::Buffer::CopyBuffer(m_pContext, stagingBuffer, m_VertexBuffer.buffer, bufferSize);
     vmaDestroyBuffer(Allocator::VmaAllocator, stagingBuffer, stagingBufferMemory);
 }
 
 void Mesh::CreateIndexBuffer(const std::vector<uint32_t>& indices)
 {
-	m_IndexCount = indices.size();
-	LogAssert(m_IndexCount >= 3, "Mesh has less then 3 indices", false);
+	m_IndexBuffer.count = indices.size();
+	LogAssert(m_IndexBuffer.count >= 3, "Mesh has less then 3 indices", false);
 
-	//Get the device and the buffer size
-	const VkDevice device = m_pContext->device;
-	const VkDeviceSize bufferSize = sizeof(indices[0]) * (m_IndexCount);
+	//Get the buffer size
+	const VkDeviceSize bufferSize = sizeof(indices[0]) * (m_IndexBuffer.count);
 
 	//Create a staging buffer
 	VkBuffer stagingBuffer;
@@ -209,9 +223,9 @@ void Mesh::CreateIndexBuffer(const std::vector<uint32_t>& indices)
 
 
 	//Create A index buffer
-	Core::Buffer::CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, m_IndexBuffer, m_IndexBufferMemory);
+	Core::Buffer::CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, m_IndexBuffer.buffer, m_IndexBuffer.bufferMemory);
 
 	//Copy the staging buffer to the index buffer
-	Core::Buffer::CopyBuffer(m_pContext, stagingBuffer, m_IndexBuffer, bufferSize);
+	Core::Buffer::CopyBuffer(m_pContext, stagingBuffer, m_IndexBuffer.buffer, bufferSize);
     vmaDestroyBuffer(Allocator::VmaAllocator, stagingBuffer, stagingBufferMemory);
 }

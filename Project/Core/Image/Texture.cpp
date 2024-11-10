@@ -64,8 +64,8 @@ void Texture::OnImGui()
 		ImGui::SameLine();
 	}
 
-
-	m_ImGuiTexture->OnImGui();
+	if(m_ImGuiTexture)
+		m_ImGuiTexture->OnImGui();
 }
 
 void Texture::ProperBind(int bindingNumber, Descriptor::DescriptorWriter &descriptorWriter) const
@@ -76,7 +76,7 @@ void Texture::ProperBind(int bindingNumber, Descriptor::DescriptorWriter &descri
 
 void Texture::Cleanup(VkDevice device)
 {
-	if (m_TextureType != TextureType::TEXTURE_CUBE)
+	if (m_TextureType != TextureType::TEXTURE_CUBE && m_ImGuiTexture)
 	{
 		m_ImGuiTexture->Cleanup();
 	}
@@ -127,9 +127,9 @@ void Texture::InitTexture(const TextureData &loadedImage)
 
 
 	//Set up the ImGuiTexture
-	if (m_TextureType == TextureType::TEXTURE_CUBE)
-		return;
-	m_ImGuiTexture = std::make_unique<ImGuiTexture>(m_Sampler, m_ImageView, ImVec2(250, 250));
+	if (m_TextureType == TextureType::TEXTURE_CUBE) return;
+	//TODO: When loading sponza this failes for some reason : [ERROR]:  Validation Error: [ UNASSIGNED-GeneralParameterError-RequiredHandle ] | MessageID = 0x8fdcb17b | vkUpdateDescriptorSets(): pDescriptorWrites[0].dstSet is VK_NULL_HANDLE.
+	//m_ImGuiTexture = std::make_unique<ImGuiTexture>(m_Sampler, m_ImageView, ImVec2(250, 250));
 }
 
 void Texture::InitTexture(const std::filesystem::path &path)

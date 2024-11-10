@@ -44,10 +44,17 @@ void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline,
         .depthAttachmentFormat = GBuffer::GetDepthAttachment()->GetFormat(),
     };
 
+
+	VkPipelineDepthStencilStateCreateInfo depthStencilState{};
+
 	//TODO: Clean this the hell up
     if(material->GetDepthOnly())
     {
         pipelineRenderingCreateInfo.pColorAttachmentFormats = GBuffer::GetColorAttachmentNormal()->GetFormat();
+    	depthStencilState = DepthAttachment::GetDepthPipelineInfo(VK_TRUE, VK_TRUE);
+    }else
+    {
+	    depthStencilState = DepthAttachment::GetDepthPipelineInfo(VK_TRUE, VK_FALSE);
     }
 
 	if(material->IsComposite())
@@ -112,7 +119,6 @@ void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline,
     };
 
     const auto inputAssemblyState = ShaderManager::GetInputAssemblyStateInfo();
-    const VkPipelineDepthStencilStateCreateInfo depthStencilState = DepthAttachment::GetDepthPipelineInfo(VK_TRUE, VK_TRUE);
     const auto vertexInputState = ShaderManager::GetVertexInputStateInfo();
 
 	std::vector<VkPipelineShaderStageCreateInfo> shaderStages;

@@ -93,6 +93,9 @@ void DepthAttachment::OnImGui()
 
 void DepthAttachment::TransitionToDepthResource(VkCommandBuffer commandBuffer)
 {
+	m_DepthAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	m_DepthAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+
     tools::InsertImageMemoryBarrier(
         commandBuffer,
         m_Image,
@@ -104,7 +107,11 @@ void DepthAttachment::TransitionToDepthResource(VkCommandBuffer commandBuffer)
     m_BindImageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 }
 
-void DepthAttachment::TransitionToShaderRead(VkCommandBuffer commandBuffer) {
+void DepthAttachment::TransitionToShaderRead(VkCommandBuffer commandBuffer)
+{
+	m_DepthAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	m_DepthAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+
     tools::InsertImageMemoryBarrier(
         commandBuffer,
         m_Image,
@@ -117,6 +124,9 @@ void DepthAttachment::TransitionToShaderRead(VkCommandBuffer commandBuffer) {
 
 void DepthAttachment::TransitionToGeneralResource(VkCommandBuffer commandBuffer)
 {
+	m_DepthAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	m_DepthAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+
     tools::InsertImageMemoryBarrier(
        commandBuffer,
        m_Image,
