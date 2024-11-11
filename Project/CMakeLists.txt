@@ -149,6 +149,42 @@ FetchContent_MakeAvailable(tinyObj)
 set(TINYOBJ_DIR ${tinyObj_SOURCE_DIR})
 
 
+#spirv-headers (NEEDED ONLY FOR SPIRV-TOOLS)
+FetchContent_Declare(
+        spirv-headers
+        GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Headers.git
+        GIT_TAG vulkan-sdk-1.3.290.0
+)
+FetchContent_MakeAvailable(spirv-headers)
+
+#spirv-tools (NEEDED ONLY FOR SHADERC)
+FetchContent_Declare(
+        spirv-tools
+        GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Tools.git
+        GIT_TAG vulkan-sdk-1.3.290
+)
+FetchContent_MakeAvailable(spirv-tools)
+
+FetchContent_Declare(
+        glslang
+        GIT_REPOSITORY https://github.com/KhronosGroup/glslang.git
+        GIT_TAG vulkan-sdk-1.3.296.0
+)
+FetchContent_MakeAvailable(glslang)
+
+#shaderc
+FetchContent_Declare(
+        shaderc
+        GIT_REPOSITORY https://github.com/google/shaderc.git
+        GIT_TAG v2024.0
+)
+set(SHADERC_SKIP_INSTALL ON CACHE BOOL "" FORCE)
+set(SHADERC_SKIP_TESTS ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(shaderc)
+
+
+
+
 
 
 FetchContent_Declare(
@@ -224,9 +260,9 @@ set(KTX_SOURCES
         ${KTX_DIR}/lib/vk_funcs.h
         ${KTX_DIR}/lib/vkloader.c
 )
-
 include_directories( ${KTX_DIR}/include)
 include_directories( ${KTX_DIR}/other_include)
+#include_directories( ${KTX_DIR}/utils)
 
 
 set(ImGuiTextEditSourceDir ${EXTERNALS_DIR}/ImGuiTextEdit)
@@ -245,6 +281,9 @@ set(VMA_SOURCES
 )
 
 # Create the executable
+message("IMGUI_DIR: ${IMGUI_DIR}")
+message("IMGUI_SOURCE_FILES: ${IMGUI_SOURCE_FILES}")
+
 add_executable(
     ${PROJECT_NAME} 
     ${SOURCES} 
@@ -278,11 +317,19 @@ target_include_directories(
     PRIVATE ${VMA_SOURCE_DIR}
 )
 
-string(REPLACE ".lib" "d.lib" SHADERC_DEBUG ${Vulkan_shaderc_combined_LIBRARY})
+
+
+
+# For Windows, rename to debug libraries with .d.lib extension
+if(WIN32)
+    string(REPLACE ".lib" "d.lib" SHADERC_DEBUG ${Vulkan_shaderc_combined_LIBRARY})
+endif()
+
+
 target_link_libraries(${PROJECT_NAME}
     PRIVATE ${Vulkan_LIBRARIES}
-    PUBLIC glfw
-    PUBLIC debug ${SHADERC_DEBUG} optimized ${Vulkan_shaderc_combined_LIBRARY}
+    PRIVATE glfw
+    PRIVATE shaderc_combined
     PRIVATE efsw
     PRIVATE glm
     PRIVATE tinyobjloader

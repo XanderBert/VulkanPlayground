@@ -279,11 +279,15 @@ void Scene::ExecuteComputePass(VkCommandBuffer commandBuffer) const
     if(ssaoMaterial->IsCompute())
     {
         const auto& textures = ssaoMaterial->GetDescriptorSet()->GetTextures();
-       	//Transition the output texture to writable
+
+    	//Transition the output texture to writable
         for(const auto& texture : textures)
 		{
-			if(texture->IsOutputTexture()) SSAO = texture.get();
-        	break;
+			if(texture->IsOutputTexture())
+			{
+				SSAO = texture.get();
+				break;
+			}
         }
 
     	SSAO->TransitionToGeneralImageLayout(commandBuffer);

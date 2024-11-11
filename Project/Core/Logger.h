@@ -2,6 +2,8 @@
 #include <iostream>
 #include <string>
 #include <csignal>
+#include <cstdint>
+
 #include "imgui.h"
 
 

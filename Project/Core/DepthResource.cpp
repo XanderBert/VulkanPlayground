@@ -42,7 +42,7 @@ void DepthAttachment::Init(const VulkanContext* vulkanContext)
 void DepthAttachment::Cleanup(const VulkanContext* vulkanContext)
 {
 	vkDestroyImageView(vulkanContext->device, m_ImageView, nullptr);
-    vmaDestroyImage(Allocator::VmaAllocator, m_Image, m_Memory);
+    vmaDestroyImage(Allocator::vmaAllocator, m_Image, m_Memory);
 
     if(m_Sampler != VK_NULL_HANDLE)
     vkDestroySampler(vulkanContext->device, m_Sampler, nullptr);

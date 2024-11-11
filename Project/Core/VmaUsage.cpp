@@ -1,5 +1,8 @@
-#define WIN32_LEAN_AND_MEAN
-#define VK_USE_PLATFORM_WIN32_KHR
+//#define WIN32_LEAN_AND_MEAN
+//#define VK_USE_PLATFORM_WIN32_KHR
+
+
+
 #define VMA_VULKAN_VERSION 1003000 // Vulkan 1.3
 #define VMA_IMPLEMENTATION
 
@@ -24,7 +27,7 @@ void Allocator::CreateAllocator(const VulkanContext *vulkanContext)
     allocatorCreateInfo.instance = vulkanContext->instance;
     allocatorCreateInfo.pVulkanFunctions = &vulkanFunctions;
 
-    vmaCreateAllocator(&allocatorCreateInfo, &VmaAllocator);
+    vmaCreateAllocator(&allocatorCreateInfo, &vmaAllocator);
 }
 
 void Allocator::Cleanup(VkDevice device)
@@ -34,7 +37,7 @@ void Allocator::Cleanup(VkDevice device)
         MemoryLayoutTexture.value()->Cleanup(device);
         delete MemoryLayoutTexture.value();
     }
-    vmaDestroyAllocator(VmaAllocator);
+    vmaDestroyAllocator(vmaAllocator);
 
 
 }
@@ -42,9 +45,9 @@ void Allocator::Cleanup(VkDevice device)
 void Allocator::GenerateMemoryLayout(VulkanContext*  vulkanContext)
 {
     char *statsString = nullptr;
-    vmaBuildStatsString(VmaAllocator, &statsString, true);
+    vmaBuildStatsString(vmaAllocator, &statsString, true);
     tools::writeFileStr("MemoryLayout.json", statsString);
-    vmaFreeStatsString(VmaAllocator, statsString);
+    vmaFreeStatsString(vmaAllocator, statsString);
 
     //TODO: Instead of using the python script to generate the image we should use ImGui to render the memory layout
     //python GpuMemDumpVis.py -o OUTPUT_FILE INPUT_FILE

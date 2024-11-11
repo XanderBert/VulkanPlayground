@@ -16,7 +16,7 @@ void VulkanBase::drawFrame(uint32_t imageIndex) const
 	SwapChain::SetImageIndex(imageIndex);
 
 	VkExtent2D& swapChainExtent = SwapChain::Extends();
-	Window::SetViewportCmd(commandBuffer.Handle);
+	VulkanWindow::SetViewportCmd(commandBuffer.Handle);
 
     // ======================= Depth-Only Pass ============================
 	GBuffer::GetDepthAttachment()->ResetImageLayout();

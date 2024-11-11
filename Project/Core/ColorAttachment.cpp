@@ -19,7 +19,7 @@ void ColorAttachment::Recreate(const VulkanContext *vulkanContext, VkClearColorV
 void ColorAttachment::Cleanup(VkDevice device)
 {
 	vkDestroyImageView(device, m_ImageView, nullptr);
-	vmaDestroyImage(Allocator::VmaAllocator, m_Image, m_Memory);
+	vmaDestroyImage(Allocator::vmaAllocator, m_Image, m_Memory);
 
 	if(m_Sampler != VK_NULL_HANDLE) vkDestroySampler(device, m_Sampler, nullptr);
 

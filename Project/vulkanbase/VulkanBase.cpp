@@ -64,12 +64,12 @@ void VulkanBase::initVulkan()
 
 void VulkanBase::mainLoop()
 {
-    const Window& window = m_pContext->window;
+    const VulkanWindow& window = m_pContext->window;
 
 
     while (!window.ShouldClose())
     {
-        Window::PollEvents();
+        VulkanWindow::PollEvents();
 
         if(window.IsMinimized())
         {

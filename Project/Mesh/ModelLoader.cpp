@@ -1,11 +1,11 @@
 #include "ModelLoader.h"
-
 #include <unordered_map>
+
 
 
 #undef min
 #undef max
-
+#undef None
 #define GLM_ENABLE_EXPERIMENTAL
 #include <fastgltf/core.hpp>
 #include <fastgltf/glm_element_traits.hpp>

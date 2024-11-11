@@ -1,5 +1,6 @@
 #pragma once
 #include <vulkan/vulkan.h>
+#include <cstring>
 #include "vulkanbase/VulkanTypes.h"
 #include "Core/VmaUsage.h"
 
@@ -24,7 +25,7 @@ struct Buffer
 
 	inline void Cleanup() const
 	{
-		vmaDestroyBuffer(Allocator::VmaAllocator, buffer, bufferMemory);
+		vmaDestroyBuffer(Allocator::vmaAllocator, buffer, bufferMemory);
 	}
 };
 
@@ -42,9 +43,9 @@ namespace Core
 
 			//Copy the data to the staging buffer
 		    void* data;
-		    vmaMapMemory(Allocator::VmaAllocator, bufferMemory, &data);
+		    vmaMapMemory(Allocator::vmaAllocator, bufferMemory, &data);
 			memcpy(data, actualData, size);
-		    vmaUnmapMemory(Allocator::VmaAllocator, bufferMemory);
+		    vmaUnmapMemory(Allocator::vmaAllocator, bufferMemory);
 		}
 
 		void CopyBuffer(VulkanContext* vulkanContext, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);

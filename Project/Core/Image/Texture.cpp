@@ -118,7 +118,7 @@ void Texture::InitTexture(const TextureData &loadedImage)
 		m_ImageMemory = allocation;
 
 		TransitionAndCopyImageBuffer(imageInMemory.stagingBuffer);
-		vmaDestroyBuffer(Allocator::VmaAllocator, imageInMemory.stagingBuffer, imageInMemory.stagingBufferMemory);
+		vmaDestroyBuffer(Allocator::vmaAllocator, imageInMemory.stagingBuffer, imageInMemory.stagingBufferMemory);
 
 		Image::CreateImageView(m_pContext->device, m_Image, static_cast<VkFormat>(m_ColorType), VK_IMAGE_ASPECT_COLOR_BIT, m_ImageView, m_TextureType);
 	}
@@ -323,5 +323,5 @@ void Texture::CleanupImage(VkDeviceMemory deviceMemory, VkImage image)
 
 void Texture::CleanupImage(VmaAllocation deviceMemory, VkImage image)
 {
-	vmaDestroyImage(Allocator::VmaAllocator, image, deviceMemory);
+	vmaDestroyImage(Allocator::vmaAllocator, image, deviceMemory);
 }

@@ -19,20 +19,20 @@
 
 
 
-class Window
+class VulkanWindow
 {
 public:
 
     //Creates The window and initializes glfw
-	explicit Window(const std::string& windowName, int width = 1280, int height = 720);
+	explicit VulkanWindow(const std::string& windowName, int width = 1280, int height = 720);
 
     //Destroys the window and terminates glfw
-	~Window();
+	~VulkanWindow();
 
-	Window(const Window&) = delete;
-	Window& operator=(const Window&) = delete;
-	Window(Window&&) = delete;
-	Window& operator=(Window&&) = delete;
+	VulkanWindow(const VulkanWindow&) = delete;
+	VulkanWindow& operator=(const VulkanWindow&) = delete;
+	VulkanWindow(VulkanWindow&&) = delete;
+	VulkanWindow& operator=(VulkanWindow&&) = delete;
 
 	void GetSize(int& width, int& height) const;
 
@@ -71,7 +71,7 @@ public:
     VkInstance instance{};
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
     VkDevice device = VK_NULL_HANDLE;
-	Window window;
+	VulkanWindow window;
 
     static std::filesystem::path GetAssetPath();
     void CleanUp() const;

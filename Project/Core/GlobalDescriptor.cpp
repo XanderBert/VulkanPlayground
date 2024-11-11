@@ -3,7 +3,7 @@
 #include "DepthResource.h"
 #include "Descriptor.h"
 #include "Camera/Camera.h"
-#include "Shaders/Logic/Shader.h"
+#include "shaders/Logic/Shader.h"
 
 void GlobalDescriptor::Init(VulkanContext *vulkanContext)
 {

@@ -264,7 +264,7 @@ typedef struct user_cbdata_optimal {
     ktx_uint8_t* dest;         // Pointer to mapped staging buffer.
     ktx_uint32_t elementSize;
     ktx_uint32_t numDimensions;
-#if defined(_DEBUG)
+#ifndef NDEBUG
     VkBufferImageCopy* regionsArrayEnd;
 #endif
 } user_cbdata_optimal;

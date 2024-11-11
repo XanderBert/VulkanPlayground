@@ -30,7 +30,7 @@ namespace Core
 		    }
 
 
-		    VulkanCheck(vmaCreateBuffer(Allocator::VmaAllocator, &bufferInfo, &allocInfo, &buffer, &bufferMemory, nullptr), "Failed to create Vma Buffer");
+		    VulkanCheck(vmaCreateBuffer(Allocator::vmaAllocator, &bufferInfo, &allocInfo, &buffer, &bufferMemory, nullptr), "Failed to create Vma Buffer");
 		}
 
 		

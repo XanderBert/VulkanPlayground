@@ -205,7 +205,7 @@ void Mesh::CreateVertexBuffer(const std::vector<Vertex>& vertices)
 
 	//Copy the staging buffer to the vertex buffer
 	Core::Buffer::CopyBuffer(m_pContext, stagingBuffer, m_VertexBuffer.buffer, bufferSize);
-    vmaDestroyBuffer(Allocator::VmaAllocator, stagingBuffer, stagingBufferMemory);
+    vmaDestroyBuffer(Allocator::vmaAllocator, stagingBuffer, stagingBufferMemory);
 }
 
 void Mesh::CreateIndexBuffer(const std::vector<uint32_t>& indices)
@@ -227,5 +227,5 @@ void Mesh::CreateIndexBuffer(const std::vector<uint32_t>& indices)
 
 	//Copy the staging buffer to the index buffer
 	Core::Buffer::CopyBuffer(m_pContext, stagingBuffer, m_IndexBuffer.buffer, bufferSize);
-    vmaDestroyBuffer(Allocator::VmaAllocator, stagingBuffer, stagingBufferMemory);
+    vmaDestroyBuffer(Allocator::vmaAllocator, stagingBuffer, stagingBufferMemory);
 }

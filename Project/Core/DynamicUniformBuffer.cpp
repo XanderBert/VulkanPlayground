@@ -44,7 +44,7 @@ void DynamicBuffer::Init()
 	Core::Buffer::CreateBuffer(GetSize(), static_cast<VkBufferUsageFlags>(m_BufferType), m_UniformBuffer, m_UniformBuffersMemory, true, true);
 
     VmaAllocationInfo allocInfo;
-    vmaGetAllocationInfo(Allocator::VmaAllocator, m_UniformBuffersMemory, &allocInfo);
+    vmaGetAllocationInfo(Allocator::vmaAllocator, m_UniformBuffersMemory, &allocInfo);
     m_UniformBuffersMapped = (void*)allocInfo.pMappedData;
 }
 
@@ -67,7 +67,7 @@ void DynamicBuffer::FullRebind(int bindingNumber, const VkDescriptorSet &descrip
 
 void DynamicBuffer::Cleanup(VkDevice device) const
 {
-    vmaDestroyBuffer(Allocator::VmaAllocator, m_UniformBuffer, m_UniformBuffersMemory);
+    vmaDestroyBuffer(Allocator::vmaAllocator, m_UniformBuffer, m_UniformBuffersMemory);
 }
 
 uint16_t DynamicBuffer::AddVariable(const float value)

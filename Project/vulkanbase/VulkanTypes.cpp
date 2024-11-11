@@ -2,42 +2,42 @@
 
 #include "Core/SwapChain.h"
 
-Window::Window(const std::string &windowName, int width, int height) :
+VulkanWindow::VulkanWindow(const std::string &windowName, int width, int height) :
 	m_WindowName(windowName), m_Width(width), m_Height(height)
 {
 	InitWindow();
 }
 
 
-Window::~Window()
+VulkanWindow::~VulkanWindow()
 {
 	glfwDestroyWindow(m_pWindow);
 	glfwTerminate();
 }
 
-void Window::GetSize(int &width, int &height) const
+void VulkanWindow::GetSize(int &width, int &height) const
 {
 	glfwGetFramebufferSize(m_pWindow, &width, &height);
 }
 
-bool Window::ShouldClose() const
+bool VulkanWindow::ShouldClose() const
 {
 	return glfwWindowShouldClose(m_pWindow);
 }
 
-bool Window::IsMinimized() const
+bool VulkanWindow::IsMinimized() const
 {
 	int width, height;
 	glfwGetFramebufferSize(m_pWindow, &width, &height);
 	return width == 0 || height == 0;
 }
 
-void Window::PollEvents()
+void VulkanWindow::PollEvents()
 {
 	glfwPollEvents();
 }
 
-void Window::SetViewportCmd(VkCommandBuffer commandBuffer)
+void VulkanWindow::SetViewportCmd(VkCommandBuffer commandBuffer)
 {
 	VkExtent2D &swapChainExtent = SwapChain::Extends();
 
@@ -58,7 +58,7 @@ void Window::SetViewportCmd(VkCommandBuffer commandBuffer)
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 }
 
-void Window::InitWindow()
+void VulkanWindow::InitWindow()
 {
 	glfwInit();
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
