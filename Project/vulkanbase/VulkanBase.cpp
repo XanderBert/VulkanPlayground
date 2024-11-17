@@ -23,9 +23,13 @@ void VulkanBase::run()
     SceneManager::AddScene(std::make_unique<Scene>(m_pContext));
     Input::SetupInput(m_pContext->window.Get());
     MaterialManager::CreatePipelines();
+
+
+
     mainLoop();
     cleanup();
 }
+
 
 
 void VulkanBase::initVulkan()

@@ -34,15 +34,13 @@ float DepthNDCToView(float depthNdc)
 layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 void main()
 {
-
-
     ivec2 texCoord = ivec2(gl_GlobalInvocationID.xy);
-    vec2 normalizedTexCoord = vec2(texCoord) / vec2(imageSize(downSampledOutput));
+    //vec2 normalizedTexCoord = vec2(texCoord) / vec2(imageSize(downSampledOutput));
 
     //vec2 pixelSize = 1 / vec2(imageSize(downSampledOutput));
     //vec2 texCoord00 = texCoord + vec2(-.25) * pixelSize;
 
-    float depth = texture(depthResource, normalizedTexCoord).r;
+    float depth = texture(depthResource, texCoord).r;
     float linearDepth = DepthNDCToView(depth);
 
     imageStore(downSampledOutput, ivec2(texCoord), vec4(linearDepth));

@@ -46,6 +46,11 @@ VkFormat* ColorAttachment::GetFormat()
 	return &m_Format;
 }
 
+VkImage ColorAttachment::GetImage() const
+{
+	return m_Image;
+}
+
 void ColorAttachment::ResetImageLayout()
 {
 	m_CurrentImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;

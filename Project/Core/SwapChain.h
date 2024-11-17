@@ -9,8 +9,7 @@
 #include "QueueFamilyIndices.h"
 #include "Core/Image/Texture.h"
 #include "Core/Logger.h"
-
-
+#include "vulkanbase/VulkanUtil.h"
 
 
 class SwapChain final
@@ -90,6 +89,12 @@ public:
 		m_Extends = extent;
 
 		CreateImageViews(device);
+
+
+
+		//Set to swapchain to present -> In the render loop it gets transitioned :
+		//FROM: present TO: attachment
+		//FROM: attachment TO: present
 	}
 
 	static void CreateSurface(const VulkanContext* vulkanContext)

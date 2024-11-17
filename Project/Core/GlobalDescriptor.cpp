@@ -7,20 +7,22 @@
 
 void GlobalDescriptor::Init(VulkanContext *vulkanContext)
 {
+	//TODO: I Need a proper way to pass a ARRAY of light structurs to the GPU.
+	const std::vector<Light *> Lights = LightManager::GetLights();
+	Light *light = Lights[0];
+
+
+
 	m_GlobalBuffer.SetDescriptorType(DescriptorType::UniformBuffer);
 
 	viewProjectionHandle = m_GlobalBuffer.AddVariable(Camera::GetViewProjectionMatrix());
 	cameraHandle = m_GlobalBuffer.AddVariable(glm::vec4(Camera::GetPosition(), 1.0f));
 	cameraPlaneHandle = m_GlobalBuffer.AddVariable(glm::vec4(Camera::GetNearPlane(), Camera::GetFarPlane(), 0.0f, 0.0f));
-
-
-	//TODO: I Need a proper way to pass a ARRAY of light structurs to the GPU.
-	const std::vector<Light *> Lights = LightManager::GetLights();
-	Light *light = Lights[0];
-
 	lightPositionHandle = m_GlobalBuffer.AddVariable(glm::vec4(light->GetPosition()[0], light->GetPosition()[1], light->GetPosition()[2], 1.0f));
 	lightColorHandle = m_GlobalBuffer.AddVariable(glm::vec4(light->GetColor()[0], light->GetColor()[1], light->GetColor()[2], 1.0f));
 	inverseProjectionHandle = m_GlobalBuffer.AddVariable(inverse(Camera::GetProjectionMatrix()));
+	viewMatrixHandle = m_GlobalBuffer.AddVariable(Camera::GetViewMatrix());
+
 
 	m_GlobalBuffer.Init();
 
@@ -38,7 +40,7 @@ void GlobalDescriptor::Bind(VulkanContext *vulkanContext, const VkCommandBuffer 
 	m_GlobalBuffer.UpdateVariable(cameraHandle, glm::vec4(Camera::GetPosition(), 1.0f));
 	m_GlobalBuffer.UpdateVariable(cameraPlaneHandle, glm::vec4(Camera::GetNearPlane(), Camera::GetFarPlane(), 0.0f, 0.0f));
 	m_GlobalBuffer.UpdateVariable(inverseProjectionHandle, inverse(Camera::GetProjectionMatrix()));
-
+	m_GlobalBuffer.UpdateVariable(viewMatrixHandle, Camera::GetViewMatrix());
 
 	//TODO: I Need a proper way to pass a ARRAY of light structurs to the GPU.
 	const std::vector<Light *> Lights = LightManager::GetLights();
@@ -55,7 +57,6 @@ void GlobalDescriptor::Bind(VulkanContext *vulkanContext, const VkCommandBuffer 
 	m_Writer.UpdateSet(vulkanContext->device, m_GlobalDescriptorSet);
 
 	vkCmdBindDescriptorSets(commandBuffer, static_cast<VkPipelineBindPoint>(pipelineType), pipelineLayout, 0, 1, &m_GlobalDescriptorSet, 0, nullptr);
-
 }
 
 VkDescriptorSetLayout &GlobalDescriptor::GetLayout()

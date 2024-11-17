@@ -63,7 +63,7 @@ void GBuffer::OnImGui()
 {
 	ImGui::Begin("GBuffer");
 	m_ColorAttachmentNormal.OnImGui();
-	m_DepthAttachment.OnImGui();
+	//m_DepthAttachment.OnImGui();
 	m_AlbedoAttachment.OnImGui();
 	ImGui::End();
 }
