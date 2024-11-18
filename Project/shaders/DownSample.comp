@@ -1,47 +1,34 @@
 #version 450
 
-layout(push_constant) uniform constants {
-    mat4 model;
+layout(push_constant) uniform constants
+{
+    mat4 projection;
 } push;
+
 
 layout(set = 0, binding = 0) uniform UniformBufferObject
 {
-    mat4 viewProjection;
-    vec4 viewPos;
-    vec4 cameraPlanes;
-
-    vec4 lightPos;
-    vec4 lightColor;
+	mat4 viewProjection;
+	vec4 viewPos;
+	vec4 cameraPlanes;
+	vec4 lightPos;
+	vec4 lightColor;
+    mat4 inverseProjection;
 } ubo;
 
 layout(set = 1, binding = 0) uniform sampler2D depthResource;
 layout(set = 1, binding = 1) uniform sampler2D normalResource;
+layout(set = 1, binding = 2, r16) uniform image2D downSampledOutput;
 
-//TODO Change to r6f -> this can significantly reduce the memory usage and increase the performance
-layout(set = 1, binding = 2, rgba8) uniform image2D downSampledOutput;
-
-
-
-
-float DepthNDCToView(float depthNdc)
-{
-    float near = ubo.cameraPlanes.x;
-    float far = ubo.cameraPlanes.y;
-    return (2.0 * near * far) / (far + near - depthNdc * (far - near));
-}
 
 
 layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 void main()
 {
     ivec2 texCoord = ivec2(gl_GlobalInvocationID.xy);
-    //vec2 normalizedTexCoord = vec2(texCoord) / vec2(imageSize(downSampledOutput));
+    vec2 normalizedTexCoord = vec2(texCoord) / vec2(imageSize(downSampledOutput));
+g
+   	float depth = texture(depthResource, normalizedTexCoord).r;
 
-    //vec2 pixelSize = 1 / vec2(imageSize(downSampledOutput));
-    //vec2 texCoord00 = texCoord + vec2(-.25) * pixelSize;
-
-    float depth = texture(depthResource, texCoord).r;
-    float linearDepth = DepthNDCToView(depth);
-
-    imageStore(downSampledOutput, ivec2(texCoord), vec4(linearDepth));
+    imageStore(downSampledOutput, ivec2(texCoord), vec4(depth));
 }

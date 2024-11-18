@@ -12,6 +12,7 @@ enum class ColorType : uint8_t
 {
 	SRGB = VK_FORMAT_R8G8B8A8_SRGB,
 	LINEAR = VK_FORMAT_R8G8B8A8_UNORM,
+	R16U = VK_FORMAT_R16_UNORM,
 };
 
 enum class TextureType : uint8_t

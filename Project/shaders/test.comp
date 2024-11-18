@@ -3,8 +3,8 @@
 #define PI              3.1415f
 #define TWO_PI          (2.0f * PI)
 #define GOLDEN_ANGLE    2.4f
-#define SAMPLES_COUNT   8
-#define CONTRAST        1.0f
+#define SAMPLES_COUNT   16
+#define CONTRAST        8.0f
 
 layout(push_constant) uniform constants {
     mat4 viewMatrix;
@@ -81,19 +81,6 @@ void sincos(float theta, out float sinus, out float cosine)
 }
 
 
-vec3 Position_View(vec2 texCoord)
-{
-   vec3 position = vec3( decode(texCoord), -1.0f);
-   position.x *= -1.0f;
-
-   position.xy *= computeUbo.nearPlaneSizeNormalized.xy;
-
-
-    position *= -texture(downDepth, texCoord).z;
-
-    return position;
-}
-
 float InterleavedGradientNoise(vec2 position_screen)
 {
     vec3 magic = vec3(0.06711056f, 4.0f * 0.00583715f, 52.9829189f);
@@ -135,24 +122,22 @@ float AlchemyNoise(ivec2 position_screen)
 }
 
 
-vec3 GetWorldPositionFromDepthMatrix(vec2 UV, sampler2D DepthTexture)
+vec3 GetViewPositionFromDepth(vec2 UV, sampler2D DepthTexture)
 {
     float Depth = texture( DepthTexture, UV ).x;
-    Depth = Depth * 2.0 - 1.0;
+    Depth = decode(Depth);
 
     vec2 ClipUV = ( UV * 2.0 - 1.0 ) * vec2( 1.0, -1.0 );
     vec4 ClipPosition = vec4( ClipUV, Depth, 1.0 );
+
+    //To View
     vec4 ViewPosition = ubo.inverseProjection * ClipPosition;
 
     // Perspective division
     ViewPosition = ViewPosition / ViewPosition.w;
 	ViewPosition.y *= -1;
 
-    vec4 WorldPosition = inverse(push.viewMatrix) * ViewPosition;
-
-
-
-    return WorldPosition.xyz;
+    return ViewPosition.xyz;
 }
 
 void main()
@@ -160,9 +145,9 @@ void main()
     ivec2 texCoord = ivec2(gl_GlobalInvocationID.xy);
     vec2 normalizedTexCoord = vec2(texCoord) / vec2(imageSize(ssaoOutput));
 
-	vec3 position = GetWorldPositionFromDepthMatrix(normalizedTexCoord, depthResource);
-   // vec3 position = Position_View(normalizedTexCoord);
-	//imageStore(ssaoOutput, texCoord, vec4(position.xy,0,position.z + 2));
+	vec3 position = GetViewPositionFromDepth(normalizedTexCoord, depthResource);
+	position = GetViewPositionFromDepth(normalizedTexCoord, downDepth);
+	imageStore(ssaoOutput, texCoord, vec4(position.xy,0,position.z +1.8f));
 
 	float alchemyNoise = AlchemyNoise(ivec2(texCoord.xy));
   	float noise = InterleavedGradientNoise(texCoord.xy);
@@ -171,14 +156,13 @@ void main()
 
 
   	vec3 normal = decode(texture(normalResource, normalizedTexCoord).xyz);
-
-  	//normal = mat3(inverse(push.viewMatrix)) * normal;
-	//imageStore(ssaoOutput, texCoord, vec4(encode(normal), 1));
-
+  	normal = mat3((push.viewMatrix)) * normal;
+	//imageStore(ssaoOutput, texCoord, vec4((normal), 1));
 
 
-    vec2 radiusScreen = vec2(0.01f / position.z);
-    radiusScreen = min(radiusScreen, vec2(0.35f));
+
+    vec2 radiusScreen = vec2(.01f / position.z);
+    radiusScreen = min(radiusScreen, vec2(0.001f));
     radiusScreen.y *= computeUbo.aspect.x;
 
 
@@ -187,19 +171,18 @@ void main()
     {
     	//Normally you would use AlchemyNoise as input here
         vec2 sampleOffset = AlchemySpiralOffset(i, alchemyNoise);
-       	sampleOffset = VogelDiskOffset(i, TWO_PI * noise);
+       	//sampleOffset = VogelDiskOffset(i, TWO_PI * noise);
         //sampleOffset = decode(hash22( i * texCoord));
 
        	vec2 sampleTexCoord = normalizedTexCoord + radiusScreen * sampleOffset;
+        vec3 samplePosition = GetViewPositionFromDepth(sampleTexCoord, depthResource);
+        samplePosition = GetViewPositionFromDepth(sampleTexCoord, downDepth);
 
-        //vec3 samplePosition = Position_View(sampleTexCoord);
-        vec3 samplePosition = GetWorldPositionFromDepthMatrix(sampleTexCoord, depthResource);
         vec3 v = samplePosition - position;
-
-        ao += max(0.0f, dot(v, normal) + 0.001f * position.z) / (dot(v, v) + 0.001f);
+        ao += max(0.0f, dot(v, normal) + 0.002f * position.z) / (dot(v, v) + 0.001f);
     }
 
-    ao = saturate(ao / float(SAMPLES_COUNT * 10));
+    ao = saturate(ao / float(SAMPLES_COUNT * 50));
     ao = 1 - ao;
     ao = pow(ao, CONTRAST);
 

@@ -52,7 +52,7 @@ Scene::Scene(VulkanContext* vulkanContext)
 	std::shared_ptr<Material> DownSampleDeptBufferMaterial = MaterialManager::CreateMaterial(vulkanContext, "DownSample");
 	DownSampleDeptBufferMaterial->AddShader("DownSample.comp", ShaderType::ComputeShader);
 	DownSampleDeptBufferMaterial->GetDescriptorSet()->AddGBuffer(0, 1);
-	std::shared_ptr<Texture> downSampleTexture = DownSampleDeptBufferMaterial->GetDescriptorSet()->CreateOutputTexture(2, vulkanContext, {width,  height});
+	std::shared_ptr<Texture> downSampleTexture = DownSampleDeptBufferMaterial->GetDescriptorSet()->CreateOutputTexture(2, vulkanContext, {width / 2.0f,  height / 2.0f}, ColorType::R16U);
 
 
 
@@ -73,7 +73,7 @@ Scene::Scene(VulkanContext* vulkanContext)
 	auto pixelSizeHandle = computeUbo->AddVariable({pixelSize.x,pixelSize.y,0,0});
 
 	computeMaterial->GetDescriptorSet()->AddGBuffer(1,2);
-	std::shared_ptr<Texture> SSAO = computeMaterial->GetDescriptorSet()->CreateOutputTexture(3, vulkanContext, {width, height});
+	std::shared_ptr<Texture> SSAO = computeMaterial->GetDescriptorSet()->CreateOutputTexture(3, vulkanContext, {width / 2.0f,  height / 2.0f});
 	computeMaterial->GetDescriptorSet()->AddTexture(4, downSampleTexture, vulkanContext);
 
 	SwapChain::OnSwapChainRecreated.AddLambda([aspectRatioHandle, pixelSizeHandle, nearPlaneSizeHandle](const VulkanContext* context)
@@ -250,8 +250,8 @@ void Scene::ExecuteComputePass(VkCommandBuffer commandBuffer) const
 	uint32_t fullscreenGroupCountX = (extends.width) / groupSize;
 	uint32_t fullscreenGroupCountY = (extends.height) / groupSize;
 
-	uint32_t quarterGroupCountX = (extends.width) / groupSize;
-	uint32_t quarterGroupCountY = (extends.height) / groupSize;
+	uint32_t quarterGroupCountX = (extends.width / 2.0f) / groupSize;
+	uint32_t quarterGroupCountY = (extends.height / 2.0f) / groupSize;
 
 	Texture* downSampleTexture{};
 	Texture* SSAO{};
