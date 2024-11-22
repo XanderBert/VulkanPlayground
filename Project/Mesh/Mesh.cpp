@@ -17,23 +17,6 @@
 #include "Core/Logger.h"
 #include "vulkanbase/VulkanTypes.h"
 
-
-// Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices,
-//            const std::shared_ptr<Material> &material, const std::shared_ptr<Material> &depthMaterial, std::string  meshName, uint32_t firstDrawIndex, int32_t vertexOffset)
-// 	: m_FirstDrawIndex(firstDrawIndex)
-//     , m_VertexOffset(vertexOffset)
-// 	, m_pMaterial(material)
-//     , m_pDepthMaterial(depthMaterial)
-//     , m_MeshName(std::move(meshName))
-// {
-// 	m_pContext = ServiceLocator::GetService<VulkanContext>();
-// 	CreateVertexBuffer(vertices);
-// 	CreateIndexBuffer(indices);
-// }
-
-
-
-
 Mesh::Mesh(const std::vector<Vertex> &vertices, const std::vector<uint32_t> &indices, std::string meshName, const std::vector<Primitive> &primitives, uint32_t firstDrawIndex, int32_t vertexOffset)
 	: m_FirstDrawIndex(firstDrawIndex)
 	, m_VertexOffset(vertexOffset)
@@ -96,7 +79,8 @@ void Mesh::RenderDepth(VkCommandBuffer commandBuffer)
     if (!m_Visible) return;
 
     GlobalDescriptor::Bind(m_pContext, commandBuffer, m_pDepthMaterial->GetPipelineLayout());
-    m_pDepthMaterial->Bind(commandBuffer, m_ModelMatrix);
+	m_pDepthMaterial->BindPushConstant(commandBuffer, m_ModelMatrix);
+    m_pDepthMaterial->Bind(commandBuffer);
 	m_IndexBuffer.BindAsIndexBuffer(commandBuffer);
 	m_VertexBuffer.BindAsVertexBuffer(commandBuffer);
 	vkCmdDrawIndexed(commandBuffer, m_IndexCount, 1, m_FirstDrawIndex, m_VertexOffset, 0);

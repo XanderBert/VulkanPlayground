@@ -16,7 +16,8 @@ struct Primitive
 
 	inline void Render(VkCommandBuffer commandBuffer, const glm::mat4& modelMatrix) const
 	{
-		material->Bind(commandBuffer, modelMatrix);
+		material->BindPushConstant(commandBuffer, modelMatrix);
+		material->Bind(commandBuffer);
 		vkCmdDrawIndexed(commandBuffer, indexCount, 1, firstIndex, 0, 0);
 	}
 };

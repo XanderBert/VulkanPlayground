@@ -176,7 +176,7 @@ namespace VulkanLogger
 
 		    //Linux
             #ifdef __linux__
-                raise(SIGTRAP);
+                //raise(SIGTRAP);
             #endif
 		}
 #endif

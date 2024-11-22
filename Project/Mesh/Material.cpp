@@ -35,9 +35,8 @@ void Material::OnImGui()
     m_DescriptorSet.OnImGui();
 }
 
-void Material::Bind(const VkCommandBuffer commandBuffer, const glm::mat4x4 &pushConstantMatrix)
+void Material::Bind(const VkCommandBuffer commandBuffer)
 {
-    m_pGraphicsPipeline->BindPushConstant(commandBuffer, pushConstantMatrix);
     m_pGraphicsPipeline->BindPipeline(commandBuffer, m_PipelineType);
     m_DescriptorSet.Bind(m_pContext, commandBuffer, m_pGraphicsPipeline->GetPipelineLayout(), 1, m_PipelineType);
 
@@ -54,6 +53,12 @@ void Material::Bind(const VkCommandBuffer commandBuffer, const glm::mat4x4 &push
     //  }
 
 }
+
+void Material::BindPushConstant(VkCommandBuffer commandBuffer, const glm::mat4x4 &pushConstantMatrix) const
+{
+    m_pGraphicsPipeline->BindPushConstant(commandBuffer, pushConstantMatrix);
+}
+
 Shader *Material::SetShader(const std::string &shaderPath, ShaderType shaderType)
 {
     //Check if a shader of this type already exists

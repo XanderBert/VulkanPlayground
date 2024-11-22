@@ -26,7 +26,8 @@ public:
 
 	void OnImGui();
 
-    void Bind(VkCommandBuffer commandBuffer, const glm::mat4x4& pushConstantMatrix);
+    void Bind(VkCommandBuffer commandBuffer);
+	void BindPushConstant(VkCommandBuffer commandBuffer, const glm::mat4x4& pushConstantMatrix) const;
 
     //Checks if a shader with the same type already exists,
     //if so it removes it and adds the new one

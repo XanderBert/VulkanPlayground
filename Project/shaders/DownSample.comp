@@ -27,7 +27,6 @@ void main()
 {
     ivec2 texCoord = ivec2(gl_GlobalInvocationID.xy);
     vec2 normalizedTexCoord = vec2(texCoord) / vec2(imageSize(downSampledOutput));
-g
    	float depth = texture(depthResource, normalizedTexCoord).r;
 
     imageStore(downSampledOutput, ivec2(texCoord), vec4(depth));

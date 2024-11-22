@@ -33,9 +33,13 @@ void GBuffer::Cleanup(const VulkanContext *vulkanContext)
 	m_AlbedoAttachment.Cleanup(vulkanContext->device);
 }
 
-void GBuffer::Bind(Descriptor::DescriptorWriter &writer, int depthBinding, int normalBinding)
+void GBuffer::BindDepth(Descriptor::DescriptorWriter &writer, int depthBinding)
 {
 	m_DepthAttachment.Bind(writer, depthBinding);
+}
+
+void GBuffer::BindNormal(Descriptor::DescriptorWriter &writer, int normalBinding)
+{
 	m_ColorAttachmentNormal.Bind(writer, normalBinding);
 }
 
