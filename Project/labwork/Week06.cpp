@@ -70,11 +70,8 @@ void VulkanBase::createSyncObjects()
 
 void VulkanBase::drawFrame()
 {
-
 	VkDevice device = m_pContext->device;
 	vkWaitForFences(device, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
-
-	//vkDeviceWaitIdle(device);
 
     //TODO: This check should only happen on events / not in the hot code path
     ShaderManager::ReloadNeededShaders(m_pContext);
@@ -115,8 +112,7 @@ void VulkanBase::drawFrame()
 	submitInfo.pCommandBuffers = &commandBuffer.Handle;
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = &renderFinishedSemaphore;
-
-	//vkDeviceWaitIdle(device);
+	
 	CommandBufferManager::SubmitCommandBuffer(m_pContext, commandBuffer, &submitInfo, inFlightFence);
 
 
