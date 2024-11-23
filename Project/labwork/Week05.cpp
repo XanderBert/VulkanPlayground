@@ -246,6 +246,15 @@ void VulkanBase::createLogicalDevice()
 	dynamicRenderingFeature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR;
 	dynamicRenderingFeature.dynamicRendering = VK_TRUE;
 
+	//Setup Bindles rendering features
+	VkPhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures{};
+	descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
+	descriptorIndexingFeatures.runtimeDescriptorArray = VK_TRUE;
+	descriptorIndexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
+	descriptorIndexingFeatures.pNext = &dynamicRenderingFeature;
+
+
+
 	VkDeviceCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 	createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
@@ -253,7 +262,7 @@ void VulkanBase::createLogicalDevice()
 	createInfo.pEnabledFeatures = &deviceFeatures;
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
 	createInfo.ppEnabledExtensionNames = deviceExtensions.data();
-	createInfo.pNext = &dynamicRenderingFeature;
+	createInfo.pNext = &descriptorIndexingFeatures;
 	createInfo.enabledLayerCount = 0;
 
 

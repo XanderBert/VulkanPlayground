@@ -16,6 +16,7 @@
 #include "Mesh/Vertex.h"
 #include "Patterns/ServiceLocator.h"
 #include "Timer/GameTimer.h"
+#include "Timer/TimerGraph.h"
 #include "shaders/Logic/ShaderEditor.h"
 #include "shaders/Logic/ShaderFactory.h"
 
@@ -192,53 +193,46 @@ void Scene::AlbedoRender(VkCommandBuffer commandBuffer) const
 
 void Scene::Render(VkCommandBuffer commandBuffer) const
 {
-	GameTimer::UpdateDelta();
-	Camera::Update();
-
-
-
-    ShaderEditor::Render();
-
 	const ImGuiIO& io = ImGui::GetIO(); (void)io;
 	const float ms = 1000.0f / io.Framerate;
-	ImGui::Begin("Info");
+	const float fps = io.Framerate;
+	TimerGraph::OnImGui(ms, fps);
+	Camera::Update();
+
+	GameTimer::UpdateDelta();
 
 
-	ImGui::Text("%.1f FPS", io.Framerate);
-    // ImGui::SameLine();
-    // if(ImGui::Button("Generate Memory Layout"))
-    // {
+
+
+
+
+
+
+
+
+
+	// ImGui::SameLine();
+	// if(ImGui::Button("Generate Memory Layout"))
+	// {
 	//		auto* pContext = ServiceLocator::GetService<VulkanContext>();
-    //     Allocator::GenerateMemoryLayout(pContext);
-    // }
-    // if(Allocator::MemoryLayoutTexture.has_value())
-    // {
-    //     Allocator::MemoryLayoutTexture.value()->OnImGui();
-    // }
+	//     Allocator::GenerateMemoryLayout(pContext);
+	// }
+	// if(Allocator::MemoryLayoutTexture.has_value())
+	// {
+	//     Allocator::MemoryLayoutTexture.value()->OnImGui();
+	// }
+	//ShaderFactory::Render();
+	//MaterialManager::OnImGui();
 
-	static std::vector<float> frameTimes;
-	if (ImPlot::BeginPlot("Frame Times", ImVec2(-1, 0), ImPlotFlags_NoInputs | ImPlotFlags_NoTitle))
-	{
-		//Update FrameTimes
-		frameTimes.push_back(ms);
-		if (frameTimes.size() > 1500) frameTimes.erase(frameTimes.begin());
-
-		ImPlot::SetupAxes("time", "ms", ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_NoTickLabels, ImPlotAxisFlags_AutoFit);
-		ImPlot::PlotLine("Frame Times", frameTimes.data(), static_cast<int>(frameTimes.size()), 0.001, 0, ImPlotLineFlags_Shaded);
-		ImPlot::EndPlot();
-	}
-    ImGui::Text("Application average %.3f ms", ms);
-	ImGui::End();
-
-	ShaderFactory::Render();
+	ShaderEditor::Render();
 	VulkanLogger::Log.Render("Vulkan Log: ");
-	MaterialManager::OnImGui();
     GlobalDescriptor::OnImGui();
 	Camera::OnImGui();
 	GBuffer::OnImGui();
 
 	for (const auto& mesh : m_Meshes)
 	{
+		//Render Each Mesh
 		mesh->Render(commandBuffer);
 
 		ImGui::Begin("Mesh");
@@ -248,7 +242,6 @@ void Scene::Render(VkCommandBuffer commandBuffer) const
 		}
 		ImGui::End();
 	}
-
 
     ImGui::Render();
 }

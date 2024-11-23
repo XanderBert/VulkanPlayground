@@ -1,16 +1,16 @@
 #include "ImGuiWrapper.h"
 #include <glm/gtc/type_ptr.hpp>
+#include "implot.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_vulkan.h"
-#include "implot.h"
 
 
 #include "DepthResource.h"
+#include "SwapChain.h"
 #include "Mesh/MaterialManager.h"
 #include "Patterns/ServiceLocator.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneManager.h"
-#include "SwapChain.h"
 #include "vulkanbase/VulkanTypes.h"
 
 #include <ImGuiFileDialog.h>
@@ -26,10 +26,7 @@ void ImGuiWrapper::Initialize(VkQueue graphicsQueue)
 	// The example only requires a single combined image sampler descriptor for the font image and only uses one descriptor set (for that)
 	// If you wish to load e.g. additional textures you may need to alter pools sizes.
 	{
-        constexpr VkDescriptorPoolSize pool_sizes[] =
-		{
-			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2000 },
-		};
+		constexpr VkDescriptorPoolSize pool_sizes[] = {{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2000},};
 
 		VkDescriptorPoolCreateInfo pool_info = {};
 		pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -44,9 +41,10 @@ void ImGuiWrapper::Initialize(VkQueue graphicsQueue)
 	ImGui::CreateContext();
 	ImPlot::CreateContext();
 
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGuiIO &io = ImGui::GetIO();
+	(void)io;
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 	//io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
 	ImGui::StyleColorsDark();
@@ -75,8 +73,8 @@ void ImGuiWrapper::Initialize(VkQueue graphicsQueue)
 	init_info.PipelineRenderingCreateInfo.depthAttachmentFormat = GBuffer::GetDepthAttachment()->GetFormat();
 
 	ImGui_ImplVulkan_Init(&init_info);
-    SetDarkStyle();
-    LogInfo("Imgui Initialized");
+	SetDraculaStyle();
+	LogInfo("Imgui Initialized");
 }
 
 void ImGuiWrapper::Cleanup()
@@ -94,66 +92,78 @@ void ImGuiWrapper::NewFrame()
 	ImGui_ImplVulkan_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
-    //Enable Proper Docking
+	//Enable Proper Docking
 	ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
 
-    ImGuizmo::BeginFrame();
-    ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, static_cast<float>(SwapChain::Extends().width), static_cast<float>(SwapChain::Extends().height));
+	ImGuizmo::BeginFrame();
+	ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, static_cast<float>(SwapChain::Extends().width), static_cast<float>(SwapChain::Extends().height));
 
-    if (ImGui::BeginMainMenuBar()) {
-        if (ImGui::BeginMenu("File"))
-        {
-            if (ImGui::MenuItem("Import", "Ctrl+I"))
-            {
-                //Setup File Dialog
-                LogInfo("Importing Mesh...");
-                IGFD::FileDialogConfig config;
-                config.path = ".";
-                config.countSelectionMax = 1;
-                config.flags = ImGuiFileDialogFlags_Modal;
-                ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".obj,.gltf", config);
-            }
+	if (ImGui::BeginMainMenuBar())
+	{
+		if (ImGui::BeginMenu("File"))
+		{
+			if (ImGui::MenuItem("Import", "Ctrl+I"))
+			{
 
-            ImGui::EndMenu();
-        }
-        ImGui::EndMainMenuBar();
-    }
+				//Set next window size
+				ImGui::SetNextWindowSize(ImVec2(400, 200), ImGuiCond_FirstUseEver);
 
-    // Display The File Dialog When Needed
-    if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
-    {
-        if (ImGuiFileDialog::Instance()->IsOk())
-        {
-            std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
-            LogInfo("Selected File: " + filePathName);
+				//Setup File Dialog
+				LogInfo("Importing Mesh...");
+				IGFD::FileDialogConfig config;
+				config.path = ".";
+				config.countSelectionMax = 1;
+				config.flags = ImGuiFileDialogFlags_Modal;
+				ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".obj,.gltf", config);
+			}
+			ImGui::EndMenu();
+		}
 
-            //Get the extension
-            std::string extension = filePathName.substr(filePathName.find_last_of('.') + 1);
 
-            if(extension == "gltf")
-            {
-                const auto vulkanContext = ServiceLocator::GetService<VulkanContext>();
-                GLTFLoader::LoadGLTF(filePathName, SceneManager::GetActiveScene(), vulkanContext);
-            }
-            else
-            {
-                //TODO: move to  OBJLoader::Load("FlightHelmet.obj", this, vulkanContext);
-                std::unique_ptr<Mesh> newMesh = std::make_unique<Mesh>(filePathName, "PBR_Material", filePathName);
-                SceneManager::GetActiveScene()->AddMesh(std::move(newMesh));
-            }
-        }
-        ImGuiFileDialog::Instance()->Close();
-    }
+		if (ImGui::BeginMenu("Style"))
+		{
+			if (ImGui::MenuItem("Dark Style")) SetDarkStyle();
+			if (ImGui::MenuItem("Dracula Style")) SetDraculaStyle();
+			ImGui::EndMenu();
+		}
+		ImGui::EndMainMenuBar();
+	}
+
+	// Display The File Dialog When Needed
+	if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+	{
+		if (ImGuiFileDialog::Instance()->IsOk())
+		{
+			std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+			LogInfo("Selected File: " + filePathName);
+
+			//Get the extension
+			std::string extension = filePathName.substr(filePathName.find_last_of('.') + 1);
+
+			if (extension == "gltf")
+			{
+				const auto vulkanContext = ServiceLocator::GetService<VulkanContext>();
+				GLTFLoader::LoadGLTF(filePathName, SceneManager::GetActiveScene(), vulkanContext);
+			}
+			else
+			{
+				//TODO: move to  OBJLoader::Load("FlightHelmet.obj", this, vulkanContext);
+				std::unique_ptr<Mesh> newMesh = std::make_unique<Mesh>(filePathName, "PBR_Material", filePathName);
+				SceneManager::GetActiveScene()->AddMesh(std::move(newMesh));
+			}
+		}
+		ImGuiFileDialog::Instance()->Close();
+	}
 }
 
 void ImGuiWrapper::EndFrame()
 {
-    ImGui::EndFrame();
+	ImGui::EndFrame();
 }
 
 void ImGuiWrapper::SetDarkStyle()
 {
-	ImVec4* colors = ImGui::GetStyle().Colors;
+	ImVec4 *colors = ImGui::GetStyle().Colors;
 	colors[ImGuiCol_Text] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
 	colors[ImGuiCol_TextDisabled] = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
 	colors[ImGuiCol_WindowBg] = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
@@ -210,7 +220,7 @@ void ImGuiWrapper::SetDarkStyle()
 	colors[ImGuiCol_NavWindowingDimBg] = ImVec4(1.00f, 0.00f, 0.00f, 0.20f);
 	colors[ImGuiCol_ModalWindowDimBg] = ImVec4(1.00f, 0.00f, 0.00f, 0.35f);
 
-	ImGuiStyle& style = ImGui::GetStyle();
+	ImGuiStyle &style = ImGui::GetStyle();
 	style.WindowPadding = ImVec2(8.00f, 8.00f);
 	style.FramePadding = ImVec2(5.00f, 2.00f);
 	style.CellPadding = ImVec2(6.00f, 6.00f);
@@ -235,18 +245,102 @@ void ImGuiWrapper::SetDarkStyle()
 	style.TabRounding = 4;
 }
 
+void ImGuiWrapper::SetDraculaStyle()
+{
+	auto &colors = ImGui::GetStyle().Colors;
+	colors[ImGuiCol_WindowBg] = ImVec4{0.1f, 0.1f, 0.13f, 1.0f};
+	colors[ImGuiCol_MenuBarBg] = ImVec4{0.16f, 0.16f, 0.21f, 1.0f};
+
+	// Border
+	colors[ImGuiCol_Border] = ImVec4{0.44f, 0.37f, 0.61f, 0.29f};
+	colors[ImGuiCol_BorderShadow] = ImVec4{0.0f, 0.0f, 0.0f, 0.24f};
+
+	// Text
+	colors[ImGuiCol_Text] = ImVec4{1.0f, 1.0f, 1.0f, 1.0f};
+	colors[ImGuiCol_TextDisabled] = ImVec4{0.5f, 0.5f, 0.5f, 1.0f};
+
+	// Headers
+	colors[ImGuiCol_Header] = ImVec4{0.13f, 0.13f, 0.17, 1.0f};
+	colors[ImGuiCol_HeaderHovered] = ImVec4{0.19f, 0.2f, 0.25f, 1.0f};
+	colors[ImGuiCol_HeaderActive] = ImVec4{0.16f, 0.16f, 0.21f, 1.0f};
+
+	// Buttons
+	colors[ImGuiCol_Button] = ImVec4{0.13f, 0.13f, 0.17, 1.0f};
+	colors[ImGuiCol_ButtonHovered] = ImVec4{0.19f, 0.2f, 0.25f, 1.0f};
+	colors[ImGuiCol_ButtonActive] = ImVec4{0.16f, 0.16f, 0.21f, 1.0f};
+	colors[ImGuiCol_CheckMark] = ImVec4{0.74f, 0.58f, 0.98f, 1.0f};
+
+	// Popups
+	colors[ImGuiCol_PopupBg] = ImVec4{0.1f, 0.1f, 0.13f, 0.92f};
+
+	// Slider
+	colors[ImGuiCol_SliderGrab] = ImVec4{0.44f, 0.37f, 0.61f, 0.54f};
+	colors[ImGuiCol_SliderGrabActive] = ImVec4{0.74f, 0.58f, 0.98f, 0.54f};
+
+	// Frame BG
+	colors[ImGuiCol_FrameBg] = ImVec4{0.13f, 0.13, 0.17, 1.0f};
+	colors[ImGuiCol_FrameBgHovered] = ImVec4{0.19f, 0.2f, 0.25f, 1.0f};
+	colors[ImGuiCol_FrameBgActive] = ImVec4{0.16f, 0.16f, 0.21f, 1.0f};
+
+	// Tabs
+	colors[ImGuiCol_Tab] = ImVec4{0.16f, 0.16f, 0.21f, 1.0f};
+	colors[ImGuiCol_TabHovered] = ImVec4{0.24, 0.24f, 0.32f, 1.0f};
+	colors[ImGuiCol_TabActive] = ImVec4{0.2f, 0.22f, 0.27f, 1.0f};
+	colors[ImGuiCol_TabUnfocused] = ImVec4{0.16f, 0.16f, 0.21f, 1.0f};
+	colors[ImGuiCol_TabUnfocusedActive] = ImVec4{0.16f, 0.16f, 0.21f, 1.0f};
+
+	// Title
+	colors[ImGuiCol_TitleBg] = ImVec4{0.16f, 0.16f, 0.21f, 1.0f};
+	colors[ImGuiCol_TitleBgActive] = ImVec4{0.16f, 0.16f, 0.21f, 1.0f};
+	colors[ImGuiCol_TitleBgCollapsed] = ImVec4{0.16f, 0.16f, 0.21f, 1.0f};
+
+	// Scrollbar
+	colors[ImGuiCol_ScrollbarBg] = ImVec4{0.1f, 0.1f, 0.13f, 1.0f};
+	colors[ImGuiCol_ScrollbarGrab] = ImVec4{0.16f, 0.16f, 0.21f, 1.0f};
+	colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4{0.19f, 0.2f, 0.25f, 1.0f};
+	colors[ImGuiCol_ScrollbarGrabActive] = ImVec4{0.24f, 0.24f, 0.32f, 1.0f};
+
+	// Seperator
+	colors[ImGuiCol_Separator] = ImVec4{0.44f, 0.37f, 0.61f, 1.0f};
+	colors[ImGuiCol_SeparatorHovered] = ImVec4{0.74f, 0.58f, 0.98f, 1.0f};
+	colors[ImGuiCol_SeparatorActive] = ImVec4{0.84f, 0.58f, 1.0f, 1.0f};
+
+	// Resize Grip
+	colors[ImGuiCol_ResizeGrip] = ImVec4{0.44f, 0.37f, 0.61f, 0.29f};
+	colors[ImGuiCol_ResizeGripHovered] = ImVec4{0.74f, 0.58f, 0.98f, 0.29f};
+	colors[ImGuiCol_ResizeGripActive] = ImVec4{0.84f, 0.58f, 1.0f, 0.29f};
+
+	// Docking
+	colors[ImGuiCol_DockingPreview] = ImVec4{0.44f, 0.37f, 0.61f, 1.0f};
+
+	auto &style = ImGui::GetStyle();
+	style.TabRounding = 4;
+	style.ScrollbarRounding = 9;
+	style.WindowRounding = 7;
+	style.GrabRounding = 3;
+	style.FrameRounding = 3;
+	style.PopupRounding = 4;
+	style.ChildRounding = 4;
+}
+
 ImGuiTexture::ImGuiTexture(VkSampler sampler, VkImageView imageView, ImVec2 size)
 {
-    ImGuiDescriptorSet = ImGui_ImplVulkan_AddTexture(sampler, imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-    m_Size = size;
+	ImGuiDescriptorSet = ImGui_ImplVulkan_AddTexture(sampler, imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	m_Size = size;
 }
 
 
-void ImGuiTexture::Cleanup() { ImGui_ImplVulkan_RemoveTexture(ImGuiDescriptorSet); }
-void ImGuiTexture::SetNewSize(ImVec2 newSize) { m_Size = newSize;}
+void ImGuiTexture::Cleanup()
+{
+	ImGui_ImplVulkan_RemoveTexture(ImGuiDescriptorSet);
+}
+
+void ImGuiTexture::SetNewSize(ImVec2 newSize)
+{
+	m_Size = newSize;
+}
 
 void ImGuiTexture::OnImGui()
 {
-    ImGui::Image(static_cast<void *>(ImGuiDescriptorSet), m_Size);
+	ImGui::Image(static_cast<void *>(ImGuiDescriptorSet), m_Size);
 }
-

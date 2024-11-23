@@ -156,11 +156,16 @@ void Camera::OnImGui()
 
     ImGui::End();
 }
+
 void Camera::Update()
 {
-    //Smoothly move the camera to the target
-    m_Origin = m_Target +  (m_Origin - m_Target) * glm::pow3((-GameTimer::GetDeltaTime() / m_MovementSmoothness));
+	// Calculate an exponential smoothing factor based on the movement smoothness.
+	const float alpha = 1.0f - glm::exp(-m_MovementSmoothness * GameTimer::GetDeltaTime());
+
+	// Smoothly interpolate using exponential smoothing.
+	m_Origin = m_Origin * (1.0f - alpha) + m_Target * alpha;
 }
+
 
 void Camera::SetAspectRatio(float width, float height)
 {

@@ -117,6 +117,9 @@ set(SOURCES
         Core/GBuffer.h
         Core/ColorAttachment.cpp
         Core/ColorAttachment.h
+        Types/CircularBuffer.h
+        Timer/TimerGraph.cpp
+        Timer/TimerGraph.h
 )
 
 

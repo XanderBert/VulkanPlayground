@@ -25,6 +25,7 @@ public:
 	static void EndFrame();
 
     static void SetDarkStyle();
+	static void SetDraculaStyle();
 
 private:
 	inline static VkDescriptorPool descriptorPool;
