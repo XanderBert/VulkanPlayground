@@ -28,30 +28,30 @@ public:
 
 	static void OnImGui()
 	{
-        ImGui::Begin("Material Factory");
-
-	        if(ImGui::Button("New Material"))
-	        {
-	            auto* pContext = ServiceLocator::GetService<VulkanContext>();
-
-	            auto material = CreateMaterial(pContext, "shader.vert", "shader.frag", "New Test Material");
-
-	            //TODO: In a perfect world, I would read the shader files and look at set 1. Add all the needed bindings to the descriptor set
-                //TODO: This would actually also be done when a shader gets reloaded because bindings could be added or removed
-                //Actual data can just be an imgui widget that can be added to the descriptor set.
-	            //A texture will for now just be grey. But textures would need to be switched out when clicked on it.
-
-	            //Add the needed bindings for the descriptorset
-	            material->GetDescriptorSet()->AddTexture(1, "vehicle_normal.png", pContext);
-	            material->GetDescriptorSet()->AddTexture(2, "vehicle_normal.png", pContext);
-	            material->GetDescriptorSet()->AddTexture(3, "vehicle_normal.png", pContext);
-	            material->GetDescriptorSet()->AddTexture(4, "vehicle_normal.png", pContext);
-
-	            //Create Pipeline
-                material->CreatePipeline();
-	        }
-
-	    ImGui::End();
+     //    ImGui::Begin("Material Factory");
+     //
+	    //     if(ImGui::Button("New Material"))
+	    //     {
+	    //         auto* pContext = ServiceLocator::GetService<VulkanContext>();
+     //
+	    //         auto material = CreateMaterial(pContext, "shader.vert", "shader.frag", "New Test Material");
+     //
+	    //         //TODO: In a perfect world, I would read the shader files and look at set 1. Add all the needed bindings to the descriptor set
+     //            //TODO: This would actually also be done when a shader gets reloaded because bindings could be added or removed
+     //            //Actual data can just be an imgui widget that can be added to the descriptor set.
+	    //         //A texture will for now just be grey. But textures would need to be switched out when clicked on it.
+     //
+	    //         //Add the needed bindings for the descriptorset
+	    //         material->GetDescriptorSet()->AddTexture(1, "vehicle_normal.png", pContext);
+	    //         material->GetDescriptorSet()->AddTexture(2, "vehicle_normal.png", pContext);
+	    //         material->GetDescriptorSet()->AddTexture(3, "vehicle_normal.png", pContext);
+	    //         material->GetDescriptorSet()->AddTexture(4, "vehicle_normal.png", pContext);
+     //
+	    //         //Create Pipeline
+     //            material->CreatePipeline();
+	    //     }
+     //
+	    // ImGui::End();
 
 
 		ImGui::Begin("Active Materials");
@@ -68,6 +68,16 @@ public:
 
 	static std::shared_ptr<Material> CreateMaterial(VulkanContext* vulkanContext, const std::string& materialName)
 	{
+		//TODO Return the already existing material?
+		//but somehow this function should let the caller know it returned an existing material instead of a new one
+
+		//Check if the material already exists if so add a _0
+		if (m_Materials.find(materialName) != m_Materials.end())
+		{
+			LogWarning("Material with name: " + materialName + " already exists");
+			return CreateMaterial(vulkanContext, materialName + "_0");
+		}
+
 		m_Materials.insert({materialName, std::make_shared<Material>(vulkanContext, materialName)});
 		return m_Materials[materialName];
 	}

@@ -222,8 +222,7 @@ void Scene::Render(VkCommandBuffer commandBuffer) const
 	//     Allocator::MemoryLayoutTexture.value()->OnImGui();
 	// }
 	//ShaderFactory::Render();
-	//MaterialManager::OnImGui();
-
+	MaterialManager::OnImGui();
 	ShaderEditor::Render();
 	VulkanLogger::Log.Render("Vulkan Log: ");
     GlobalDescriptor::OnImGui();
