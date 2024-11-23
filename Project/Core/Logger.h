@@ -9,7 +9,7 @@
 
 
 #define VulkanCheck(result, message) \
-if (result != VK_SUCCESS) \
+if ((result) != VK_SUCCESS) \
 {\
 	VulkanLogger::LogMessage(VulkanLogger::LogLevel::LOGERROR, message);\
 }\
@@ -165,6 +165,8 @@ namespace VulkanLogger
         Log.AddLog("%s %s\n", prefix.c_str(), message.c_str());
         std::cout << colorCode << prefix << " " << message << "\033[0m" << std::endl;
 
+
+
 #ifndef NDEBUG
 		if (level == LogLevel::LOGERROR)
 		{
@@ -176,7 +178,7 @@ namespace VulkanLogger
 
 		    //Linux
             #ifdef __linux__
-                //raise(SIGTRAP);
+                raise(SIGTRAP);
             #endif
 		}
 #endif

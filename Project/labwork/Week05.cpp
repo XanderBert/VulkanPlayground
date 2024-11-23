@@ -246,16 +246,6 @@ void VulkanBase::createLogicalDevice()
 	dynamicRenderingFeature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR;
 	dynamicRenderingFeature.dynamicRendering = VK_TRUE;
 
-    //VkPhysicalDeviceTimelineSemaphoreFeaturesKHR timelineSemaphoreFeatures{};
-    //timelineSemaphoreFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES_KHR;
-    //timelineSemaphoreFeatures.timelineSemaphore = VK_TRUE;
-    //timelineSemaphoreFeatures.pNext = &dynamicRenderingFeature;
-
-    //VkPhysicalDeviceBufferDeviceAddressFeatures bufferDeviceAddressFeatures{};
-    //bufferDeviceAddressFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
-    //bufferDeviceAddressFeatures.bufferDeviceAddress = VK_TRUE;
-    //bufferDeviceAddressFeatures.pNext = &timelineSemaphoreFeatures;
-
 	VkDeviceCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 	createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
@@ -264,17 +254,15 @@ void VulkanBase::createLogicalDevice()
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
 	createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 	createInfo.pNext = &dynamicRenderingFeature;
-
-	if (enableValidationLayers) 
-	{
-		createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
-		createInfo.ppEnabledLayerNames = validationLayers.data();
-	}
-
 	createInfo.enabledLayerCount = 0;
-	
 
-	
+
+#ifndef NDEBUG
+		createInfo.enabledLayerCount = static_cast<uint32_t>(m_ValidationLayers.size());
+		createInfo.ppEnabledLayerNames = m_ValidationLayers.data();
+#endif
+
+
 	VulkanCheck(vkCreateDevice(physicalDevice, &createInfo, nullptr, &m_pContext->device), "failed to create logical device!");
 
 	vkGetDeviceQueue(m_pContext->device, indices.graphicsFamily.value(), 0, &m_pContext->graphicsQueue);

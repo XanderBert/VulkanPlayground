@@ -16,10 +16,11 @@
 
 class VulkanContext;
 struct ImGui_ImplVulkan_InitInfo;
-const std::vector validationLayers = { "VK_LAYER_KHRONOS_validation" };
+
 const std::vector<const char*> deviceExtensions = 
 {
 	VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+
 	VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
 	VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME,
 	VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME,
@@ -44,6 +45,10 @@ private:
 	PFN_vkCmdBeginRenderingKHR vkCmdBeginRenderingKHR{ VK_NULL_HANDLE };
 	PFN_vkCmdEndRenderingKHR vkCmdEndRenderingKHR{ VK_NULL_HANDLE };
 
+
+	const std::vector<const char*> m_ValidationLayers = { "VK_LAYER_KHRONOS_validation" };
+
+
 	VkQueue presentQueue;
 	VkDebugUtilsMessengerEXT debugMessenger;
 	VkSemaphore imageAvailableSemaphore;
@@ -58,11 +63,12 @@ private:
     static int rateDeviceSuitability(VkPhysicalDevice device);
     static bool isDeviceSuitable(VkPhysicalDevice device);
 	void createLogicalDevice();
-	void setupDebugMessenger();
+	VkDebugUtilsMessengerCreateInfoEXT setupDebugMessenger();
     static bool checkDeviceExtensionSupport(VkPhysicalDevice device);
 	void createInstance();
 	std::vector<const char*> getRequiredExtensions();
-	void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
+	static void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
+	static bool CheckValidationLayerSupport(const std::vector<const char*>& validationLayers);
 	void createSyncObjects();
 	void drawFrame();
 

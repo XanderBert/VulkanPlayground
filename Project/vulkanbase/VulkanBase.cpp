@@ -36,7 +36,6 @@ void VulkanBase::initVulkan()
 {
     m_pContext = ServiceLocator::GetService<VulkanContext>();
     createInstance();
-    setupDebugMessenger();
 
     SwapChain::CreateSurface(m_pContext);
     pickPhysicalDevice();
