@@ -45,6 +45,8 @@ public:
     void AddTexture(int binding, const std::variant<std::filesystem::path,ImageInMemory>& pathOrImage, VulkanContext* pContext, ColorType colorType = ColorType::LINEAR, TextureType textureType = TextureType::TEXTURE_2D);
     void AddTexture(int binding, std::shared_ptr<Texture> texture, VulkanContext* pContext);
 	void AddGBuffer(int depthBinding, int normalBinding);
+	void AddDepthBuffer(int binding);
+	void AddNormalBuffer(int binding);
 
 
 
@@ -65,7 +67,6 @@ public:
 
     void OnImGui();
 private:
-
     [[nodiscard]] bool IsBindingUsedForBuffers(int binding) const;
     [[nodiscard]] bool IsBindingUsedForTextures(int binding) const;
     [[nodiscard]] bool IsBindingUsedForDepthTexture(int binding) const;

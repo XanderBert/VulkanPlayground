@@ -30,6 +30,7 @@ public:
 
 	[[nodiscard]] VkRenderingAttachmentInfoKHR* GetRenderingAttachmentInfo();
 	[[nodiscard]] VkFormat* GetFormat();
+	[[nodiscard]] VkImage GetImage() const;
 
 	void ResetImageLayout();
 	void TransitionToWrite(VkCommandBuffer commandBuffer);

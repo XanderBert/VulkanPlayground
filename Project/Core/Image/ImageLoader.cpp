@@ -48,7 +48,7 @@ namespace Image
         if(constexpr int threshold = 2560 * 1440; width * height > threshold) props.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
 
         //Create the image
-	    VulkanCheck(vmaCreateImage(Allocator::VmaAllocator, &imageInfo, &props, &image, &imageMemory, nullptr), "Failed To Create Image");
+	    VulkanCheck(vmaCreateImage(Allocator::vmaAllocator, &imageInfo, &props, &image, &imageMemory, nullptr), "Failed To Create Image");
 	}
 
 	void CreateImageView(VkDevice device, VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, VkImageView &imageView, TextureType textureType)

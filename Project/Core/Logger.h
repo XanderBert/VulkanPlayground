@@ -2,6 +2,8 @@
 #include <iostream>
 #include <string>
 #include <csignal>
+#include <cstdint>
+
 #include "imgui.h"
 
 
@@ -163,8 +165,20 @@ namespace VulkanLogger
         Log.AddLog("%s %s\n", prefix.c_str(), message.c_str());
         std::cout << colorCode << prefix << " " << message << "\033[0m" << std::endl;
 
-#ifdef _DEBUG
-		if (level == LogLevel::LOGERROR) __debugbreak();
+#ifndef NDEBUG
+		if (level == LogLevel::LOGERROR)
+		{
+		    //Windows
+            #ifdef WIN32
+		        __debugbreak();
+            #endif
+
+
+		    //Linux
+            #ifdef __linux__
+                //raise(SIGTRAP);
+            #endif
+		}
 #endif
     }
 }

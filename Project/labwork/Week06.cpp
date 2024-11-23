@@ -70,8 +70,11 @@ void VulkanBase::createSyncObjects()
 
 void VulkanBase::drawFrame()
 {
+
 	VkDevice device = m_pContext->device;
 	vkWaitForFences(device, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
+
+	//vkDeviceWaitIdle(device);
 
     //TODO: This check should only happen on events / not in the hot code path
     ShaderManager::ReloadNeededShaders(m_pContext);
@@ -87,6 +90,8 @@ void VulkanBase::drawFrame()
 	{
 		LogError("Failed to acquire swap chain image!");
 	}
+	SwapChain::SetImageIndex(imageIndex);
+
 
 	Descriptor::DescriptorManager::ClearPools(m_pContext->device);
 	vkResetFences(device, 1, &inFlightFence);
@@ -102,25 +107,23 @@ void VulkanBase::drawFrame()
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-	VkSemaphore waitSemaphores[] = { imageAvailableSemaphore };
 	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 	submitInfo.waitSemaphoreCount = 1;
-	submitInfo.pWaitSemaphores = waitSemaphores;
+	submitInfo.pWaitSemaphores = &imageAvailableSemaphore;
 	submitInfo.pWaitDstStageMask = waitStages;
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &commandBuffer.Handle;
-	VkSemaphore signalSemaphores[] = { renderFinishedSemaphore };
 	submitInfo.signalSemaphoreCount = 1;
-	submitInfo.pSignalSemaphores = signalSemaphores;
+	submitInfo.pSignalSemaphores = &renderFinishedSemaphore;
 
-
+	//vkDeviceWaitIdle(device);
 	CommandBufferManager::SubmitCommandBuffer(m_pContext, commandBuffer, &submitInfo, inFlightFence);
 
 
 	VkPresentInfoKHR presentInfo{};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 	presentInfo.waitSemaphoreCount = 1;
-	presentInfo.pWaitSemaphores = signalSemaphores;
+	presentInfo.pWaitSemaphores = &renderFinishedSemaphore;
 	const VkSwapchainKHR swapChains[] = { SwapChain::GetSwapChain() };
 	presentInfo.swapchainCount = 1;
 	presentInfo.pSwapchains = swapChains;
@@ -206,35 +209,27 @@ void VulkanBase::createInstance()
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 	createInfo.ppEnabledExtensionNames = extensions.data();
 
-	//Validation Features:
-	if(enableValidationLayers)
-	{
-		VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
-		createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
-		createInfo.ppEnabledLayerNames = validationLayers.data();
-		populateDebugMessengerCreateInfo(debugCreateInfo);
 
-		std::vector<VkValidationFeatureEnableEXT> enabledValidationFeatures;
-		enabledValidationFeatures.push_back(VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT);
-		enabledValidationFeatures.push_back(VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT);
-		enabledValidationFeatures.push_back(VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT);
-		enabledValidationFeatures.push_back(VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT);
+	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
+	createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+	createInfo.ppEnabledLayerNames = validationLayers.data();
+	populateDebugMessengerCreateInfo(debugCreateInfo);
 
-		VkValidationFeaturesEXT validationFeatures{};
-		validationFeatures.sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
-		validationFeatures.enabledValidationFeatureCount = static_cast<uint32_t>(enabledValidationFeatures.size());
-		validationFeatures.pEnabledValidationFeatures = enabledValidationFeatures.data();
-		validationFeatures.disabledValidationFeatureCount = 0;
-		validationFeatures.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
+	std::vector<VkValidationFeatureEnableEXT> enabledValidationFeatures;
+	//enabledValidationFeatures.push_back(VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT);
+	//enabledValidationFeatures.push_back(VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT);
+	//enabledValidationFeatures.push_back(VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT);
+	enabledValidationFeatures.push_back(VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT);
+
+	VkValidationFeaturesEXT validationFeatures{};
+	validationFeatures.sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
+	validationFeatures.enabledValidationFeatureCount = static_cast<uint32_t>(enabledValidationFeatures.size());
+	validationFeatures.pEnabledValidationFeatures = enabledValidationFeatures.data();
+	validationFeatures.disabledValidationFeatureCount = 0;
+	validationFeatures.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
 
 
-		createInfo.pNext = (VkValidationFeaturesEXT*)&validationFeatures;
-	}
-	else
-	{
-		createInfo.enabledLayerCount = 0;
-		createInfo.pNext = nullptr;
-	}
+	createInfo.pNext = (VkValidationFeaturesEXT*)&validationFeatures;
 
 	VulkanCheck(vkCreateInstance(&createInfo, nullptr, &m_pContext->instance), "Failed to create instance!");
 }
@@ -249,6 +244,7 @@ std::vector<const char*> VulkanBase::getRequiredExtensions()
 
 	if (enableValidationLayers)
 	{
+		extensions.push_back(VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME);
 		extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 	}
 

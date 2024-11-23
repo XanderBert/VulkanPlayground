@@ -37,8 +37,7 @@ void Shader::OnImGui(const std::string& materialName)
 
     if(ImGui::Button(openLabel.c_str()))
     {
-        ShaderEditor::OpenFileForEdit("shaders\\" + m_FileName);
-        //tools::OpenFile("shaders\\" + m_FileName);
+        ShaderEditor::OpenFileForEdit("shaders/" + m_FileName);
     }
 }
 

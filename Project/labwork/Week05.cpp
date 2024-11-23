@@ -13,10 +13,16 @@
 
 void VulkanBase::drawFrame(uint32_t imageIndex) const
 {
-	SwapChain::SetImageIndex(imageIndex);
+	//TODO: Move to swapchain
+	tools::InsertImageMemoryBarrier(
+			commandBuffer.Handle,
+			SwapChain::Image(static_cast<uint8_t>(imageIndex)),
+			VK_IMAGE_LAYOUT_UNDEFINED,
+			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+			VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 });
 
 	VkExtent2D& swapChainExtent = SwapChain::Extends();
-	Window::SetViewportCmd(commandBuffer.Handle);
+	VulkanWindow::SetViewportCmd(commandBuffer.Handle);
 
     // ======================= Depth-Only Pass ============================
 	GBuffer::GetDepthAttachment()->ResetImageLayout();
@@ -24,6 +30,10 @@ void VulkanBase::drawFrame(uint32_t imageIndex) const
 
 	GBuffer::GetColorAttachmentNormal()->ResetImageLayout();
 	GBuffer::GetColorAttachmentNormal()->TransitionToWrite(commandBuffer.Handle);
+
+
+
+
 
 	// Create rendering info
 	VkRenderingInfoKHR depthRenderInfo{};
@@ -56,26 +66,6 @@ void VulkanBase::drawFrame(uint32_t imageIndex) const
 
 
 
-	// ======================= Compute SSAO Pass ============================
-	// auto ssaoMaterial = MaterialManager::GetMaterial("SSAOMaterial");
-	// auto color = ssaoMaterial->GetDescriptorSet()->GetColorAttachment("SSAO");
-	// color->ResetImageLayout();
-	// color->TransitionToWrite(commandBuffer.Handle);
-	//
-	// VkRenderingInfoKHR ssaoRenderInfo{};
-	// ssaoRenderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
-	// ssaoRenderInfo.renderArea = { 0, 0, swapChainExtent };
-	// ssaoRenderInfo.layerCount = 1;
-	// ssaoRenderInfo.colorAttachmentCount = 1;
-	// ssaoRenderInfo.pColorAttachments = color->GetRenderingAttachmentInfo();
-	// ssaoRenderInfo.pDepthAttachment = GBuffer::GetDepthAttachment()->GetRenderingAttachmentInfo();
-	// ssaoRenderInfo.pStencilAttachment = VK_NULL_HANDLE;
-	//
-	// vkCmdBeginRenderingKHR(commandBuffer.Handle, &ssaoRenderInfo);
-	// SceneManager::ComputeSSAO(commandBuffer.Handle);
-	// vkCmdEndRenderingKHR(commandBuffer.Handle);
-	//
-	// color->TransitionToRead(commandBuffer.Handle);
 
 
 
@@ -99,6 +89,8 @@ void VulkanBase::drawFrame(uint32_t imageIndex) const
 	GBuffer::GetAlbedoAttachment()->ResetImageLayout();
 	GBuffer::GetAlbedoAttachment()->TransitionToWrite(commandBuffer.Handle);
 
+
+
     vkCmdBeginRenderingKHR(commandBuffer.Handle, &renderInfo);
     SceneManager::Render(commandBuffer.Handle);
     vkCmdEndRenderingKHR(commandBuffer.Handle);
@@ -106,26 +98,6 @@ void VulkanBase::drawFrame(uint32_t imageIndex) const
 	//Here we write to albedo
 	//Albedo should transition to read
 	GBuffer::GetAlbedoAttachment()->TransitionToRead(commandBuffer.Handle);
-
-
-	//TODO: Move to swapchain
-	tools::InsertImageMemoryBarrier(
-			commandBuffer.Handle,
-			SwapChain::Image(static_cast<uint8_t>(imageIndex)),
-			VK_IMAGE_LAYOUT_UNDEFINED,
-			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-			VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 });
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -150,6 +122,8 @@ void VulkanBase::drawFrame(uint32_t imageIndex) const
 	presentInfo.pColorAttachments = &colorAttachmentInfo;
 	presentInfo.pDepthAttachment = GBuffer::GetDepthAttachment()->GetRenderingAttachmentInfo();
 	presentInfo.pStencilAttachment = VK_NULL_HANDLE;
+
+
 
 	vkCmdBeginRenderingKHR(commandBuffer.Handle, &presentInfo);
 	SceneManager::RenderPresent(commandBuffer.Handle);

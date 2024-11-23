@@ -1,5 +1,6 @@
 #pragma once
 #include <vulkan/vulkan.h>
+#include <vector>
 
 #include "Core/VmaUsage.h"
 #include "vulkanbase/VulkanTypes.h"
@@ -30,11 +31,13 @@ public:
 	[[nodiscard]] static VkPipelineDepthStencilStateCreateInfo GetDepthPipelineInfo(VkBool32 depthTestEnable, VkBool32 depthWriteEnable);
 	[[nodiscard]] VkImageLayout GetBindImageLayout();
 	[[nodiscard]] VkFormat GetFormat() const;
+	[[nodiscard]] VkImage GetImage() const;
 
     void OnImGui();
 
     void TransitionToDepthResource(VkCommandBuffer commandBuffer);
     void TransitionToShaderRead(VkCommandBuffer commandBuffer);
+	void TransitionToShaderReadOnly(VkCommandBuffer commandBuffer);
     void TransitionToGeneralResource(VkCommandBuffer commandBuffer);
     void ResetImageLayout();
 

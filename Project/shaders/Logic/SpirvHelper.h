@@ -3,7 +3,7 @@
 #include <optional>
 #include <shaderc/shaderc.h>
 #include <shaderc/shaderc.hpp>
-#include <vulkanbase/vulkanUtil.h>
+#include <vulkanbase/VulkanUtil.h>
 #include "Core/Logger.h"
 #include "Patterns/Delegate.h"
 

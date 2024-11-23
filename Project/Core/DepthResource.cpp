@@ -42,7 +42,7 @@ void DepthAttachment::Init(const VulkanContext* vulkanContext)
 void DepthAttachment::Cleanup(const VulkanContext* vulkanContext)
 {
 	vkDestroyImageView(vulkanContext->device, m_ImageView, nullptr);
-    vmaDestroyImage(Allocator::VmaAllocator, m_Image, m_Memory);
+    vmaDestroyImage(Allocator::vmaAllocator, m_Image, m_Memory);
 
     if(m_Sampler != VK_NULL_HANDLE)
     vkDestroySampler(vulkanContext->device, m_Sampler, nullptr);
@@ -100,11 +100,11 @@ void DepthAttachment::TransitionToDepthResource(VkCommandBuffer commandBuffer)
         commandBuffer,
         m_Image,
         m_BindImageLayout,
-        VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
+        VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
         VkImageSubresourceRange{VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 1});
 
 
-    m_BindImageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+    m_BindImageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
 }
 
 void DepthAttachment::TransitionToShaderRead(VkCommandBuffer commandBuffer)
@@ -112,14 +112,32 @@ void DepthAttachment::TransitionToShaderRead(VkCommandBuffer commandBuffer)
 	m_DepthAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	m_DepthAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
 
-    tools::InsertImageMemoryBarrier(
-        commandBuffer,
-        m_Image,
-        m_BindImageLayout,
-        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-        VkImageSubresourceRange{VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 1});
+	tools::InsertImageMemoryBarrier(
+		commandBuffer,
+		m_Image,
+		m_BindImageLayout,
+		VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+		VkImageSubresourceRange{VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 1});
 
-    m_BindImageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+	m_BindImageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+}
+
+void DepthAttachment::TransitionToShaderReadOnly(VkCommandBuffer commandBuffer)
+{
+	m_DepthAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	m_DepthAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+
+
+	tools::InsertImageMemoryBarrier(
+		commandBuffer,
+		m_Image,
+		m_BindImageLayout,
+		VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+		VkImageSubresourceRange{VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 1});
+
+
+	m_BindImageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 }
 
 void DepthAttachment::TransitionToGeneralResource(VkCommandBuffer commandBuffer)
@@ -147,6 +165,11 @@ VkImageLayout DepthAttachment::GetBindImageLayout()
 VkFormat DepthAttachment::GetFormat() const
 {
 	return m_Format;
+}
+
+VkImage DepthAttachment::GetImage() const
+{
+	return m_Image;
 }
 
 

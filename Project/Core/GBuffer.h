@@ -18,7 +18,8 @@ public:
 	static void Init(const VulkanContext* vulkanContext);
 	static void Cleanup(const VulkanContext* vulkanContext);
 
-	static void Bind(Descriptor::DescriptorWriter& writer, int depthBinding, int normalBinding);
+	static void BindDepth(Descriptor::DescriptorWriter& writer, int depthBinding);
+	static void BindNormal(Descriptor::DescriptorWriter& writer, int normalBinding);
 	static void BindAlbedo(Descriptor::DescriptorWriter& writer, int albedoBinding);
 
 	static ColorAttachment* GetColorAttachmentNormal();

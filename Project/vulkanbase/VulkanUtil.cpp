@@ -205,7 +205,7 @@ namespace tools
 		CloseHandle(pi.hThread);
 
 #elif defined __linux__
-		std::string command = "xdg-open " + filePath;
+		std::string command = "xdg-open " + path;
 		system(command.c_str());
 #endif
 	}

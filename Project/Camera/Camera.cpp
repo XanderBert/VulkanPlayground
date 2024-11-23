@@ -32,17 +32,17 @@ float Camera::GetNearPlane() { return m_NearPlane; }
 float Camera::GetFarPlane() { return m_FarPlane; }
 glm::mat4 Camera::GetViewMatrix()
 {
-    return glm::lookAt(m_Origin, m_Origin + m_Forward, m_Up);
+    return glm::lookAtRH(m_Origin, m_Origin + m_Forward, m_Up);
 }
 
 glm::mat4 Camera::GetInvertedYProjectionMatrix()
 {
-    return  glm::perspective(m_Fov, m_Width / m_Height, m_NearPlane, m_FarPlane);
+    return  glm::perspective(m_Fov, GetAspectRatio(), m_NearPlane, m_FarPlane);
 }
 
 glm::mat4 Camera::GetProjectionMatrix()
 {
-    glm::mat4x4 projectionMatrix = glm::perspective(m_Fov, m_Width / m_Height, m_NearPlane, m_FarPlane);
+    glm::mat4x4 projectionMatrix = glm::perspective(m_Fov, GetAspectRatio(), m_NearPlane, m_FarPlane);
 
     // Flip the Y axis
 	projectionMatrix[1][1] *= -1;

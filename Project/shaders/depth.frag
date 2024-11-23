@@ -24,13 +24,18 @@ layout (location = 3) in vec4 inTangent;
 
 layout(location = 0) out vec4 outNormal;
 
+//Move from [-1, 1] to [0, 1]
+vec3 encode(vec3 decoded)
+{
+	return 0.5f * decoded + 0.5f;
+}
+
 void main()
 {
 	vec3 normal = normalize(inNormal);
+	normal = encode(normal);
 
-	//Move the normal from [0, 1] to [-1, 1]
-	normal = 0.5f * normal + 0.5f;
-
-	//Output the normal
+	//Store the normal
 	outNormal = vec4(normal, 1.0f);
 }
+

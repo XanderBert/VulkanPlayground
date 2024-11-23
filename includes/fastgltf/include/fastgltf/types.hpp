@@ -182,6 +182,7 @@ namespace fastgltf {
         ElementArrayBuffer = 34963,
     };
 
+#undef None
     enum class MimeType : std::uint8_t {
         None = 0,
         JPEG = 1,

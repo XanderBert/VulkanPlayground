@@ -38,6 +38,7 @@ private:
 
     static inline uint16_t lightPositionHandle = 0;
     static inline uint16_t lightColorHandle = 0;
+	static inline uint16_t viewMatrixHandle = 0;
 
 	static inline Descriptor::DescriptorWriter m_Writer{};
 };

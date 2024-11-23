@@ -1,4 +1,5 @@
 #pragma once
+#include <vulkan/vulkan.h>
 #include <ktxvulkan.h>
 #include <optional>
 

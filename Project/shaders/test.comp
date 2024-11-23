@@ -1,16 +1,22 @@
-#version 450
+#version 450 core
 
 #define PI              3.1415f
 #define TWO_PI          (2.0f * PI)
 #define GOLDEN_ANGLE    2.4f
 #define SAMPLES_COUNT   16
-#define CONTRAST        2.0f
+#define CONTRAST        8.0f
 
 layout(push_constant) uniform constants {
     mat4 viewMatrix;
 } push;
 
-layout(set = 0, binding = 0) uniform UniformBufferObject {
+layout(set = 0, binding = 0) uniform UniformBufferObject
+{
+	mat4 viewProjection;
+	vec4 viewPos;
+	vec4 cameraPlanes;
+	vec4 lightPos;
+	vec4 lightColor;
     mat4 inverseProjection;
 } ubo;
 
@@ -24,28 +30,114 @@ layout(set = 1, binding = 0) uniform UniformBufferCompute {
 layout(set = 1, binding = 1) uniform sampler2D depthResource;
 layout(set = 1, binding = 2) uniform sampler2D normalResource;
 layout(set = 1, binding = 3, rgba8) uniform image2D ssaoOutput;
+layout(set = 1, binding = 4) uniform sampler2D downDepth;
 layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 
-vec3 Position_View(vec2 texCoord)
+
+float decode(float encoded)
 {
-    vec3 position = vec3(texCoord, -1.0f);
-    position.xy -= 0.5f;
-    position.y *= -1.0f;
-    position.xy *= computeUbo.nearPlaneSizeNormalized.xy;
-    float depth = texture(depthResource, texCoord).x;
-    position *= -depth;
-    return position;
+	return encoded * 2.0f - 1.0f;
 }
 
-float InterleavedGradientNoise(vec2 position_screen) {
+vec2 decode(vec2 encoded)
+{
+	return encoded * 2.0f - 1.0f;
+}
+
+vec3 decode(vec3 encoded)
+{
+	return encoded * 2.0f - 1.0f;
+}
+
+
+vec3 encode(vec3 decoded)
+{
+	return 0.5f * decoded + 0.5f;
+}
+
+float saturate(float p)
+{
+	return clamp(p, 0.0f, 1.0f);
+}
+
+float hash12(vec2 p)
+{
+	vec3 p3  = fract(vec3(p.xyx) * .1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
+}
+
+vec2 hash22(vec2 p)
+{
+	vec3 p3 = fract(vec3(p.xyx) * vec3(.1031, .1030, .0973));
+    p3 += dot(p3, p3.yzx+33.33);
+    return fract((p3.xx+p3.yz)*p3.zy);
+}
+
+void sincos(float theta, out float sinus, out float cosine)
+{
+	sinus = sin(theta);
+	cosine = cos(theta);
+}
+
+
+float InterleavedGradientNoise(vec2 position_screen)
+{
     vec3 magic = vec3(0.06711056f, 4.0f * 0.00583715f, 52.9829189f);
     return fract(magic.z * fract(dot(position_screen, magic.xy)));
 }
 
-vec2 VogelDiskOffset(int sampleIndex, float phi) {
+vec2 VogelDiskOffset(int sampleIndex, float phi)
+{
     float r = sqrt(float(sampleIndex) + 0.5f) / sqrt(float(SAMPLES_COUNT));
     float theta = sampleIndex * GOLDEN_ANGLE + phi;
-    return r * vec2(cos(theta), sin(theta));
+
+    float cosine;
+    float sinus;
+    sincos(theta, sinus, cosine);
+
+    return vec2(r * cosine, r * sinus);
+}
+
+
+vec2 AlchemySpiralOffset(int sampleIndex, float phi)
+{
+	float alpha = float(sampleIndex + 0.5f) / SAMPLES_COUNT;
+	float theta = 7.0f*TWO_PI*alpha + phi;
+
+	float sine;
+	float cosine;
+	sincos(theta, sine, cosine);
+
+
+
+	return vec2(cosine, sine);
+}
+
+
+
+float AlchemyNoise(ivec2 position_screen)
+{
+	return 30.0f*(position_screen.x^position_screen.y) + 10.0f*(position_screen.x*position_screen.y);
+}
+
+
+vec3 GetViewPositionFromDepth(vec2 UV, sampler2D DepthTexture)
+{
+    float Depth = texture( DepthTexture, UV ).x;
+    Depth = decode(Depth);
+
+    vec2 ClipUV = ( UV * 2.0 - 1.0 ) * vec2( 1.0, -1.0 );
+    vec4 ClipPosition = vec4( ClipUV, Depth, 1.0 );
+
+    //To View
+    vec4 ViewPosition = ubo.inverseProjection * ClipPosition;
+
+    // Perspective division
+    ViewPosition = ViewPosition / ViewPosition.w;
+	ViewPosition.y *= -1;
+
+    return ViewPosition.xyz;
 }
 
 void main()
@@ -53,36 +145,46 @@ void main()
     ivec2 texCoord = ivec2(gl_GlobalInvocationID.xy);
     vec2 normalizedTexCoord = vec2(texCoord) / vec2(imageSize(ssaoOutput));
 
-    vec3 position = Position_View(normalizedTexCoord);
-    vec3 normal = texture(normalResource, normalizedTexCoord).xyz;
-    //normal = 2.0f * normal - 1.0f;
-    normal = mat3(push.viewMatrix) * normal;
+	vec3 position = GetViewPositionFromDepth(normalizedTexCoord, depthResource);
+	position = GetViewPositionFromDepth(normalizedTexCoord, downDepth);
+	imageStore(ssaoOutput, texCoord, vec4(position.xy,0,position.z +1.8f));
 
-    float noise = InterleavedGradientNoise(texCoord.xy);
+	float alchemyNoise = AlchemyNoise(ivec2(texCoord.xy));
+  	float noise = InterleavedGradientNoise(texCoord.xy);
+  	//noise = hash12(texCoord.xy);
+  	//imageStore(ssaoOutput, texCoord, vec4(noise));
 
-    vec2 radiusScreen = vec2(0.1 / position.z);
 
-    radiusScreen = min(radiusScreen, vec2(0.003));
+  	vec3 normal = decode(texture(normalResource, normalizedTexCoord).xyz);
+  	normal = mat3((push.viewMatrix)) * normal;
+	//imageStore(ssaoOutput, texCoord, vec4((normal), 1));
+
+
+
+    vec2 radiusScreen = vec2(.01f / position.z);
+    radiusScreen = min(radiusScreen, vec2(0.001f));
     radiusScreen.y *= computeUbo.aspect.x;
 
 
     float ao = 0.0f;
+    for (int i = 0; i < SAMPLES_COUNT; i++)
+    {
+    	//Normally you would use AlchemyNoise as input here
+        vec2 sampleOffset = AlchemySpiralOffset(i, alchemyNoise);
+       	//sampleOffset = VogelDiskOffset(i, TWO_PI * noise);
+        //sampleOffset = decode(hash22( i * texCoord));
 
-    for (int i = 0; i < SAMPLES_COUNT; i++) {
-        vec2 sampleOffset = VogelDiskOffset(i, TWO_PI * noise);
-        vec2 sampleTexCoord = normalizedTexCoord + (radiusScreen * sampleOffset);
+       	vec2 sampleTexCoord = normalizedTexCoord + radiusScreen * sampleOffset;
+        vec3 samplePosition = GetViewPositionFromDepth(sampleTexCoord, depthResource);
+        samplePosition = GetViewPositionFromDepth(sampleTexCoord, downDepth);
 
-        vec3 samplePosition = Position_View(sampleTexCoord);
         vec3 v = samplePosition - position;
-
         ao += max(0.0f, dot(v, normal) + 0.002f * position.z) / (dot(v, v) + 0.001f);
     }
 
-    ao = clamp(ao / float(SAMPLES_COUNT), 0.0f, 1.0f);
-    //ao = 1 - ao;
-
+    ao = saturate(ao / float(SAMPLES_COUNT * 50));
+    ao = 1 - ao;
     ao = pow(ao, CONTRAST);
 
-    imageStore(ssaoOutput, texCoord, vec4(ao));
+	imageStore(ssaoOutput, texCoord, vec4(ao));
 }
-

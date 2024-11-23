@@ -111,10 +111,32 @@ void DescriptorSet::AddGBuffer(int depthBinding, int normalBinding)
 	m_DescriptorBuilder.AddBinding(normalBinding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 }
 
+void DescriptorSet::AddDepthBuffer(int binding)
+{
+    if(IsBindingUsedForBuffers(binding) || IsBindingUsedForTextures(binding))
+    {
+        LogError("Binding at:" + std::to_string(binding) + " is already used for a Buffer or Texture");
+        return;
+    }
+
+    m_DepthTextureBinding = binding;
+    m_DescriptorBuilder.AddBinding(binding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+}
+
+void DescriptorSet::AddNormalBuffer(int binding)
+{
+    if(IsBindingUsedForBuffers(binding) || IsBindingUsedForTextures(binding))
+    {
+        LogError("Binding at:" + std::to_string(binding) + " is already used for a Buffer or Texture");
+        return;
+    }
+
+    m_NormalTextureBinding = binding;
+    m_DescriptorBuilder.AddBinding(binding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+}
 
 
-std::shared_ptr<Texture> DescriptorSet::CreateOutputTexture(int binding, VulkanContext *pContext, const glm::ivec2 &extent,
-                                                            ColorType colorType, TextureType textureType)
+std::shared_ptr<Texture> DescriptorSet::CreateOutputTexture(int binding, VulkanContext *pContext, const glm::ivec2 &extent, ColorType colorType, TextureType textureType)
 {
     if(IsBindingUsedForBuffers(binding) || IsBindingUsedForDepthTexture(binding))
     {
@@ -213,7 +235,12 @@ void DescriptorSet::Bind(VulkanContext *pContext, const VkCommandBuffer& command
 	//TODO: This is a bit hacky, maybe find a better way to do this
     if(m_DepthTextureBinding != -1)
     {
-    	GBuffer::Bind(m_DescriptorWriter, m_DepthTextureBinding, m_NormalTextureBinding);
+        GBuffer::BindDepth(m_DescriptorWriter, m_DepthTextureBinding);
+    }
+
+    if(m_NormalTextureBinding != -1)
+    {
+        GBuffer::BindNormal(m_DescriptorWriter, m_NormalTextureBinding);
     }
 
     m_DescriptorWriter.UpdateSet(pContext->device, m_DescriptorSet);

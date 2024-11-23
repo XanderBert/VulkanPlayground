@@ -5,6 +5,7 @@
 
 #include "ImGuiFileDialog.h"
 #include "Core/CommandBuffer.h"
+#include "Core/SwapChain.h"
 #include "Patterns/ServiceLocator.h"
 #include "vulkanbase/VulkanTypes.h"
 #include "vulkanbase/VulkanUtil.h"
@@ -118,7 +119,7 @@ void Texture::InitTexture(const TextureData &loadedImage)
 		m_ImageMemory = allocation;
 
 		TransitionAndCopyImageBuffer(imageInMemory.stagingBuffer);
-		vmaDestroyBuffer(Allocator::VmaAllocator, imageInMemory.stagingBuffer, imageInMemory.stagingBufferMemory);
+		vmaDestroyBuffer(Allocator::vmaAllocator, imageInMemory.stagingBuffer, imageInMemory.stagingBufferMemory);
 
 		Image::CreateImageView(m_pContext->device, m_Image, static_cast<VkFormat>(m_ColorType), VK_IMAGE_ASPECT_COLOR_BIT, m_ImageView, m_TextureType);
 	}
@@ -192,6 +193,43 @@ void Texture::InitEmptyTexture()
 		ImVec2 size = ImVec2(m_ImageSize.x / 2.0f, m_ImageSize.y / 2.0f);
 		m_ImGuiTexture = std::make_unique<ImGuiTexture>(m_Sampler, m_ImageView, size);
 	}
+
+
+	SwapChain::OnSwapChainRecreated.AddLambda([&](const VulkanContext* context)
+	{
+		Cleanup(context->device);
+		m_IsOutputTexture = true;
+		m_MipLevels = 1;
+		VmaAllocation allocation{};
+
+		// Create an image that is writable by compute shaders
+		Image::CreateImage(m_ImageSize.x, m_ImageSize.y, m_MipLevels, VK_SAMPLE_COUNT_1_BIT, static_cast<VkFormat>(m_ColorType), VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, // Allow both storage and sampling, Transfer bit is for clearing the image.
+			   m_Image, allocation, m_TextureType);
+
+		m_ImageMemory = allocation;
+
+		// Create an image view for the image
+		Image::CreateImageView(m_pContext->device, m_Image, static_cast<VkFormat>(m_ColorType), VK_IMAGE_ASPECT_COLOR_BIT, m_ImageView, m_TextureType);
+
+		// Create a sampler for the image if needed
+		Image::CreateSampler(m_pContext, m_Sampler, m_MipLevels);
+
+
+		CommandBuffer commandBuffer{};
+		CommandBufferManager::CreateCommandBufferSingleUse(m_pContext, commandBuffer);
+
+		TransitionToGeneralImageLayout(commandBuffer.Handle);
+
+		CommandBufferManager::EndCommandBufferSingleUse(m_pContext, commandBuffer);
+
+		// Setup the ImGui texture if not a cubemap
+		if (m_TextureType != TextureType::TEXTURE_CUBE)
+		{
+			ImVec2 size = ImVec2(m_ImageSize.x / 2.0f, m_ImageSize.y / 2.0f);
+			m_ImGuiTexture = std::make_unique<ImGuiTexture>(m_Sampler, m_ImageView, size);
+		}
+	});
+
 }
 
 void Texture::TransitionAndCopyImageBuffer(VkBuffer srcBuffer)
@@ -323,5 +361,5 @@ void Texture::CleanupImage(VkDeviceMemory deviceMemory, VkImage image)
 
 void Texture::CleanupImage(VmaAllocation deviceMemory, VkImage image)
 {
-	vmaDestroyImage(Allocator::VmaAllocator, image, deviceMemory);
+	vmaDestroyImage(Allocator::vmaAllocator, image, deviceMemory);
 }
