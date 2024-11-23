@@ -8,6 +8,20 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+
+#set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+
+# Ensure consistent runtime library for Debug builds to avoid mismatched runtimes.
+# Only applies MultiThreadedDebug (MTd) runtime for Debug configuration.
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDebug")  # Static runtime for Debug (MTd)
+else()
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")       # Static runtime for Release (MT)
+endif()
+
+
+
+
 set(FETCHCONTENT_QUIET FALSE)  # Force verbose output to debug fetch content issues
 include(FetchContent)
 

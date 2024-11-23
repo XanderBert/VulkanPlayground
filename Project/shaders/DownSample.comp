@@ -1,25 +1,7 @@
 #version 450
 
-layout(push_constant) uniform constants
-{
-    mat4 projection;
-} push;
-
-
-layout(set = 0, binding = 0) uniform UniformBufferObject
-{
-	mat4 viewProjection;
-	vec4 viewPos;
-	vec4 cameraPlanes;
-	vec4 lightPos;
-	vec4 lightColor;
-    mat4 inverseProjection;
-} ubo;
-
 layout(set = 1, binding = 0) uniform sampler2D depthResource;
-layout(set = 1, binding = 1) uniform sampler2D normalResource;
-layout(set = 1, binding = 2, r16) uniform image2D downSampledOutput;
-
+layout(set = 1, binding = 1, r16) uniform image2D downSampledOutput;
 
 
 layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;

@@ -13,7 +13,13 @@
 
 void VulkanBase::drawFrame(uint32_t imageIndex) const
 {
-	SwapChain::SetImageIndex(imageIndex);
+	//TODO: Move to swapchain
+	tools::InsertImageMemoryBarrier(
+			commandBuffer.Handle,
+			SwapChain::Image(static_cast<uint8_t>(imageIndex)),
+			VK_IMAGE_LAYOUT_UNDEFINED,
+			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+			VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 });
 
 	VkExtent2D& swapChainExtent = SwapChain::Extends();
 	VulkanWindow::SetViewportCmd(commandBuffer.Handle);
@@ -95,13 +101,7 @@ void VulkanBase::drawFrame(uint32_t imageIndex) const
 
 
 
-	//TODO: Move to swapchain
-	tools::InsertImageMemoryBarrier(
-			commandBuffer.Handle,
-			SwapChain::Image(static_cast<uint8_t>(imageIndex)),
-			VK_IMAGE_LAYOUT_UNDEFINED,
-			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-			VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 });
+
 
 
 	//TODO: Move to swapchain

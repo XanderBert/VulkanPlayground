@@ -74,7 +74,7 @@ void VulkanBase::drawFrame()
 	VkDevice device = m_pContext->device;
 	vkWaitForFences(device, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
 
-	vkDeviceWaitIdle(device);
+	//vkDeviceWaitIdle(device);
 
     //TODO: This check should only happen on events / not in the hot code path
     ShaderManager::ReloadNeededShaders(m_pContext);
@@ -90,6 +90,8 @@ void VulkanBase::drawFrame()
 	{
 		LogError("Failed to acquire swap chain image!");
 	}
+	SwapChain::SetImageIndex(imageIndex);
+
 
 	Descriptor::DescriptorManager::ClearPools(m_pContext->device);
 	vkResetFences(device, 1, &inFlightFence);
@@ -114,7 +116,7 @@ void VulkanBase::drawFrame()
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = &renderFinishedSemaphore;
 
-	vkDeviceWaitIdle(device);
+	//vkDeviceWaitIdle(device);
 	CommandBufferManager::SubmitCommandBuffer(m_pContext, commandBuffer, &submitInfo, inFlightFence);
 
 
@@ -217,7 +219,7 @@ void VulkanBase::createInstance()
 	//enabledValidationFeatures.push_back(VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT);
 	//enabledValidationFeatures.push_back(VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT);
 	//enabledValidationFeatures.push_back(VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT);
-	//enabledValidationFeatures.push_back(VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT);
+	enabledValidationFeatures.push_back(VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT);
 
 	VkValidationFeaturesEXT validationFeatures{};
 	validationFeatures.sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
@@ -228,18 +230,6 @@ void VulkanBase::createInstance()
 
 
 	createInfo.pNext = (VkValidationFeaturesEXT*)&validationFeatures;
-
-
-	//Validation Features:
-	if(enableValidationLayers)
-	{
-
-	}
-	else
-	{
-		createInfo.enabledLayerCount = 0;
-		createInfo.pNext = nullptr;
-	}
 
 	VulkanCheck(vkCreateInstance(&createInfo, nullptr, &m_pContext->instance), "Failed to create instance!");
 }
