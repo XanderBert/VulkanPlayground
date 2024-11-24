@@ -23,97 +23,94 @@
 
 Scene::Scene(VulkanContext* vulkanContext)
 {
-	auto [width, height] = SwapChain::Extends();
+	//auto [width, height] = SwapChain::Extends();
 
 
     //
     //Depth Pass
     //
-    std::shared_ptr<Material> depthMaterial = MaterialManager::CreateMaterial(vulkanContext, "DepthOnlyMaterial");
-    depthMaterial->SetDepthOnly(true);
-	depthMaterial->AddShader("depth.vert", ShaderType::VertexShader);
-	depthMaterial->AddShader("depth.frag", ShaderType::FragmentShader);
+    //std::shared_ptr<Material> depthMaterial = MaterialManager::CreateMaterial(vulkanContext, "DepthOnlyMaterial");
+    //depthMaterial->SetDepthOnly(true);
+	//depthMaterial->AddShader("depth.vert", ShaderType::VertexShader);
+	//depthMaterial->AddShader("depth.frag", ShaderType::FragmentShader);
 
 	//
 	//Skybox Material
 	//
-    std::shared_ptr<Material> skyboxMaterial = MaterialManager::CreateMaterial(vulkanContext, "skybox.vert", "skybox.frag", "Skybox_Material");
-    skyboxMaterial->GetDescriptorSet()->AddTexture(1, "cubemap_vulkan.ktx", vulkanContext, ColorType::SRGB, TextureType::TEXTURE_CUBE);
-    skyboxMaterial->SetCullMode(VK_CULL_MODE_FRONT_BIT);
+    //std::shared_ptr<Material> skyboxMaterial = MaterialManager::CreateMaterial(vulkanContext, "skybox.vert", "skybox.frag", "Skybox_Material");
+    //skyboxMaterial->GetDescriptorSet()->AddTexture(1, "cubemap_vulkan.ktx", vulkanContext, ColorType::SRGB, TextureType::TEXTURE_CUBE);
+    //skyboxMaterial->SetCullMode(VK_CULL_MODE_FRONT_BIT);
 
 	//
 	//SSAO Materials
 	//
-	glm::ivec2 quarterScreen = glm::ivec2(width / 2.0f, height / 2.0f);
+	//glm::ivec2 quarterScreen = glm::ivec2(width / 2.0f, height / 2.0f);
 
 
 	//Downsample Depth
 	//
-	std::shared_ptr<Material> DownSampleDeptBufferMaterial = MaterialManager::CreateMaterial(vulkanContext, "DownSample");
-	DownSampleDeptBufferMaterial->AddShader("DownSample.comp", ShaderType::ComputeShader);
-	DownSampleDeptBufferMaterial->GetDescriptorSet()->AddDepthBuffer(0);
-	std::shared_ptr<Texture> downSampleTexture = DownSampleDeptBufferMaterial->GetDescriptorSet()->CreateOutputTexture(1, vulkanContext, quarterScreen, ColorType::R16U);
+	//std::shared_ptr<Material> DownSampleDeptBufferMaterial = MaterialManager::CreateMaterial(vulkanContext, "DownSample");
+	//DownSampleDeptBufferMaterial->AddShader("DownSample.comp", ShaderType::ComputeShader);
+	//DownSampleDeptBufferMaterial->GetDescriptorSet()->AddDepthBuffer(0);
+	//std::shared_ptr<Texture> downSampleTexture = DownSampleDeptBufferMaterial->GetDescriptorSet()->CreateOutputTexture(1, vulkanContext, quarterScreen, ColorType::R16U);
 
-	DynamicBuffer* downUbo = DownSampleDeptBufferMaterial->GetDescriptorSet()->AddBuffer(2, DescriptorType::UniformBuffer);
-	downUbo->AddVariable({quarterScreen.x, quarterScreen.y,0,0});
+	//DynamicBuffer* downUbo = DownSampleDeptBufferMaterial->GetDescriptorSet()->AddBuffer(2, DescriptorType::UniformBuffer);
+	//downUbo->AddVariable({quarterScreen.x, quarterScreen.y,0,0});
 
-	SwapChain::OnSwapChainRecreated.AddLambda([](const VulkanContext* context)
-	{
-		const auto extends = SwapChain::Extends();
-		DynamicBuffer* downUbo = MaterialManager::GetMaterial("DownSample")->GetDescriptorSet()->GetBuffer(2);
-		downUbo->UpdateVariable(0, {extends.width / 2.0f, extends.height / 2.0f,0,0});
-	});
-
-
+	//SwapChain::OnSwapChainRecreated.AddLambda([](const VulkanContext* context)
+	//{
+	//	const auto extends = SwapChain::Extends();
+	//	DynamicBuffer* downUbo = MaterialManager::GetMaterial("DownSample")->GetDescriptorSet()->GetBuffer(2);
+	//	downUbo->UpdateVariable(0, {extends.width / 2.0f, extends.height / 2.0f,0,0});
+	//});
 
 
 
 
-	glm::vec2 pixelSize{2.0f / static_cast<float>(width), 2.0f / static_cast<float>(height)};
-
-	std::shared_ptr<Material> computeMaterial = MaterialManager::CreateMaterial(vulkanContext, "ComputeMaterial");
-	computeMaterial->AddShader("test.comp", ShaderType::ComputeShader);
-
-	auto* computeUbo = computeMaterial->GetDescriptorSet()->AddBuffer(0, DescriptorType::UniformBuffer);
-	auto nearPlaneSizeHandle = computeUbo->AddVariable({Camera::GetNearPlaneSizeAtDistance(1.0f), 0,0});
-	auto aspectRatioHandle = computeUbo->AddVariable({Camera::GetAspectRatio(), 0,0, 0});
-	auto radiusWorldHandle = computeUbo->AddVariable({1, 0,0,0});
-	auto maxRadiusScreenHandle = computeUbo->AddVariable({0.1,0,0,0});
-	auto pixelSizeHandle = computeUbo->AddVariable({pixelSize.x,pixelSize.y,0,0});
-
-	computeMaterial->GetDescriptorSet()->AddGBuffer(1,2);
-	std::shared_ptr<Texture> SSAO = computeMaterial->GetDescriptorSet()->CreateOutputTexture(3, vulkanContext, {width / 2.0f,  height / 2.0f});
-	computeMaterial->GetDescriptorSet()->AddTexture(4, downSampleTexture, vulkanContext);
-
-	SwapChain::OnSwapChainRecreated.AddLambda([aspectRatioHandle, pixelSizeHandle, nearPlaneSizeHandle](const VulkanContext* context)
-	{
-		const auto extends = SwapChain::Extends();
-		const auto aspect = static_cast<float>(extends.width) / static_cast<float>(extends.height);
-		const glm::vec2 pixelSize{static_cast<float>(extends.width), static_cast<float>(extends.height)};
-
-		auto* computeUbo = MaterialManager::GetMaterial("ComputeMaterial")->GetDescriptorSet()->GetBuffer(0);
-		computeUbo->UpdateVariable(aspectRatioHandle, glm::vec4(aspect, 0,0,0));
-		computeUbo->UpdateVariable(pixelSizeHandle, glm::vec4{pixelSize.x, pixelSize.y, 0,0});
-		computeUbo->UpdateVariable(nearPlaneSizeHandle, glm::vec4{Camera::GetNearPlaneSizeAtDistance(1.0f), 0,0});
-	});
 
 
-	std::shared_ptr<Material> BlurMaterial = MaterialManager::CreateMaterial(vulkanContext, "Blur");
-	BlurMaterial->AddShader("Blur.comp", ShaderType::ComputeShader);
-	BlurMaterial->GetDescriptorSet()->AddTexture(0, SSAO, vulkanContext);
-	BlurMaterial->GetDescriptorSet()->AddTexture(1, downSampleTexture, vulkanContext);
-	std::shared_ptr<Texture> blurredSSAO = BlurMaterial->GetDescriptorSet()->CreateOutputTexture(2, vulkanContext, {width / 2.0f, height / 2.0f});
+	//glm::vec2 pixelSize{2.0f / static_cast<float>(width), 2.0f / static_cast<float>(height)};
+
+	//std::shared_ptr<Material> computeMaterial = MaterialManager::CreateMaterial(vulkanContext, "ComputeMaterial");
+	//computeMaterial->AddShader("test.comp", ShaderType::ComputeShader);
+
+	//auto* computeUbo = computeMaterial->GetDescriptorSet()->AddBuffer(0, DescriptorType::UniformBuffer);
+	//auto nearPlaneSizeHandle = computeUbo->AddVariable({Camera::GetNearPlaneSizeAtDistance(1.0f), 0,0});
+	//auto aspectRatioHandle = computeUbo->AddVariable({Camera::GetAspectRatio(), 0,0, 0});
+	//auto radiusWorldHandle = computeUbo->AddVariable({1, 0,0,0});
+	//auto maxRadiusScreenHandle = computeUbo->AddVariable({0.1,0,0,0});
+	//auto pixelSizeHandle = computeUbo->AddVariable({pixelSize.x,pixelSize.y,0,0});
+
+	//computeMaterial->GetDescriptorSet()->AddGBuffer(1,2);
+	//std::shared_ptr<Texture> SSAO = computeMaterial->GetDescriptorSet()->CreateOutputTexture(3, vulkanContext, {width / 2.0f,  height / 2.0f});
+	//computeMaterial->GetDescriptorSet()->AddTexture(4, downSampleTexture, vulkanContext);
+
+	//SwapChain::OnSwapChainRecreated.AddLambda([aspectRatioHandle, pixelSizeHandle, nearPlaneSizeHandle](const VulkanContext* context)
+	//{
+	//	const auto extends = SwapChain::Extends();
+	//	const auto aspect = static_cast<float>(extends.width) / static_cast<float>(extends.height);
+	//	const glm::vec2 pixelSize{static_cast<float>(extends.width), static_cast<float>(extends.height)};
+
+	//	auto* computeUbo = MaterialManager::GetMaterial("ComputeMaterial")->GetDescriptorSet()->GetBuffer(0);
+	//	computeUbo->UpdateVariable(aspectRatioHandle, glm::vec4(aspect, 0,0,0));
+	//	computeUbo->UpdateVariable(pixelSizeHandle, glm::vec4{pixelSize.x, pixelSize.y, 0,0});
+	//	computeUbo->UpdateVariable(nearPlaneSizeHandle, glm::vec4{Camera::GetNearPlaneSizeAtDistance(1.0f), 0,0});
+	//});
+
+
+	//std::shared_ptr<Material> BlurMaterial = MaterialManager::CreateMaterial(vulkanContext, "Blur");
+	//BlurMaterial->AddShader("Blur.comp", ShaderType::ComputeShader);
+	//BlurMaterial->GetDescriptorSet()->AddTexture(0, SSAO, vulkanContext);
+	//BlurMaterial->GetDescriptorSet()->AddTexture(1, downSampleTexture, vulkanContext);
+	//std::shared_ptr<Texture> blurredSSAO = BlurMaterial->GetDescriptorSet()->CreateOutputTexture(2, vulkanContext, {width / 2.0f, height / 2.0f});
 
 
 	//Upsample
-	std::shared_ptr<Material> UpSampleMaterial = MaterialManager::CreateMaterial(vulkanContext, "UpSample");
-	UpSampleMaterial->AddShader("UpSample.comp", ShaderType::ComputeShader);
-	UpSampleMaterial->GetDescriptorSet()->AddGBuffer(0, 1);
-	UpSampleMaterial->GetDescriptorSet()->AddTexture(2, blurredSSAO, vulkanContext);
-	std::shared_ptr<Texture> upSampleTexture = UpSampleMaterial->GetDescriptorSet()->CreateOutputTexture(3, vulkanContext, {width, height});
-
-
-
+	//std::shared_ptr<Material> UpSampleMaterial = MaterialManager::CreateMaterial(vulkanContext, "UpSample");
+	//UpSampleMaterial->AddShader("UpSample.comp", ShaderType::ComputeShader);
+	//UpSampleMaterial->GetDescriptorSet()->AddGBuffer(0, 1);
+	//UpSampleMaterial->GetDescriptorSet()->AddTexture(2, blurredSSAO, vulkanContext);
+	//std::shared_ptr<Texture> upSampleTexture = UpSampleMaterial->GetDescriptorSet()->CreateOutputTexture(3, vulkanContext, {width, height});
 
 
 
@@ -122,33 +119,36 @@ Scene::Scene(VulkanContext* vulkanContext)
 	compositeMaterial->SetIsComposite(true);
 	compositeMaterial->GetDescriptorSet()->AddColorAttachment(GBuffer::GetAlbedoAttachment(), 0);
 
-	//TODO blurred SSAO gets pushed in here
-	compositeMaterial->GetDescriptorSet()->AddTexture(1, upSampleTexture, vulkanContext);
-	auto compositeBuffer = compositeMaterial->GetDescriptorSet()->AddBuffer(2, DescriptorType::UniformBuffer);
-	auto sizeHandle = compositeBuffer->AddVariable(glm::vec4{width, height, 0,0});
 
-	SwapChain::OnSwapChainRecreated.AddLambda([sizeHandle](const VulkanContext* context)
-	{
-		const auto extends = SwapChain::Extends();
-		auto* compositeBuffer = MaterialManager::GetMaterial("CompositeMaterial")->GetDescriptorSet()->GetBuffer(2);
-		compositeBuffer->UpdateVariable(sizeHandle, glm::vec4{extends.width, extends.height, 0,0});
+	//compositeMaterial->GetDescriptorSet()->AddTexture(1, upSampleTexture, vulkanContext);
+	//auto compositeBuffer = compositeMaterial->GetDescriptorSet()->AddBuffer(2, DescriptorType::UniformBuffer);
+	//auto sizeHandle = compositeBuffer->AddVariable(glm::vec4{width, height, 0,0});
 
-		LogWarning(std::to_string(extends.width) + " " + std::to_string(extends.height));
-	});
+	//SwapChain::OnSwapChainRecreated.AddLambda([sizeHandle](const VulkanContext* context)
+	//{
+	//	const auto extends = SwapChain::Extends();
+	//		auto* compositeBuffer = MaterialManager::GetMaterial("CompositeMaterial")->GetDescriptorSet()->GetBuffer(2);
+	//	compositeBuffer->UpdateVariable(sizeHandle, glm::vec4{extends.width, extends.height, 0,0});
 
-
-
-
-
+	//	LogWarning(std::to_string(extends.width) + " " + std::to_string(extends.height));
+	//});
 
 
 	//Load model
 	GLTFLoader::LoadGLTF("FlightHelmet.gltf", this, vulkanContext);
 
+
+
+
+
+
     //Create the cubmap last so its rendered last
     //with a simple shader & depthmap trick we can make it only over the fragments that are not yet written to
-    m_Meshes.push_back(std::make_unique<Mesh>("Cube.obj", "Skybox_Material", "CubeMap"));
-    m_Meshes.back()->SetRotation(glm::vec3{-90,0,0});
+    //m_Meshes.push_back(std::make_unique<Mesh>("Cube.obj", "Skybox_Material", "CubeMap"));
+    //m_Meshes.back()->SetRotation(glm::vec3{-90,0,0});
+
+
+
 
     //
     // Setup Input
@@ -165,7 +165,9 @@ Scene::Scene(VulkanContext* vulkanContext)
     Input::BindFunction({{GLFW_KEY_Y}, Input::InputType::Press}, ImGuizmoHandler::ScaleOperation);
 
     Input::BindFunction({{GLFW_KEY_S}, Input::InputType::Press, GLFW_MOD_CONTROL}, ShaderEditor::SaveFile);
-    //Input::BindFunction({{GLFW_KEY_I}, Input::InputType::Press, GLFW_MOD_CONTROL}, ImGuiWrapper::OpenFileDialog);
+
+	//TODO: Fix This
+	//Input::BindFunction({{GLFW_KEY_I}, Input::InputType::Press, GLFW_MOD_CONTROL}, ImGuiWrapper::OpenFileDialog);
 
     LogInfo("Scene Made");
 }
@@ -185,7 +187,7 @@ void Scene::AlbedoRender(VkCommandBuffer commandBuffer) const
 {
 	auto mat = MaterialManager::GetMaterial("CompositeMaterial");
 
-	GlobalDescriptor::Bind(ServiceLocator::GetService<VulkanContext>(), commandBuffer, mat->GetPipelineLayout(), PipelineType::Graphics);
+	//GlobalDescriptor::Bind(ServiceLocator::GetService<VulkanContext>(), commandBuffer, mat->GetPipelineLayout(), PipelineType::Graphics);
 	mat->BindPushConstant(commandBuffer, Camera::GetViewMatrix());
 	mat->Bind(commandBuffer);
 	vkCmdDraw(commandBuffer, 3, 1, 0, 0);

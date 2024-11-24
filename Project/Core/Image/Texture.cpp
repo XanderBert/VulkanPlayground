@@ -20,6 +20,7 @@ Texture::Texture(const std::variant<std::filesystem::path, ImageInMemory> &pathO
 	}, pathOrImage);
 }
 
+
 Texture::Texture(VulkanContext *vulkanContext, const glm::ivec2 &extent, ColorType colorType, TextureType textureType):
 	m_pContext(vulkanContext), m_ImageSize(extent), m_TextureType(textureType), m_ColorType(colorType)
 {
@@ -65,15 +66,13 @@ void Texture::OnImGui()
 		ImGui::SameLine();
 	}
 
-	if(m_ImGuiTexture)
-		m_ImGuiTexture->OnImGui();
+	if(m_ImGuiTexture) m_ImGuiTexture->OnImGui();
 }
 
 void Texture::ProperBind(int bindingNumber, Descriptor::DescriptorWriter &descriptorWriter) const
 {
 	descriptorWriter.WriteImage(bindingNumber, m_ImageView, m_Sampler, m_BindImageLayout, static_cast<VkDescriptorType>(m_DescriptorImageType));
 }
-
 
 void Texture::Cleanup(VkDevice device)
 {
@@ -128,7 +127,7 @@ void Texture::InitTexture(const TextureData &loadedImage)
 
 
 	//Set up the ImGuiTexture
-	if (m_TextureType == TextureType::TEXTURE_CUBE) return;
+	//if (m_TextureType == TextureType::TEXTURE_CUBE) return;
 	//TODO: When loading sponza this failes for some reason : [ERROR]:  Validation Error: [ UNASSIGNED-GeneralParameterError-RequiredHandle ] | MessageID = 0x8fdcb17b | vkUpdateDescriptorSets(): pDescriptorWrites[0].dstSet is VK_NULL_HANDLE.
 	//m_ImGuiTexture = std::make_unique<ImGuiTexture>(m_Sampler, m_ImageView, ImVec2(250, 250));
 }
@@ -278,7 +277,7 @@ void Texture::TransitionToReadableImageLayout(VkCommandBuffer commandBuffer)
 	m_DescriptorImageType = DescriptorImageType::SAMPLED_IMAGE;
 }
 
-void Texture::ClearImage(VkCommandBuffer commandBuffer)
+void Texture::ClearImage(VkCommandBuffer commandBuffer) const
 {
 	VkImageSubresourceRange subresourceRange = {};
 	subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -289,7 +288,6 @@ void Texture::ClearImage(VkCommandBuffer commandBuffer)
 
 	VkClearColorValue clearColor = {0.0f, 0.0f, 0.0f, 0.0f};
 
-	//PFN_vkCmdClearColorImage vkCmdClearColorImage = reinterpret_cast<PFN_vkCmdClearColorImage>(vkGetDeviceProcAddr(m_pContext->device, "vkCmdClearColorImage"));
 	vkCmdClearColorImage(commandBuffer, m_Image, m_BindImageLayout, &clearColor, 1, &subresourceRange);
 }
 
@@ -316,10 +314,8 @@ bool Texture::IsPendingKill() const
 
 void Texture::CleanupImage(VkDeviceMemory deviceMemory, VkImage image)
 {
-	//todo: fix this ugliness with the service locator
-	const auto device = ServiceLocator::GetService<VulkanContext>()->device;
-	vkFreeMemory(device, deviceMemory, nullptr);
-	vkDestroyImage(device, image, nullptr);
+	vkFreeMemory(m_pContext->device, deviceMemory, nullptr);
+	vkDestroyImage(m_pContext->device, image, nullptr);
 }
 
 void Texture::CleanupImage(VmaAllocation deviceMemory, VkImage image)

@@ -18,18 +18,21 @@ struct GlobalDescriptor
     GlobalDescriptor& operator=(GlobalDescriptor&&) = delete;
 
 	static void Init(VulkanContext* vulkanContext);
-
-
-	static void Bind(VulkanContext* vulkanContext, VkCommandBuffer commandBuffer, const VkPipelineLayout& pipelineLayout, PipelineType pipelineType = PipelineType::Graphics);
-	static VkDescriptorSetLayout& GetLayout();
+	static void Bind(VkCommandBuffer commandBuffer);
 	static void Cleanup(VkDevice device);
-
     static void OnImGui();
 
+	[[nodiscard]] VkDescriptorSetLayout& GetLayout();
+
 private:
-	static inline VkDescriptorSetLayout m_GlobalDescriptorSetLayout{};
-	static inline VkDescriptorSet m_GlobalDescriptorSet{};
-	static inline DynamicBuffer m_GlobalBuffer{};
+	inline static VulkanContext* m_pVulkanContext{};
+	inline static GraphicsPipeline m_Pipeline{};
+	inline static DescriptorSet m_DescriptorSet{};
+
+	//DescriptorSet
+	//static inline VkDescriptorSetLayout m_GlobalDescriptorSetLayout{};
+	//static inline VkDescriptorSet m_GlobalDescriptorSet{};
+	//static inline DynamicBuffer m_GlobalBuffer{};
 
 	static inline uint16_t inverseProjectionHandle = 0;
 	static inline uint16_t viewProjectionHandle = 0;
@@ -40,5 +43,5 @@ private:
     static inline uint16_t lightColorHandle = 0;
 	static inline uint16_t viewMatrixHandle = 0;
 
-	static inline Descriptor::DescriptorWriter m_Writer{};
+	//static inline Descriptor::DescriptorWriter m_Writer{};
 };

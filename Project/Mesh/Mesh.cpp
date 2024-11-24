@@ -69,7 +69,6 @@ void Mesh::Render(VkCommandBuffer commandBuffer)
 
 	for(const auto& primitive: m_Primitives)
 	{
-		GlobalDescriptor::Bind(m_pContext, commandBuffer, primitive.material->GetPipelineLayout());
 		primitive.Render(commandBuffer, m_ModelMatrix);
 	}
 }

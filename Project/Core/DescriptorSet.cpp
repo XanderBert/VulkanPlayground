@@ -7,7 +7,7 @@
 #include "DynamicUniformBuffer.h"
 #include "GBuffer.h"
 #include "SwapChain.h"
-#include "Image/ImageLoader.h"
+
 
 DynamicBuffer *DescriptorSet::AddBuffer(int binding, DescriptorType type)
 {
@@ -27,7 +27,7 @@ DynamicBuffer *DescriptorSet::AddBuffer(int binding, DescriptorType type)
         return nullptr;
     }
 
-    m_DescriptorBuilder.AddBinding(binding, static_cast<VkDescriptorType>(type));
+    //m_DescriptorBuilder.AddBinding(binding, static_cast<VkDescriptorType>(type));
 
     iterator->second.SetDescriptorType(type);
 
@@ -67,7 +67,7 @@ void DescriptorSet::AddTexture(int binding, const std::variant<std::filesystem::
         return;
     }
 
-    m_DescriptorBuilder.AddBinding(binding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    //m_DescriptorBuilder.AddBinding(binding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 }
 
 void DescriptorSet::AddTexture(int binding,std::shared_ptr<Texture> texture, VulkanContext *pContext)
@@ -86,7 +86,7 @@ void DescriptorSet::AddTexture(int binding,std::shared_ptr<Texture> texture, Vul
 	}
 
 	//Add a new texture at binding x
-	m_DescriptorBuilder.AddBinding(binding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+	//m_DescriptorBuilder.AddBinding(binding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 }
 
 void DescriptorSet::AddGBuffer(int depthBinding, int normalBinding)
@@ -107,8 +107,8 @@ void DescriptorSet::AddGBuffer(int depthBinding, int normalBinding)
 	m_DepthTextureBinding = depthBinding;
 	m_NormalTextureBinding = normalBinding;
 
-	m_DescriptorBuilder.AddBinding(depthBinding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-	m_DescriptorBuilder.AddBinding(normalBinding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+	//m_DescriptorBuilder.AddBinding(depthBinding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+	//m_DescriptorBuilder.AddBinding(normalBinding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 }
 
 void DescriptorSet::AddDepthBuffer(int binding)
@@ -120,7 +120,7 @@ void DescriptorSet::AddDepthBuffer(int binding)
     }
 
     m_DepthTextureBinding = binding;
-    m_DescriptorBuilder.AddBinding(binding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    //m_DescriptorBuilder.AddBinding(binding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 }
 
 void DescriptorSet::AddNormalBuffer(int binding)
@@ -132,7 +132,7 @@ void DescriptorSet::AddNormalBuffer(int binding)
     }
 
     m_NormalTextureBinding = binding;
-    m_DescriptorBuilder.AddBinding(binding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    //m_DescriptorBuilder.AddBinding(binding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 }
 
 
@@ -155,7 +155,7 @@ std::shared_ptr<Texture> DescriptorSet::CreateOutputTexture(int binding, VulkanC
         return nullptr;
     }
 
-    m_DescriptorBuilder.AddBinding(binding, static_cast<VkDescriptorType>(DescriptorImageType::STORAGE_IMAGE));
+    //m_DescriptorBuilder.AddBinding(binding, static_cast<VkDescriptorType>(DescriptorImageType::STORAGE_IMAGE));
 
     return m_Textures[binding];
 }
@@ -187,7 +187,7 @@ std::vector<std::shared_ptr<Texture>> DescriptorSet::GetTextures()
 void DescriptorSet::AddColorAttachment(ColorAttachment *colorAttachment, int binding)
 {
 	m_ColorAttachments.emplace(binding, colorAttachment);
-	m_DescriptorBuilder.AddBinding(binding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+	//m_DescriptorBuilder.AddBinding(binding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 }
 
 void DescriptorSet::Initialize(const VulkanContext *pContext)
@@ -197,7 +197,7 @@ void DescriptorSet::Initialize(const VulkanContext *pContext)
         ubo.Init();
     }
 
-    m_DescriptorSetLayout = m_DescriptorBuilder.Build(pContext->device, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_COMPUTE_BIT);
+    m_DescriptorBuilder.Build(pContext->device, m_DescriptorSetLayout);
 }
 
 void DescriptorSet::Bind(VulkanContext *pContext, const VkCommandBuffer& commandBuffer, const VkPipelineLayout & pipelineLayout, int descriptorSetIndex, PipelineType pipelineType, bool fullRebind)
@@ -221,7 +221,8 @@ void DescriptorSet::Bind(VulkanContext *pContext, const VkCommandBuffer& command
     }
 
     //Bind all textures
-    for (auto &[binding, texture]: m_Textures) {
+    for (auto &[binding, texture]: m_Textures)
+    {
         texture->ProperBind(binding, m_DescriptorWriter);
     }
 
@@ -244,8 +245,7 @@ void DescriptorSet::Bind(VulkanContext *pContext, const VkCommandBuffer& command
     }
 
     m_DescriptorWriter.UpdateSet(pContext->device, m_DescriptorSet);
-    vkCmdBindDescriptorSets(commandBuffer, static_cast<VkPipelineBindPoint>(pipelineType), pipelineLayout, descriptorSetIndex, 1,
-                            &m_DescriptorSet, 0, nullptr);
+    vkCmdBindDescriptorSets(commandBuffer, static_cast<VkPipelineBindPoint>(pipelineType), pipelineLayout, 0, 1, &m_DescriptorSet, 0, nullptr);
 }
 
 VkDescriptorSetLayout &DescriptorSet::GetLayout(const VulkanContext* pContext)

@@ -12,6 +12,7 @@
 #include "VulkanTypes.h"
 #include "Core/DepthResource.h"
 #include "Core/GBuffer.h"
+#include "Core/GlobalDescriptor.h"
 
 
 void VulkanBase::run()
@@ -57,8 +58,12 @@ void VulkanBase::initVulkan()
 
     CommandPool::CreateCommandPool(m_pContext);
     CommandBufferManager::CreateCommandBuffer(m_pContext, commandBuffer);
-    Descriptor::DescriptorManager::Init(m_pContext);
-    createSyncObjects();
+
+	Descriptor::DescriptorManager::Init(m_pContext);
+	GlobalDescriptor::Bind(commandBuffer.Handle);
+
+
+	createSyncObjects();
     ShaderManager::Setup();
 
 

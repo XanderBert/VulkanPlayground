@@ -9,8 +9,8 @@
 
 void Material::CleanUp()
 {
-    m_DescriptorSet.CleanUp(m_pContext->device);
-    m_pGraphicsPipeline->Cleanup(m_pContext->device);
+    //m_DescriptorSet.CleanUp(m_pContext->device);
+	//m_pGraphicsPipeline->Cleanup(m_pContext->device);
 }
 
 Material::Material(VulkanContext *vulkanContext, std::string materialName)
@@ -18,7 +18,7 @@ Material::Material(VulkanContext *vulkanContext, std::string materialName)
     , m_MaterialName(std::move(materialName))
 {
     m_Shaders.reserve(2);
-    m_pGraphicsPipeline = std::make_unique<GraphicsPipeline>();
+    //m_pGraphicsPipeline = std::make_unique<GraphicsPipeline>();
 
     m_pContext = vulkanContext;
 }
@@ -32,32 +32,34 @@ void Material::OnImGui()
 		shader->OnImGui(m_MaterialName);
 	}
 
-    m_DescriptorSet.OnImGui();
+    //m_DescriptorSet.OnImGui();
 }
 
-void Material::Bind(const VkCommandBuffer commandBuffer)
-{
-    m_pGraphicsPipeline->BindPipeline(commandBuffer, m_PipelineType);
-    m_DescriptorSet.Bind(m_pContext, commandBuffer, m_pGraphicsPipeline->GetPipelineLayout(), 1, m_PipelineType);
+// void Material::Bind(const VkCommandBuffer commandBuffer)
+// {
+//     //m_pGraphicsPipeline->BindPipeline(commandBuffer, m_PipelineType);
+//
+//
+// 	//m_DescriptorSet.Bind(m_pContext, commandBuffer, m_pGraphicsPipeline->GetPipelineLayout(), 1, m_PipelineType);
+//
+//
+//     // TODO: This would be a better solution:
+//     //  for each material
+//     //  {
+//     //      bind material resources  // material parameters and textures
+//     //      for each mesh
+//     //      {
+//     //          bind mesh resources  // object transforms
+//     //          draw mesh
+//     //      }
+//     //  }
+//
+// }
 
-
-    // TODO: This would be a better solution:
-    //  for each material
-    //  {
-    //      bind material resources  // material parameters and textures
-    //      for each mesh
-    //      {
-    //          bind mesh resources  // object transforms
-    //          draw mesh
-    //      }
-    //  }
-
-}
-
-void Material::BindPushConstant(VkCommandBuffer commandBuffer, const glm::mat4x4 &pushConstantMatrix) const
-{
-    m_pGraphicsPipeline->BindPushConstant(commandBuffer, pushConstantMatrix);
-}
+// void Material::BindPushConstant(VkCommandBuffer commandBuffer, const glm::mat4x4 &pushConstantMatrix) const
+// {
+//     m_pGraphicsPipeline->BindPushConstant(commandBuffer, pushConstantMatrix);
+// }
 
 Shader *Material::SetShader(const std::string &shaderPath, ShaderType shaderType)
 {
@@ -91,39 +93,45 @@ const std::vector<Shader*>& Material::GetShaders() const
     return m_Shaders;
 }
 
-const VkPipelineLayout &Material::GetPipelineLayout() const
+// const VkPipelineLayout &Material::GetPipelineLayout() const
+// {
+//     return m_pGraphicsPipeline->GetPipelineLayout();
+// }
+
+// VkPipelineLayoutCreateInfo Material::GetPipelineLayoutCreateInfo()
+// {
+//     // Push Constant in the Vertex Shader for model
+//		static VkPushConstantRange pushConstantRange{};
+//		pushConstantRange.offset = 0;
+//		pushConstantRange.size = sizeof(glm::mat4x4);
+//		pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_COMPUTE_BIT;
+//
+// 		constexpr uint32_t layoutCount = 2;
+// 		VkDescriptorSetLayout layouts[layoutCount] = { GlobalDescriptor::GetLayout(), m_DescriptorSet.GetLayout(m_pContext) };
+//
+//
+//     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+//     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+//     pipelineLayoutInfo.setLayoutCount = layoutCount;
+//     pipelineLayoutInfo.pSetLayouts = layouts;
+//     pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
+//     pipelineLayoutInfo.pushConstantRangeCount = 1;
+//
+//     return pipelineLayoutInfo;
+// }
+
+std::string Material::GetMaterialName() const
 {
-    return m_pGraphicsPipeline->GetPipelineLayout();
+	return m_MaterialName;
 }
 
-VkPipelineLayoutCreateInfo Material::GetPipelineLayoutCreateInfo() {
-    // Push Constant in the Vertex Shader for model
-    static VkPushConstantRange pushConstantRange{};
-    pushConstantRange.offset = 0;
-    pushConstantRange.size = sizeof(glm::mat4x4);
-    pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_COMPUTE_BIT;
-
-    m_SetLayouts =
-    {
-            GlobalDescriptor::GetLayout(),
-            m_DescriptorSet.GetLayout(m_pContext),
-    };
-
-    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(m_SetLayouts.size());
-    pipelineLayoutInfo.pSetLayouts = m_SetLayouts.data();
-    pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
-    pipelineLayoutInfo.pushConstantRangeCount = 1;
-
-    return pipelineLayoutInfo;
-}
-std::string Material::GetMaterialName() const { return m_MaterialName; }
-DescriptorSet *Material::GetDescriptorSet() { return &m_DescriptorSet; }
-VkCullModeFlags Material::GetCullModeBit() const {
+VkCullModeFlags Material::GetCullModeBit() const
+{
     return m_CullMode;
 }
-void Material::SetCullMode(VkCullModeFlags cullMode) {
+
+void Material::SetCullMode(VkCullModeFlags cullMode)
+{
     m_CullMode = cullMode;
 }
 
@@ -162,7 +170,7 @@ void Material::SetSSAOPass(bool isSSAO)
 	m_IsSSAO = isSSAO;
 }
 
-void Material::CreatePipeline()
-{
-	m_pGraphicsPipeline->CreatePipeline(m_pContext, this);
-}
+// void Material::CreatePipeline()
+// {
+// 	m_pGraphicsPipeline->CreatePipeline(m_pContext, this);
+// }

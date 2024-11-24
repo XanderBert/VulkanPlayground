@@ -7,68 +7,66 @@
 
 void GlobalDescriptor::Init(VulkanContext *vulkanContext)
 {
-	//TODO: I Need a proper way to pass a ARRAY of light structurs to the GPU.
-	const std::vector<Light *> Lights = LightManager::GetLights();
-	Light *light = Lights[0];
-
-
-
-	m_GlobalBuffer.SetDescriptorType(DescriptorType::UniformBuffer);
-
-	viewProjectionHandle = m_GlobalBuffer.AddVariable(Camera::GetViewProjectionMatrix());
-	cameraHandle = m_GlobalBuffer.AddVariable(glm::vec4(Camera::GetPosition(), 1.0f));
-	cameraPlaneHandle = m_GlobalBuffer.AddVariable(glm::vec4(Camera::GetNearPlane(), Camera::GetFarPlane(), 0.0f, 0.0f));
-	lightPositionHandle = m_GlobalBuffer.AddVariable(glm::vec4(light->GetPosition()[0], light->GetPosition()[1], light->GetPosition()[2], 1.0f));
-	lightColorHandle = m_GlobalBuffer.AddVariable(glm::vec4(light->GetColor()[0], light->GetColor()[1], light->GetColor()[2], 1.0f));
-	inverseProjectionHandle = m_GlobalBuffer.AddVariable(inverse(Camera::GetProjectionMatrix()));
-	viewMatrixHandle = m_GlobalBuffer.AddVariable(Camera::GetViewMatrix());
-
-
-	m_GlobalBuffer.Init();
-
-	Descriptor::DescriptorBuilder builder{};
-	builder.AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-	m_GlobalDescriptorSetLayout = builder.Build(vulkanContext->device, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_COMPUTE_BIT);
-}
-
-
-void GlobalDescriptor::Bind(VulkanContext *vulkanContext, const VkCommandBuffer commandBuffer, const VkPipelineLayout &pipelineLayout, PipelineType pipelineType)
-{
-	LogAssert(m_GlobalDescriptorSetLayout != VK_NULL_HANDLE, "GlobalDescriptorSetLayout is not initialized", true);
-	m_GlobalBuffer.UpdateVariable(viewProjectionHandle, Camera::GetViewProjectionMatrix());
-	m_GlobalBuffer.UpdateVariable(viewProjectionHandle, Camera::GetViewProjectionMatrix());
-	m_GlobalBuffer.UpdateVariable(cameraHandle, glm::vec4(Camera::GetPosition(), 1.0f));
-	m_GlobalBuffer.UpdateVariable(cameraPlaneHandle, glm::vec4(Camera::GetNearPlane(), Camera::GetFarPlane(), 0.0f, 0.0f));
-	m_GlobalBuffer.UpdateVariable(inverseProjectionHandle, inverse(Camera::GetProjectionMatrix()));
-	m_GlobalBuffer.UpdateVariable(viewMatrixHandle, Camera::GetViewMatrix());
+	m_pVulkanContext = vulkanContext;
 
 	//TODO: I Need a proper way to pass a ARRAY of light structurs to the GPU.
 	const std::vector<Light *> Lights = LightManager::GetLights();
 	Light *light = Lights[0];
-	m_GlobalBuffer.UpdateVariable(lightPositionHandle, glm::vec4(light->GetPosition()[0], light->GetPosition()[1], light->GetPosition()[2], 1.0f));
-	m_GlobalBuffer.UpdateVariable(lightColorHandle, glm::vec4(light->GetColor()[0], light->GetColor()[1], light->GetColor()[2], 1.0f));
 
+	auto* globalBuffer = m_DescriptorSet.AddBuffer(0, DescriptorType::UniformBuffer);
 
-	m_GlobalDescriptorSet = Descriptor::DescriptorManager::Allocate(vulkanContext->device, m_GlobalDescriptorSetLayout, 0);
-	m_Writer.Cleanup();
-
-
-	m_GlobalBuffer.ProperBind(0, m_Writer);
-	m_Writer.UpdateSet(vulkanContext->device, m_GlobalDescriptorSet);
-
-	vkCmdBindDescriptorSets(commandBuffer, static_cast<VkPipelineBindPoint>(pipelineType), pipelineLayout, 0, 1, &m_GlobalDescriptorSet, 0, nullptr);
+	viewProjectionHandle = globalBuffer->AddVariable(Camera::GetViewProjectionMatrix());
+	cameraHandle = globalBuffer->AddVariable(glm::vec4(Camera::GetPosition(), 1.0f));
+	cameraPlaneHandle = globalBuffer->AddVariable(glm::vec4(Camera::GetNearPlane(), Camera::GetFarPlane(), 0.0f, 0.0f));
+	lightPositionHandle = globalBuffer->AddVariable(glm::vec4(light->GetPosition()[0], light->GetPosition()[1], light->GetPosition()[2], 1.0f));
+	lightColorHandle = globalBuffer->AddVariable(glm::vec4(light->GetColor()[0], light->GetColor()[1], light->GetColor()[2], 1.0f));
+	inverseProjectionHandle = globalBuffer->AddVariable(inverse(Camera::GetProjectionMatrix()));
+	viewMatrixHandle = globalBuffer->AddVariable(Camera::GetViewMatrix());
 }
 
-VkDescriptorSetLayout &GlobalDescriptor::GetLayout()
+
+void GlobalDescriptor::Bind(VkCommandBuffer commandBuffer)
 {
-	return m_GlobalDescriptorSetLayout;
+	//auto* globalBuffer = m_DescriptorSet.GetBuffer(0);
+
+	//TODO --> Move to Update:
+	//LogAssert(GetLayout() != VK_NULL_HANDLE, "GlobalDescriptorSetLayout is not initialized", true);
+	//globalBuffer->UpdateVariable(viewProjectionHandle, Camera::GetViewProjectionMatrix());
+	//globalBuffer->UpdateVariable(viewProjectionHandle, Camera::GetViewProjectionMatrix());
+	//globalBuffer->UpdateVariable(cameraHandle, glm::vec4(Camera::GetPosition(), 1.0f));
+	//globalBuffer->UpdateVariable(cameraPlaneHandle, glm::vec4(Camera::GetNearPlane(), Camera::GetFarPlane(), 0.0f, 0.0f));
+	//globalBuffer->UpdateVariable(inverseProjectionHandle, inverse(Camera::GetProjectionMatrix()));
+	//globalBuffer->UpdateVariable(viewMatrixHandle, Camera::GetViewMatrix());
+
+	//TODO: I Need a proper way to pass a ARRAY of light structurs to the GPU.
+	//const std::vector<Light *> Lights = LightManager::GetLights();
+	//Light *light = Lights[0];
+	//globalBuffer->UpdateVariable(lightPositionHandle, glm::vec4(light->GetPosition()[0], light->GetPosition()[1], light->GetPosition()[2], 1.0f));
+	//globalBuffer->UpdateVariable(lightColorHandle, glm::vec4(light->GetColor()[0], light->GetColor()[1], light->GetColor()[2], 1.0f));
+
+
+	//m_GlobalDescriptorSet = Descriptor::DescriptorManager::Allocate(vulkanContext->device, m_GlobalDescriptorSetLayout, 0);
+	//m_Writer.Cleanup();
+
+	//m_GlobalBuffer.ProperBind(0, m_Writer);
+	//m_Writer.UpdateSet(vulkanContext->device, m_GlobalDescriptorSet);
+
+	//vkCmdBindDescriptorSets(commandBuffer, static_cast<VkPipelineBindPoint>(pipelineType), pipelineLayout, 0, 1, &m_GlobalDescriptorSet, 0, nullptr);
+
+	//TODO: Cleanup this call please
+	m_DescriptorSet.Bind(m_pVulkanContext, commandBuffer, m_Pipeline.GetPipelineLayout(), 0,PipelineType::Graphics, true);
+}
+
+VkDescriptorSetLayout& GlobalDescriptor::GetLayout()
+{
+	return m_DescriptorSet.GetLayout(m_pVulkanContext);
 }
 
 
 void GlobalDescriptor::Cleanup(VkDevice device)
 {
-	vkDestroyDescriptorSetLayout(device, m_GlobalDescriptorSetLayout, nullptr);
-	m_GlobalBuffer.Cleanup(device);
+	m_Pipeline.Cleanup(m_pVulkanContext->device);
+	m_Pipeline.Cleanup(m_pVulkanContext->device);
 }
 
 void GlobalDescriptor::OnImGui()

@@ -15,7 +15,6 @@ void GraphicsPipeline::CreatePipeline(const VulkanContext* vulkanContext,Materia
 
 void GraphicsPipeline::BindPushConstant(const VkCommandBuffer commandBuffer, const glm::mat4x4& matrix) const
 {
-    //vertex and fragment
 	vkCmdPushConstants(commandBuffer, m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_COMPUTE_BIT , 0, sizeof(glm::mat4x4), &matrix);
 }
 
@@ -32,6 +31,7 @@ void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline,
 	graphicsPipeline.Cleanup(vulkanContext->device);
 
 	const VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = material->GetPipelineLayoutCreateInfo();
+
 	VulkanCheck(vkCreatePipelineLayout(vulkanContext->device, &pipelineLayoutCreateInfo, nullptr, &graphicsPipeline.m_PipelineLayout ), "Failed To Create PipelineLayout")
     LogInfo("Layout Created For: " + material->GetMaterialName());
 

@@ -63,9 +63,7 @@ public:
 
 	void TransitionToGeneralImageLayout(VkCommandBuffer commandBuffer);
 	void TransitionToReadableImageLayout(VkCommandBuffer commandBuffer);
-	//void TransitionToWriteableImageLayout(VkCommandBuffer commandBuffer);
-
-	void ClearImage(VkCommandBuffer commandBuffer);
+	void ClearImage(VkCommandBuffer commandBuffer) const;
 
 	void SetOutputTexture(bool isOutputTexture);
 	[[nodiscard]] bool IsOutputTexture() const;
@@ -80,8 +78,8 @@ private:
 
 	void TransitionAndCopyImageBuffer(VkBuffer srcBuffer);
 
-	static void CleanupImage(VkDeviceMemory deviceMemory, VkImage image);
-	static void CleanupImage(VmaAllocation deviceMemory, VkImage image);
+	void CleanupImage(VkDeviceMemory deviceMemory, VkImage image);
+	void CleanupImage(VmaAllocation deviceMemory, VkImage image);
 
 	VulkanContext *m_pContext{};
 	std::optional<std::filesystem::path> m_Path{};

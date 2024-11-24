@@ -23,11 +23,10 @@ public:
 	Material(Material&&) = delete;
 	Material& operator=(Material&&) = delete;
 
-
 	void OnImGui();
 
-    void Bind(VkCommandBuffer commandBuffer);
-	void BindPushConstant(VkCommandBuffer commandBuffer, const glm::mat4x4& pushConstantMatrix) const;
+    //void Bind(VkCommandBuffer commandBuffer);
+	//void BindPushConstant(VkCommandBuffer commandBuffer, const glm::mat4x4& pushConstantMatrix) const;
 
     //Checks if a shader with the same type already exists,
     //if so it removes it and adds the new one
@@ -39,15 +38,16 @@ public:
     void CreatePipeline();
 
     [[nodiscard]] const std::vector<Shader*>& GetShaders() const;
-    [[nodiscard]] const VkPipelineLayout& GetPipelineLayout() const;
-    [[nodiscard]] VkPipelineLayoutCreateInfo GetPipelineLayoutCreateInfo();
+    //[[nodiscard]] const VkPipelineLayout& GetPipelineLayout() const;
+    //[[nodiscard]] VkPipelineLayoutCreateInfo GetPipelineLayoutCreateInfo();
     [[nodiscard]] std::string GetMaterialName() const;
 
-    [[nodiscard]] DescriptorSet* GetDescriptorSet();
+    //[[nodiscard]] DescriptorSet* GetDescriptorSet();
 
     [[nodiscard]] VkCullModeFlags GetCullModeBit() const;
     void SetCullMode(VkCullModeFlags cullMode);
 
+	//TODO Clean this up -> Render graphs
     [[nodiscard]] bool GetDepthOnly() const;
     [[nodiscard]] bool IsCompute() const;
 	[[nodiscard]] bool IsSSAO() const;
@@ -62,19 +62,17 @@ private:
 
 	void CleanUp();
 
-	std::unique_ptr<GraphicsPipeline> m_pGraphicsPipeline;
+	//std::unique_ptr<GraphicsPipeline> m_pGraphicsPipeline;
 	std::vector<Shader*> m_Shaders;
 
 	VulkanContext* m_pContext;
 	std::string m_MaterialName;
 
-    DescriptorSet m_DescriptorSet{};
-    std::vector<VkDescriptorSetLayout> m_SetLayouts{};
-
+    //DescriptorSet m_DescriptorSet{};
 
     VkCullModeFlags m_CullMode = VK_CULL_MODE_BACK_BIT;
 
-	//TODO: Cleanup
+	//TODO: Cleanup -> Render graphs
     bool m_IsDepthOnly = false;
 	bool m_IsSSAO = false;
 	bool m_IsComposite = false;

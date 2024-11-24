@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 #include <deque>
 #include <memory>
 #include <vector>
@@ -9,6 +10,10 @@
 
 namespace Descriptor 
 {
+	static constexpr uint32_t		 k_bindless_buffer_binding = 0;
+	static constexpr uint32_t        k_bindless_texture_binding = 10;
+	static constexpr uint32_t        k_max_bindless_resources = 1024;
+
 	//manages allocation of descriptor sets.
 	//Will keep creating new descriptor pools once they get filled. it will reset the entire thing and reuse pools.
 	class DescriptorAllocator final
@@ -84,7 +89,7 @@ namespace Descriptor
 	class DescriptorBuilder final
 	{
 	public:
-		DescriptorBuilder() = default;
+		DescriptorBuilder();
 		~DescriptorBuilder() = default;
 
 		DescriptorBuilder(const DescriptorBuilder&) = delete;
@@ -93,12 +98,16 @@ namespace Descriptor
 		DescriptorBuilder& operator=(DescriptorBuilder&&) = delete;
 
 
-		VkDescriptorSetLayout Build(VkDevice device, VkShaderStageFlags shaderStages);
+		void Build(VkDevice device, VkDescriptorSetLayout& descriptorSetLayout);
 
-		void AddBinding(uint32_t binding, VkDescriptorType type);
+
+
+		//void AddBinding(uint32_t binding, VkDescriptorType type);
 		void Cleanup();
 	private:
-		std::vector<VkDescriptorSetLayoutBinding> m_Bindings;
+
+
+		std::array<VkDescriptorSetLayoutBinding, 4> m_Bindings{};
 	};
 
 
