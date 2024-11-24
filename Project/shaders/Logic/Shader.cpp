@@ -1,7 +1,6 @@
 #include "Shader.h"
 
 #include <ranges>
-
 #include <vector>
 
 #include "Mesh/Material.h"
@@ -163,7 +162,8 @@ void ShaderManager::ReloadShader(const VulkanContext * vulkanContext, const std:
 Shader *ShaderManager::CreateShader(const VulkanContext *vulkanContext, const std::string &fileName,
                                     ShaderType shaderType, Material *material) {
     // Check if the shader already exists
-    if (const auto it = m_ShaderInfo.find(fileName); it != m_ShaderInfo.end()) {
+    if (const auto it = m_ShaderInfo.find(fileName); it != m_ShaderInfo.end())
+    {
         Shader *shader = it->second.get();
         shader->AddMaterial(material);
         return shader;
@@ -173,11 +173,10 @@ Shader *ShaderManager::CreateShader(const VulkanContext *vulkanContext, const st
 
 
     std::unique_ptr<Shader> shaderPtr = std::make_unique<Shader>(shaderInfo, material, fileName);
-    Shader *shader = shaderPtr.get();
 
-    m_ShaderInfo.insert(std::make_pair(fileName, std::move(shaderPtr)));
+    m_ShaderInfo.emplace(fileName, std::move(shaderPtr));
 
-    return shader;
+    return m_ShaderInfo[fileName].get();
 }
 void ShaderManager::RemoveMaterial(Shader *shader, Material *material)
 {

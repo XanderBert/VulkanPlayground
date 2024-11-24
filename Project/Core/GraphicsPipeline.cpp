@@ -8,32 +8,28 @@
 #include "SwapChain.h"
 #include "shaders/Logic/Shader.h"
 
-void GraphicsPipeline::CreatePipeline(const VulkanContext* vulkanContext,Material* material)
-{
-	GraphicsPipelineBuilder::CreatePipeline(*this, vulkanContext, material);
-}
+//void GraphicsPipeline::CreatePipeline(const VulkanContext* vulkanContext,Material* material)
+//{
+//	GraphicsPipelineBuilder::CreatePipeline(vulkanContext, material);
+//}
 
-void GraphicsPipeline::BindPushConstant(const VkCommandBuffer commandBuffer, const glm::mat4x4& matrix) const
-{
-	vkCmdPushConstants(commandBuffer, m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_COMPUTE_BIT , 0, sizeof(glm::mat4x4), &matrix);
-}
-
-void GraphicsPipeline::BindPipeline(const VkCommandBuffer& commandBuffer, PipelineType pipeline) const
-{
-	vkCmdBindPipeline(commandBuffer, static_cast<VkPipelineBindPoint>(pipeline), m_GraphicsPipeline);
-}
+//void GraphicsPipeline::BindPushConstant(const VkCommandBuffer commandBuffer, const glm::mat4x4& matrix) const
+//{
+//	LogAssert(false, "Not Implemented Yet", true);
+	//vkCmdPushConstants(commandBuffer, m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_COMPUTE_BIT , 0, sizeof(glm::mat4x4), &matrix);
+//}
 
 
 
-void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline, const VulkanContext* vulkanContext, Material* material)
+
+void GraphicsPipelineBuilder::CreatePipeline(const VulkanContext* vulkanContext, Material* material)
 {
 	//destroy previous pipeline layout and graphics pipeline
-	graphicsPipeline.Cleanup(vulkanContext->device);
+	material->CleanupPipeline();
 
-	const VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = material->GetPipelineLayoutCreateInfo();
-
-	VulkanCheck(vkCreatePipelineLayout(vulkanContext->device, &pipelineLayoutCreateInfo, nullptr, &graphicsPipeline.m_PipelineLayout ), "Failed To Create PipelineLayout")
-    LogInfo("Layout Created For: " + material->GetMaterialName());
+	//TODO: Clean this the hell up
+	//TODO This information should be passed by the material
+	VkPipelineDepthStencilStateCreateInfo depthStencilState{};
 
 	//Create dynamic rendering structure
 	VkPipelineRenderingCreateInfoKHR pipelineRenderingCreateInfo
@@ -43,11 +39,6 @@ void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline,
         .pColorAttachmentFormats = GBuffer::GetAlbedoAttachment()->GetFormat(),
         .depthAttachmentFormat = GBuffer::GetDepthAttachment()->GetFormat(),
     };
-
-
-	VkPipelineDepthStencilStateCreateInfo depthStencilState{};
-
-	//TODO: Clean this the hell up
     if(material->GetDepthOnly())
     {
         pipelineRenderingCreateInfo.pColorAttachmentFormats = GBuffer::GetColorAttachmentNormal()->GetFormat();
@@ -148,26 +139,37 @@ void GraphicsPipelineBuilder::CreatePipeline(GraphicsPipeline& graphicsPipeline,
         .pDepthStencilState = &depthStencilState,
         .pColorBlendState = &colorBlending,
         .pDynamicState = &dynamicState,
-        .layout = graphicsPipeline.m_PipelineLayout,
+        .layout = GlobalDescriptor::GetPipelineLayout(),
         .renderPass = VK_NULL_HANDLE,
         .subpass = 0,
         .basePipelineHandle = VK_NULL_HANDLE,
         .basePipelineIndex = -1,
         };
 
-        VulkanCheck(vkCreateGraphicsPipelines(vulkanContext->device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline.m_GraphicsPipeline), "Failed to create graphics pipeline!")
+        VulkanCheck(vkCreateGraphicsPipelines(vulkanContext->device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &material->m_GraphicsPipeline), "Failed to create graphics pipeline!")
     }
     else
     {
         VkComputePipelineCreateInfo pipelineInfo{};
         pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
         pipelineInfo.stage = shaderStages[0];
-        pipelineInfo.layout = graphicsPipeline.m_PipelineLayout;
+        pipelineInfo.layout = GlobalDescriptor::GetPipelineLayout();
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
         pipelineInfo.basePipelineIndex = -1;
-        VulkanCheck(vkCreateComputePipelines(vulkanContext->device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline.m_GraphicsPipeline), "Failed to create compute pipeline!")
+        VulkanCheck(vkCreateComputePipelines(vulkanContext->device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &material->m_GraphicsPipeline), "Failed to create compute pipeline!")
     }
 
 
     LogInfo("Pipeline Created For: " + material->GetMaterialName());
+}
+
+void GraphicsPipelineBuilder::CreatePipelineLayout(VkPipelineLayout& pipelineLayout, const VulkanContext *vulkanContext)
+{
+	VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
+	pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+
+	pipelineLayoutCreateInfo.setLayoutCount = 1;
+	pipelineLayoutCreateInfo.pSetLayouts = &GlobalDescriptor::GetLayout();
+
+	VulkanCheck(vkCreatePipelineLayout(vulkanContext->device, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout), "Failed To Create PipelineLayout");
 }

@@ -16,7 +16,8 @@ struct Primitive
 
 	inline void Render(VkCommandBuffer commandBuffer, const glm::mat4& modelMatrix) const
 	{
-		material->BindPushConstant(commandBuffer, modelMatrix);
+		//TODO: Move pushconstant to a UBO
+		//material->BindPushConstant(commandBuffer, modelMatrix);
 		material->Bind(commandBuffer);
 		vkCmdDrawIndexed(commandBuffer, indexCount, 1, firstIndex, 0, 0);
 	}
@@ -43,7 +44,7 @@ public:
 	void CleanUp();
 
 	[[nodiscard]] std::string GetMeshName() const { return m_MeshName; }
-    //[[nodiscard]] Material* GetMaterial() const { return m_pMaterial.get(); }
+    [[nodiscard]] Material* GetMaterial() const { return m_pMaterial.get(); }
 
 	//TODO: Move to a component system
 	void SetPosition(const glm::vec3& position);
@@ -68,7 +69,7 @@ private:
     Buffer m_VertexBuffer{};
 	Buffer m_IndexBuffer{};
 
-	//std::shared_ptr<Material> m_pMaterial;
+	std::shared_ptr<Material> m_pMaterial;
     std::shared_ptr<Material> m_pDepthMaterial;
 
 	std::vector<uint16_t> m_VariableHandles;
@@ -84,12 +85,3 @@ private:
 
     DescriptorSet m_MeshDescriptorSet{};
 };
-
-//
-// struct Node
-// {
-// 	Node* parent;
-// 	std::vector<std::unique_ptr<Node>> children;
-// 	Model mesh;
-// 	glm::mat4 modelMatrix;
-// };

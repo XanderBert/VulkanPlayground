@@ -13,8 +13,12 @@
 
 void VulkanBase::drawFrame(uint32_t imageIndex) const
 {
+	//Bind the bindless descriptor set (Stores all textures, ubo's ....)
+	GlobalDescriptor::Bind(commandBuffer.Handle);
+
+
+
 	//TODO: Move to swapchain
-	// Transition the swapchain image to COLOR_ATTACHMENT_OPTIMAL for rendering
 	tools::InsertImageMemoryBarrier(
 		 commandBuffer.Handle,
 		 SwapChain::Image(static_cast<uint8_t>(imageIndex)),

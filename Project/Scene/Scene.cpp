@@ -117,6 +117,12 @@ Scene::Scene(VulkanContext* vulkanContext)
 	//Composite Material
 	std::shared_ptr<Material> compositeMaterial = MaterialManager::CreateMaterial(vulkanContext, "composite.vert", "composite.frag", "CompositeMaterial");
 	compositeMaterial->SetIsComposite(true);
+
+	//Whenever we add a color or depth attachments:
+	//It should be stored in the material info.
+	//That materials should creat its own pipeline to use then
+	//The PipelineLayout will still be shared
+	GlobalDescriptor
 	compositeMaterial->GetDescriptorSet()->AddColorAttachment(GBuffer::GetAlbedoAttachment(), 0);
 
 

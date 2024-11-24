@@ -106,7 +106,7 @@ public:
 	{
 		for (const auto &material : m_Materials | std::views::values)
 		{
-			material->CleanUp();
+			material->CleanupPipeline();
 		}
 	}
 

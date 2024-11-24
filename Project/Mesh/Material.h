@@ -4,8 +4,39 @@
 #include <string>
 #include <vector>
 #include <vulkan/vulkan.h>
+
+#include "Core/DepthResource.h"
 #include "Core/DescriptorSet.h"
 #include "Core/GraphicsPipeline.h"
+
+//Create a renderpass class
+
+//This holds information about
+//attachments
+//pipeline to use (Global or Another one)
+//
+
+
+//Some render passes only "render" one material
+//Other ones will go over each mesh to render
+
+//Do i make a pure virtual renderpass?
+
+//Do i create a different one for compute passes?
+
+
+struct RenderPass
+{
+	RenderPass() = default;
+	virtual ~RenderPass() = default;
+
+	RenderPass(const RenderPass&) = delete;
+	RenderPass(RenderPass&&) = delete;
+	RenderPass& operator=(const RenderPass&) = delete;
+	RenderPass& operator=(RenderPass&&) = delete;
+
+	virtual	void Render(VkCommandBuffer commandBuffer) = 0;
+};
 
 
 enum class ShaderType;
@@ -25,7 +56,9 @@ public:
 
 	void OnImGui();
 
-    //void Bind(VkCommandBuffer commandBuffer);
+	//void Bind()
+
+    void Bind(VkCommandBuffer commandBuffer) const;
 	//void BindPushConstant(VkCommandBuffer commandBuffer, const glm::mat4x4& pushConstantMatrix) const;
 
     //Checks if a shader with the same type already exists,
@@ -35,15 +68,8 @@ public:
     //Adds a shader of the specified type without checking if one is already present of the same type
     Shader* AddShader(const std::string& shaderPath, ShaderType shaderType);
 
-    void CreatePipeline();
-
     [[nodiscard]] const std::vector<Shader*>& GetShaders() const;
-    //[[nodiscard]] const VkPipelineLayout& GetPipelineLayout() const;
-    //[[nodiscard]] VkPipelineLayoutCreateInfo GetPipelineLayoutCreateInfo();
     [[nodiscard]] std::string GetMaterialName() const;
-
-    //[[nodiscard]] DescriptorSet* GetDescriptorSet();
-
     [[nodiscard]] VkCullModeFlags GetCullModeBit() const;
     void SetCullMode(VkCullModeFlags cullMode);
 
@@ -59,16 +85,18 @@ public:
 
 private:
 	friend class MaterialManager;
+	friend class GraphicsPipelineBuilder;
+	friend class ShaderManager;
 
-	void CleanUp();
+	void CreatePipeline();
+	void CleanupPipeline() const;
 
-	//std::unique_ptr<GraphicsPipeline> m_pGraphicsPipeline;
+	VkPipeline m_GraphicsPipeline{};
+	PipelineType m_PipelineType = PipelineType::Graphics;
+
 	std::vector<Shader*> m_Shaders;
-
 	VulkanContext* m_pContext;
 	std::string m_MaterialName;
-
-    //DescriptorSet m_DescriptorSet{};
 
     VkCullModeFlags m_CullMode = VK_CULL_MODE_BACK_BIT;
 
@@ -78,5 +106,4 @@ private:
 	bool m_IsComposite = false;
 
 
-    PipelineType m_PipelineType = PipelineType::Graphics;
 };

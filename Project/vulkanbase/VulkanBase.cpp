@@ -60,8 +60,6 @@ void VulkanBase::initVulkan()
     CommandBufferManager::CreateCommandBuffer(m_pContext, commandBuffer);
 
 	Descriptor::DescriptorManager::Init(m_pContext);
-	GlobalDescriptor::Bind(commandBuffer.Handle);
-
 
 	createSyncObjects();
     ShaderManager::Setup();

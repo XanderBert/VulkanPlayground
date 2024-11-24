@@ -22,17 +22,14 @@ struct GlobalDescriptor
 	static void Cleanup(VkDevice device);
     static void OnImGui();
 
-	[[nodiscard]] VkDescriptorSetLayout& GetLayout();
+	[[nodiscard]] static VkDescriptorSetLayout& GetLayout();
+	[[nodiscard]] static VkPipelineLayout& GetPipelineLayout();
+	[[nodiscard]] static DescriptorSet& GetDescriptorSet();
 
 private:
 	inline static VulkanContext* m_pVulkanContext{};
-	inline static GraphicsPipeline m_Pipeline{};
 	inline static DescriptorSet m_DescriptorSet{};
-
-	//DescriptorSet
-	//static inline VkDescriptorSetLayout m_GlobalDescriptorSetLayout{};
-	//static inline VkDescriptorSet m_GlobalDescriptorSet{};
-	//static inline DynamicBuffer m_GlobalBuffer{};
+	inline static VkPipelineLayout m_PipelineLayout{};
 
 	static inline uint16_t inverseProjectionHandle = 0;
 	static inline uint16_t viewProjectionHandle = 0;
@@ -42,6 +39,4 @@ private:
     static inline uint16_t lightPositionHandle = 0;
     static inline uint16_t lightColorHandle = 0;
 	static inline uint16_t viewMatrixHandle = 0;
-
-	//static inline Descriptor::DescriptorWriter m_Writer{};
 };

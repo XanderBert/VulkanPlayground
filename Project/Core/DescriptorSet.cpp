@@ -172,17 +172,6 @@ std::vector<std::shared_ptr<Texture>> DescriptorSet::GetTextures()
     return textures;
 }
 
-// void DescriptorSet::CreateColorAttachment(VulkanContext *pContext, ColorType colorType, const VkClearColorValue& clearColor, const glm::ivec2& extent, const std::string& name)
-// {
-// 	auto colorAttachment = std::make_shared<ColorAttachment>();
-// 	colorAttachment->Init(pContext,static_cast<VkFormat>(colorType), clearColor, extent);
-// 	m_ColorAttachments.emplace(name,std::move(colorAttachment));
-// }
-//
-// ColorAttachment * DescriptorSet::GetColorAttachment(const std::string &name)
-// {
-// 	return m_ColorAttachments.find(name)->second.get();
-// }
 
 void DescriptorSet::AddColorAttachment(ColorAttachment *colorAttachment, int binding)
 {

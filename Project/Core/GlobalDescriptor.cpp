@@ -8,6 +8,7 @@
 void GlobalDescriptor::Init(VulkanContext *vulkanContext)
 {
 	m_pVulkanContext = vulkanContext;
+	GraphicsPipelineBuilder::CreatePipelineLayout(m_PipelineLayout, m_pVulkanContext);
 
 	//TODO: I Need a proper way to pass a ARRAY of light structurs to the GPU.
 	const std::vector<Light *> Lights = LightManager::GetLights();
@@ -54,7 +55,7 @@ void GlobalDescriptor::Bind(VkCommandBuffer commandBuffer)
 	//vkCmdBindDescriptorSets(commandBuffer, static_cast<VkPipelineBindPoint>(pipelineType), pipelineLayout, 0, 1, &m_GlobalDescriptorSet, 0, nullptr);
 
 	//TODO: Cleanup this call please
-	m_DescriptorSet.Bind(m_pVulkanContext, commandBuffer, m_Pipeline.GetPipelineLayout(), 0,PipelineType::Graphics, true);
+	m_DescriptorSet.Bind(m_pVulkanContext, commandBuffer, m_PipelineLayout, 0,PipelineType::Graphics, true);
 }
 
 VkDescriptorSetLayout& GlobalDescriptor::GetLayout()
@@ -62,11 +63,19 @@ VkDescriptorSetLayout& GlobalDescriptor::GetLayout()
 	return m_DescriptorSet.GetLayout(m_pVulkanContext);
 }
 
+VkPipelineLayout& GlobalDescriptor::GetPipelineLayout()
+{
+	return m_PipelineLayout;
+}
+
+DescriptorSet& GlobalDescriptor::GetDescriptorSet()
+{
+	return m_DescriptorSet;
+}
 
 void GlobalDescriptor::Cleanup(VkDevice device)
 {
-	m_Pipeline.Cleanup(m_pVulkanContext->device);
-	m_Pipeline.Cleanup(m_pVulkanContext->device);
+	vkDestroyPipelineLayout(device, m_PipelineLayout, nullptr);
 }
 
 void GlobalDescriptor::OnImGui()
