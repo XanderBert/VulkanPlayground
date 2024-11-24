@@ -4,28 +4,21 @@
 
 
 ## Some Features
-- Lua Script Support (Removed for now)
-- Runtime Shader Creation
-- Runtime Shader Compiling
-- Runtime Shader Changes watcher thread -> automatically compiles the changed shader in runtime
+- Hot Shader Reloading
 - PBR Material System (Channel and non channel packed)
 - Runtime GLTF/Obj Model Loading
-- Runtime Texture Loading/Swapping
-- .ktx Texture Loading
+- Runtime Texture Loading/Swapping (including .ktx textures)
+- Compute Shaders
+- Compute SSAO
+- Linux & Windows Support
 
-## What do i want to get out of this project?
-First of all i want to setup a working runtime shader editor and abstract vulkan.
-
-I would like to have support for multiple Shader languages. The first one on the list is Slang (next to GLSL).
+## What did i want to get out of this project?
+First of all i want to setup a working runtime shader editor and abstract vulkan. 
+This project got out of hand. It is/will be my shader editor to quickly prototype and test Graphics Programming Techniques 
 
 ![HotShaderReload](HotShaderReload.gif)
 
 TODO:
-- Rework Render System to have better material instancing
-- Shadow Mapping
-- Deferred Rendering
+- Bindless Rendering [Working on this at the moment]
 - Object Picking for Object Manipulation
-- Scene Graph
-- Scene Serialization
-- Scene Deserialization
-- Make 2 types of Descriptor Allocators (Each Frame (Dynamic Descriptor Sets) and One Time (Static Descriptor Sets))
+- Frame Graph's
