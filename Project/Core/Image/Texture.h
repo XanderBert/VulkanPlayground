@@ -8,6 +8,8 @@
 #include "Core/ImGuiWrapper.h"
 #include "vulkanbase/VulkanTypes.h"
 
+enum class DescriptorType;
+
 enum class ColorType : uint8_t
 {
 	SRGB = VK_FORMAT_R8G8B8A8_SRGB,
@@ -58,7 +60,7 @@ public:
 	Texture &operator=(Texture &&) = delete;
 
 	void OnImGui();
-	void ProperBind(int bindingNumber, Descriptor::DescriptorWriter &descriptorWriter) const;
+	void Bind(Descriptor::DescriptorWriter &descriptorWriter, DescriptorType descriptorType) const;
 	void Cleanup(VkDevice device);
 
 	void TransitionToGeneralImageLayout(VkCommandBuffer commandBuffer);

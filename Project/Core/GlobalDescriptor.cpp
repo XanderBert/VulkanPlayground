@@ -14,15 +14,24 @@ void GlobalDescriptor::Init(VulkanContext *vulkanContext)
 	const std::vector<Light *> Lights = LightManager::GetLights();
 	Light *light = Lights[0];
 
-	auto* globalBuffer = m_DescriptorSet.AddBuffer(0, DescriptorType::UniformBuffer);
+	DynamicBuffer globalBuffer{};
 
-	viewProjectionHandle = globalBuffer->AddVariable(Camera::GetViewProjectionMatrix());
-	cameraHandle = globalBuffer->AddVariable(glm::vec4(Camera::GetPosition(), 1.0f));
-	cameraPlaneHandle = globalBuffer->AddVariable(glm::vec4(Camera::GetNearPlane(), Camera::GetFarPlane(), 0.0f, 0.0f));
-	lightPositionHandle = globalBuffer->AddVariable(glm::vec4(light->GetPosition()[0], light->GetPosition()[1], light->GetPosition()[2], 1.0f));
-	lightColorHandle = globalBuffer->AddVariable(glm::vec4(light->GetColor()[0], light->GetColor()[1], light->GetColor()[2], 1.0f));
-	inverseProjectionHandle = globalBuffer->AddVariable(inverse(Camera::GetProjectionMatrix()));
-	viewMatrixHandle = globalBuffer->AddVariable(Camera::GetViewMatrix());
+	viewProjectionHandle = globalBuffer.AddVariable(Camera::GetViewProjectionMatrix());
+	cameraHandle = globalBuffer.AddVariable(glm::vec4(Camera::GetPosition(), 1.0f));
+	cameraPlaneHandle = globalBuffer.AddVariable(glm::vec4(Camera::GetNearPlane(), Camera::GetFarPlane(), 0.0f, 0.0f));
+	lightPositionHandle = globalBuffer.AddVariable(glm::vec4(light->GetPosition()[0], light->GetPosition()[1], light->GetPosition()[2], 1.0f));
+	lightColorHandle = globalBuffer.AddVariable(glm::vec4(light->GetColor()[0], light->GetColor()[1], light->GetColor()[2], 1.0f));
+	inverseProjectionHandle = globalBuffer.AddVariable(inverse(Camera::GetProjectionMatrix()));
+	viewMatrixHandle = globalBuffer.AddVariable(Camera::GetViewMatrix());
+	globalBuffer.Init(BufferType::UniformBuffer);
+
+	DescriptorResource globalDescriptorResource
+	{
+		.resource = globalBuffer,
+		.type = DescriptorType::UniformBuffer,
+	};
+
+	int globalResourceIndex = m_DescriptorSet.AddResource(globalDescriptorResource);
 }
 
 
@@ -54,13 +63,13 @@ void GlobalDescriptor::Bind(VkCommandBuffer commandBuffer)
 
 	//vkCmdBindDescriptorSets(commandBuffer, static_cast<VkPipelineBindPoint>(pipelineType), pipelineLayout, 0, 1, &m_GlobalDescriptorSet, 0, nullptr);
 
-	//TODO: Cleanup this call please
-	m_DescriptorSet.Bind(m_pVulkanContext, commandBuffer, m_PipelineLayout, 0,PipelineType::Graphics, true);
+
+	m_DescriptorSet.Bind(m_pVulkanContext, commandBuffer,PipelineType::Graphics);
 }
 
-VkDescriptorSetLayout& GlobalDescriptor::GetLayout()
+const VkDescriptorSetLayout& GlobalDescriptor::GetLayout()
 {
-	return m_DescriptorSet.GetLayout(m_pVulkanContext);
+	return m_DescriptorSet.GetDescriptorSetLayout();
 }
 
 VkPipelineLayout& GlobalDescriptor::GetPipelineLayout()

@@ -25,8 +25,6 @@ DynamicBuffer::DynamicBuffer(DynamicBuffer &&other) noexcept {
         m_UniformBuffer = other.m_UniformBuffer;
         m_UniformBuffersMemory = other.m_UniformBuffersMemory;
         m_UniformBuffersMapped = other.m_UniformBuffersMapped;
-        m_BufferType = other.m_BufferType;
-        m_DescriptorType = other.m_DescriptorType;
 
         other.m_UniformBuffer = nullptr;
         other.m_UniformBuffersMemory = nullptr;
@@ -36,34 +34,29 @@ DynamicBuffer::DynamicBuffer(DynamicBuffer &&other) noexcept {
 
 
 
-void DynamicBuffer::Init()
+void DynamicBuffer::Init(BufferType bufferType)
 {
 	//Log the size of the buffer in bytes
 	LogInfo("Initializing Dynamic buffer with size: " + std::to_string(GetSize()) + " bytes");
 
-	Core::Buffer::CreateBuffer(GetSize(), static_cast<VkBufferUsageFlags>(m_BufferType), m_UniformBuffer, m_UniformBuffersMemory, true, true);
+	Core::Buffer::CreateBuffer(GetSize(), static_cast<VkBufferUsageFlags>(bufferType), m_UniformBuffer, m_UniformBuffersMemory, true, true);
 
     VmaAllocationInfo allocInfo;
     vmaGetAllocationInfo(Allocator::vmaAllocator, m_UniformBuffersMemory, &allocInfo);
     m_UniformBuffersMapped = (void*)allocInfo.pMappedData;
 }
 
-void DynamicBuffer::ProperBind(int bindingNumber, Descriptor::DescriptorWriter &descriptorWriter) const {
-    //Update the data for the descriptor set
+void DynamicBuffer::Bind(Descriptor::DescriptorWriter &descriptorWriter, DescriptorType descriptorType) const
+{
+	int binding = Descriptor::k_bindless_buffer_binding;
+	if(descriptorType == DescriptorType::StorageBuffer) ++binding;
+
+	//Update the data for the descriptor set
     memcpy(m_UniformBuffersMapped, GetData(), GetSize());
 
     //Write the buffer to the descriptor set
-    descriptorWriter.WriteBuffer(bindingNumber, m_UniformBuffer, GetSize(), 0, static_cast<VkDescriptorType>(m_DescriptorType));
+    descriptorWriter.WriteBuffer(binding, m_UniformBuffer, GetSize(), 0, static_cast<VkDescriptorType>(descriptorType));
 }
-void DynamicBuffer::FullRebind(int bindingNumber, const VkDescriptorSet &descriptorSet, Descriptor::DescriptorWriter &descriptorWriter, VulkanContext *vulkanContext) const
-{
-    memcpy(m_UniformBuffersMapped, GetData(), GetSize());
-
-    descriptorWriter.Cleanup();
-    descriptorWriter.WriteBuffer(bindingNumber, m_UniformBuffer, GetSize(), 0, static_cast<VkDescriptorType>(m_DescriptorType));
-    descriptorWriter.UpdateSet(vulkanContext->device, descriptorSet);
-}
-
 
 void DynamicBuffer::Cleanup(VkDevice device) const
 {
@@ -131,7 +124,7 @@ void DynamicBuffer::OnImGui()
     {
         AddVariable(glm::vec4{0});
         Cleanup(ServiceLocator::GetService<VulkanContext>()->device);
-        Init();
+        Init(BufferType::UniformBuffer);
     }
 
     std::string labelAddMat4 = "Add Mat4" + labelAddition;
@@ -139,16 +132,9 @@ void DynamicBuffer::OnImGui()
     {
         AddVariable(glm::mat4{1});
         Cleanup(ServiceLocator::GetService<VulkanContext>()->device);
-        Init();
+        Init(BufferType::UniformBuffer);
     }
 }
-
-void DynamicBuffer::SetDescriptorType(DescriptorType descriptorType)
-{
-    m_DescriptorType = descriptorType;
-    m_BufferType = m_DescriptorType == DescriptorType::UniformBuffer ? BufferType::UniformBuffer : BufferType::StorageBuffer;
-}
-
 void DynamicBuffer::UpdateVariable(uint16_t handle, const glm::mat4& value)
 {
 	constexpr uint8_t size = sizeof(glm::mat4) / sizeof(float);

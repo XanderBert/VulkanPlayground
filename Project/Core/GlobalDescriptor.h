@@ -22,7 +22,7 @@ struct GlobalDescriptor
 	static void Cleanup(VkDevice device);
     static void OnImGui();
 
-	[[nodiscard]] static VkDescriptorSetLayout& GetLayout();
+	[[nodiscard]] static const VkDescriptorSetLayout& GetLayout();
 	[[nodiscard]] static VkPipelineLayout& GetPipelineLayout();
 	[[nodiscard]] static DescriptorSet& GetDescriptorSet();
 

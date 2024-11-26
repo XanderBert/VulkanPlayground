@@ -97,12 +97,8 @@ namespace Descriptor
 		DescriptorBuilder(DescriptorBuilder&&) = delete;
 		DescriptorBuilder& operator=(DescriptorBuilder&&) = delete;
 
-
 		void Build(VkDevice device, VkDescriptorSetLayout& descriptorSetLayout);
 
-
-
-		//void AddBinding(uint32_t binding, VkDescriptorType type);
 		void Cleanup();
 	private:
 

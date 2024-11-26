@@ -26,7 +26,7 @@ public:
 	void Recreate(const VulkanContext *vulkanContext, VkClearColorValue clearColor, const glm::ivec2& extent);
 
 	void Cleanup(VkDevice device);
-	void Bind(Descriptor::DescriptorWriter& writer, int bindingNumber) const;
+	void Bind(Descriptor::DescriptorWriter& writer) const;
 
 	[[nodiscard]] VkRenderingAttachmentInfoKHR* GetRenderingAttachmentInfo();
 	[[nodiscard]] VkFormat* GetFormat();

@@ -31,9 +31,14 @@ void ColorAttachment::Cleanup(VkDevice device)
 }
 
 //Only Bind if we will use tha attachment in a descriptor set -> If it will need a binding number
-void ColorAttachment::Bind(Descriptor::DescriptorWriter &writer, int bindingNumber) const
+void ColorAttachment::Bind(Descriptor::DescriptorWriter &writer) const
 {
-	writer.WriteImage(bindingNumber, m_ImageView, m_Sampler, m_CurrentImageLayout, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+	//TODO: Add Support
+	LogAssert(false, "Support needs to be added",true);
+
+	//Are these bindings being seen as textures?
+	//if so use binding 10
+	writer.WriteImage(0, m_ImageView, m_Sampler, m_CurrentImageLayout, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 }
 
 VkRenderingAttachmentInfoKHR* ColorAttachment::GetRenderingAttachmentInfo()

@@ -5,6 +5,7 @@
 
 #include "ImGuiFileDialog.h"
 #include "Core/CommandBuffer.h"
+#include "Core/DescriptorSet.h"
 #include "Core/SwapChain.h"
 #include "Patterns/ServiceLocator.h"
 #include "vulkanbase/VulkanTypes.h"
@@ -69,9 +70,13 @@ void Texture::OnImGui()
 	if(m_ImGuiTexture) m_ImGuiTexture->OnImGui();
 }
 
-void Texture::ProperBind(int bindingNumber, Descriptor::DescriptorWriter &descriptorWriter) const
+void Texture::Bind(Descriptor::DescriptorWriter &descriptorWriter, DescriptorType type) const
 {
-	descriptorWriter.WriteImage(bindingNumber, m_ImageView, m_Sampler, m_BindImageLayout, static_cast<VkDescriptorType>(m_DescriptorImageType));
+	int binding = Descriptor::k_bindless_texture_binding;
+	if(type == DescriptorType::StorageImage) ++binding;
+
+
+	descriptorWriter.WriteImage(binding, m_ImageView, m_Sampler, m_BindImageLayout, static_cast<VkDescriptorType>(m_DescriptorImageType));
 }
 
 void Texture::Cleanup(VkDevice device)
