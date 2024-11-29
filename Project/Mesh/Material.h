@@ -1,11 +1,6 @@
 #pragma once
-#include <glm/glm.hpp>
-#include <memory>
 #include <string>
 #include <vector>
-#include <vulkan/vulkan.h>
-
-#include "Core/DepthResource.h"
 #include "Core/DescriptorSet.h"
 #include "Core/GraphicsPipeline.h"
 

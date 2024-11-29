@@ -15,7 +15,6 @@ void GlobalDescriptor::Init(VulkanContext *vulkanContext)
 	Light *light = Lights[0];
 
 	DynamicBuffer globalBuffer{};
-
 	viewProjectionHandle = globalBuffer.AddVariable(Camera::GetViewProjectionMatrix());
 	cameraHandle = globalBuffer.AddVariable(glm::vec4(Camera::GetPosition(), 1.0f));
 	cameraPlaneHandle = globalBuffer.AddVariable(glm::vec4(Camera::GetNearPlane(), Camera::GetFarPlane(), 0.0f, 0.0f));
@@ -23,7 +22,6 @@ void GlobalDescriptor::Init(VulkanContext *vulkanContext)
 	lightColorHandle = globalBuffer.AddVariable(glm::vec4(light->GetColor()[0], light->GetColor()[1], light->GetColor()[2], 1.0f));
 	inverseProjectionHandle = globalBuffer.AddVariable(inverse(Camera::GetProjectionMatrix()));
 	viewMatrixHandle = globalBuffer.AddVariable(Camera::GetViewMatrix());
-	globalBuffer.Init(BufferType::UniformBuffer);
 
 	DescriptorResource globalDescriptorResource
 	{
@@ -31,7 +29,7 @@ void GlobalDescriptor::Init(VulkanContext *vulkanContext)
 		.type = DescriptorType::UniformBuffer,
 	};
 
-	int globalResourceIndex = m_DescriptorSet.AddResource(globalDescriptorResource);
+	DescriptorResourceHandle globalResourceIndex = m_DescriptorSet.AddResource(globalDescriptorResource);
 }
 
 

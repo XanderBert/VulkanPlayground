@@ -5,6 +5,7 @@
 
 #include "ImageLoader.h"
 #include "Core/Descriptor.h"
+#include "Core/DescriptorSet.h"
 #include "Core/ImGuiWrapper.h"
 #include "vulkanbase/VulkanTypes.h"
 
@@ -24,11 +25,6 @@ enum class TextureType : uint8_t
 };
 
 
-enum class DescriptorImageType : uint8_t
-{
-	SAMPLED_IMAGE = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-	STORAGE_IMAGE = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-};
 
 
 struct ImageInMemory
@@ -60,7 +56,7 @@ public:
 	Texture &operator=(Texture &&) = delete;
 
 	void OnImGui();
-	void Bind(Descriptor::DescriptorWriter &descriptorWriter, DescriptorType descriptorType) const;
+	void Write(Descriptor::DescriptorWriter &writer, DescriptorResourceHandle newIndex, DescriptorType descriptorType);
 	void Cleanup(VkDevice device);
 
 	void TransitionToGeneralImageLayout(VkCommandBuffer commandBuffer);
@@ -69,7 +65,7 @@ public:
 
 	void SetOutputTexture(bool isOutputTexture);
 	[[nodiscard]] bool IsOutputTexture() const;
-	[[nodiscard]] DescriptorImageType GetDescriptorImageType() const;
+	[[nodiscard]] DescriptorType GetDescriptorType() const;
 
 	[[nodiscard]] bool IsPendingKill() const;
 
@@ -98,7 +94,7 @@ private:
 
 	ColorType m_ColorType{};
 	TextureType m_TextureType{};
-	DescriptorImageType m_DescriptorImageType{DescriptorImageType::SAMPLED_IMAGE};
+	DescriptorType m_DescriptorImageType{DescriptorType::SampledImage};
 
 	VkImageLayout m_BindImageLayout{VK_IMAGE_LAYOUT_UNDEFINED};
 

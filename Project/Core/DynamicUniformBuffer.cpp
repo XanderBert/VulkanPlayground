@@ -15,6 +15,7 @@
 #include "Patterns/ServiceLocator.h"
 
 
+
 //---------------------------------------------------------------
 //-------------------------DynamicBuffer-------------------------
 //---------------------------------------------------------------
@@ -33,29 +34,30 @@ DynamicBuffer::DynamicBuffer(DynamicBuffer &&other) noexcept {
 }
 
 
-
-void DynamicBuffer::Init(BufferType bufferType)
+void DynamicBuffer::Write(Descriptor::DescriptorWriter &writer, DescriptorResourceHandle newIndex, DescriptorType descriptorType)
 {
 	//Log the size of the buffer in bytes
 	LogInfo("Initializing Dynamic buffer with size: " + std::to_string(GetSize()) + " bytes");
 
+	//Get the bufferType
+	BufferType bufferType = descriptorType == DescriptorType::UniformBuffer ? BufferType::UniformBuffer : BufferType::StorageBuffer;
+
+	//Create the buffer
 	Core::Buffer::CreateBuffer(GetSize(), static_cast<VkBufferUsageFlags>(bufferType), m_UniformBuffer, m_UniformBuffersMemory, true, true);
 
-    VmaAllocationInfo allocInfo;
-    vmaGetAllocationInfo(Allocator::vmaAllocator, m_UniformBuffersMemory, &allocInfo);
-    m_UniformBuffersMapped = (void*)allocInfo.pMappedData;
+	//Allocate memory on the GPU
+	VmaAllocationInfo allocInfo;
+	vmaGetAllocationInfo(Allocator::vmaAllocator, m_UniformBuffersMemory, &allocInfo);
+	m_UniformBuffersMapped = (void*)allocInfo.pMappedData;
+
+	//Write the buffer
+	writer.WriteBuffer(newIndex, m_UniformBuffer, GetSize(), 0, descriptorType);
 }
 
-void DynamicBuffer::Bind(Descriptor::DescriptorWriter &descriptorWriter, DescriptorType descriptorType) const
+void DynamicBuffer::Bind() const
 {
-	int binding = Descriptor::k_bindless_buffer_binding;
-	if(descriptorType == DescriptorType::StorageBuffer) ++binding;
-
 	//Update the data for the descriptor set
     memcpy(m_UniformBuffersMapped, GetData(), GetSize());
-
-    //Write the buffer to the descriptor set
-    descriptorWriter.WriteBuffer(binding, m_UniformBuffer, GetSize(), 0, static_cast<VkDescriptorType>(descriptorType));
 }
 
 void DynamicBuffer::Cleanup(VkDevice device) const
@@ -124,7 +126,6 @@ void DynamicBuffer::OnImGui()
     {
         AddVariable(glm::vec4{0});
         Cleanup(ServiceLocator::GetService<VulkanContext>()->device);
-        Init(BufferType::UniformBuffer);
     }
 
     std::string labelAddMat4 = "Add Mat4" + labelAddition;
@@ -132,7 +133,6 @@ void DynamicBuffer::OnImGui()
     {
         AddVariable(glm::mat4{1});
         Cleanup(ServiceLocator::GetService<VulkanContext>()->device);
-        Init(BufferType::UniformBuffer);
     }
 }
 void DynamicBuffer::UpdateVariable(uint16_t handle, const glm::mat4& value)
@@ -167,3 +167,63 @@ void DynamicBuffer::Update(uint16_t handle, const float* dataPtr, uint8_t size)
 
 	std::copy_n(dataPtr, size, m_Data.begin() + handle);
 }
+
+void BindlessParameters::Build(VkDevice device VkDescriptorPool descriptorPool)
+{
+	//Create the buffer
+	Core::Buffer::CreateBuffer(m_LastOffset, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, m_Buffer, m_Allocation, true, false);
+
+	// Copy the ranges to the GPU
+	uint8_t *data = nullptr;
+	vmaMapMemory(Allocator::vmaAllocator, m_Allocation, reinterpret_cast<void**>(&data));
+	for (const auto &range : m_Ranges)
+	{
+		memcpy(data + range.offset, range.data, range.size);
+	}
+	vmaUnmapMemory(Allocator::vmaAllocator, m_Allocation);
+
+	// Create layout for descriptor set
+	VkDescriptorSetLayoutBinding binding{};
+	binding.binding = Descriptor::ParametersUboBinding;
+	binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+	binding.descriptorCount = 1;
+	binding.stageFlags = VK_SHADER_STAGE_ALL;
+
+    VkDescriptorSetLayoutCreateInfo createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    createInfo.bindingCount = 1;
+    createInfo.pBindings = &binding;
+    vkCreateDescriptorSetLayout(device, &createInfo, nullptr, &m_Layout);
+
+
+
+		// Get maximum size of a single range
+		uint32_t maxRangeSize = 0;
+		for (auto &range : mRanges)
+		{
+			maxRangeSize = std::max(range.size, maxRangeSize);
+		}
+
+		// Create descriptor
+		VkDescriptorSetAllocateInfo allocateInfo{};
+		allocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		allocateInfo.pNext = nullptr;
+		allocateInfo.descriptorPool = descriptorPool;
+		allocateInfo.pSetLayouts = &mLayout;
+		allocateInfo.descriptorSetCount = 1;
+		vkAllocateDescriptorSets(mDevice, &allocateInfo, &mDescriptorSet);
+
+		VkBufferInfo bufferInfo{};
+		bufferInfo.buffer = mBuffer;
+		bufferInfo.offset = 0;
+		bufferInfo.range = maxRangeSize;
+
+		VkWriteDescriptorSet write{};
+		write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+		write.dstBinding = 0;
+		write.dstSet = m_Descriptor;
+		write.descriptorCount = 1;
+		write.dstArrayElement = 0;
+		write.pBufferInfo = &bufferInfo;
+		vkUpdateDescriptorSets(mDevice, 1, &write, 0, nullptr);
+	}

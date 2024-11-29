@@ -194,7 +194,7 @@ void Scene::AlbedoRender(VkCommandBuffer commandBuffer) const
 	auto mat = MaterialManager::GetMaterial("CompositeMaterial");
 
 	//GlobalDescriptor::Bind(ServiceLocator::GetService<VulkanContext>(), commandBuffer, mat->GetPipelineLayout(), PipelineType::Graphics);
-	mat->BindPushConstant(commandBuffer, Camera::GetViewMatrix());
+	//mat->BindPushConstant(commandBuffer, Camera::GetViewMatrix());
 	mat->Bind(commandBuffer);
 	vkCmdDraw(commandBuffer, 3, 1, 0, 0);
 }
@@ -273,11 +273,11 @@ void Scene::ExecuteComputePass(VkCommandBuffer commandBuffer) const
 	if(downSampleMaterial->IsCompute())
 	{
 		//Transition the output texture to writable
-		const auto& textures = downSampleMaterial->GetDescriptorSet()->GetTextures();
-		for(const auto& texture : textures)
+		//const auto& textures = downSampleMaterial->GetDescriptorSet()->GetTextures();
+		//for(const auto& texture : textures)
 		{
-			if(texture->IsOutputTexture()) downSampleTexture = texture.get();
-			break;
+			//if(texture->IsOutputTexture()) downSampleTexture = texture.get();
+			//break;
 		}
 
 		downSampleTexture->TransitionToGeneralImageLayout(commandBuffer);
@@ -293,22 +293,22 @@ void Scene::ExecuteComputePass(VkCommandBuffer commandBuffer) const
 	auto ssaoMaterial = MaterialManager::GetMaterial("ComputeMaterial");
     if(ssaoMaterial->IsCompute())
     {
-        const auto& textures = ssaoMaterial->GetDescriptorSet()->GetTextures();
+        //const auto& textures = ssaoMaterial->GetDescriptorSet()->GetTextures();
 
     	//Transition the output texture to writable
-        for(const auto& texture : textures)
+        //for(const auto& texture : textures)
 		{
-			if(texture->IsOutputTexture())
+			//if(texture->IsOutputTexture())
 			{
-				SSAO = texture.get();
-				break;
+			//	SSAO = texture.get();
+			//	break;
 			}
         }
 
     	SSAO->TransitionToGeneralImageLayout(commandBuffer);
 
-		GlobalDescriptor::Bind(ServiceLocator::GetService<VulkanContext>(), commandBuffer, ssaoMaterial->GetPipelineLayout(), PipelineType::Compute);
-    	ssaoMaterial->BindPushConstant(commandBuffer, Camera::GetViewMatrix());
+		//GlobalDescriptor::Bind(ServiceLocator::GetService<VulkanContext>(), commandBuffer, ssaoMaterial->GetPipelineLayout(), PipelineType::Compute);
+    	//ssaoMaterial->BindPushConstant(commandBuffer, Camera::GetViewMatrix());
 		ssaoMaterial->Bind(commandBuffer);
 		vkCmdDispatch(commandBuffer, quarterGroupCountX, quarterGroupCountY	, 1);
 
@@ -320,20 +320,20 @@ void Scene::ExecuteComputePass(VkCommandBuffer commandBuffer) const
 	auto blurMaterial = MaterialManager::GetMaterial("Blur");
 	if(ssaoMaterial->IsCompute())
 	{
-		const auto& textures = blurMaterial->GetDescriptorSet()->GetTextures();
+		//const auto& textures = blurMaterial->GetDescriptorSet()->GetTextures();
 		//Transition the output texture to writable
-		for(const auto& texture : textures)
+		//for(const auto& texture : textures)
 		{
-			if(texture->IsOutputTexture())
+		//	if(texture->IsOutputTexture())
 			{
-				BlurrSSAO = texture.get();
-				break;
+		//		BlurrSSAO = texture.get();
+		//		break;
 			}
 		}
 
 		BlurrSSAO->TransitionToGeneralImageLayout(commandBuffer);
 
-		blurMaterial->BindPushConstant(commandBuffer, Camera::GetProjectionMatrix());
+		//blurMaterial->BindPushConstant(commandBuffer, Camera::GetProjectionMatrix());
 		blurMaterial->Bind(commandBuffer);
 		vkCmdDispatch(commandBuffer, quarterGroupCountX, quarterGroupCountY, 1);
 
@@ -347,22 +347,22 @@ void Scene::ExecuteComputePass(VkCommandBuffer commandBuffer) const
 	auto upSampleMaterial = MaterialManager::GetMaterial("UpSample");
 	if(upSampleMaterial->IsCompute())
 	{
-		const auto& textures = upSampleMaterial->GetDescriptorSet()->GetTextures();
+		//const auto& textures = upSampleMaterial->GetDescriptorSet()->GetTextures();
 		//Transition the output texture to writable
-		for(const auto& texture : textures)
+		//for(const auto& texture : textures)
 		{
-			if(texture->IsOutputTexture()) texture->TransitionToGeneralImageLayout(commandBuffer);
+		//	if(texture->IsOutputTexture()) texture->TransitionToGeneralImageLayout(commandBuffer);
 		}
 
-		GlobalDescriptor::Bind(ServiceLocator::GetService<VulkanContext>(), commandBuffer, upSampleMaterial->GetPipelineLayout(), PipelineType::Compute);
-		upSampleMaterial->BindPushConstant(commandBuffer, Camera::GetProjectionMatrix());
+		//GlobalDescriptor::Bind(ServiceLocator::GetService<VulkanContext>(), commandBuffer, upSampleMaterial->GetPipelineLayout(), PipelineType::Compute);
+		//upSampleMaterial->BindPushConstant(commandBuffer, Camera::GetProjectionMatrix());
 		upSampleMaterial->Bind(commandBuffer);
 		vkCmdDispatch(commandBuffer, fullscreenGroupCountX, fullscreenGroupCountY, 1);
 
 		//transition the output texture to readable
-			for(const auto& texture : textures)
+		//	for(const auto& texture : textures)
 		{
-			if(texture->IsOutputTexture()) texture->TransitionToReadableImageLayout(commandBuffer);
+		///	if(texture->IsOutputTexture()) texture->TransitionToReadableImageLayout(commandBuffer);
 		}
 	}
 

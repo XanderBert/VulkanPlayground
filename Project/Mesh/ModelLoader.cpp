@@ -22,6 +22,7 @@
 #include "Mesh.h"
 #include "Vertex.h"
 #include "Core/Logger.h"
+#include "Core/Image/Texture.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneManager.h"
 

@@ -70,13 +70,10 @@ void Texture::OnImGui()
 	if(m_ImGuiTexture) m_ImGuiTexture->OnImGui();
 }
 
-void Texture::Bind(Descriptor::DescriptorWriter &descriptorWriter, DescriptorType type) const
+void Texture::Write(Descriptor::DescriptorWriter &writer, DescriptorResourceHandle newIndex, DescriptorType descriptorType)
 {
-	int binding = Descriptor::k_bindless_texture_binding;
-	if(type == DescriptorType::StorageImage) ++binding;
-
-
-	descriptorWriter.WriteImage(binding, m_ImageView, m_Sampler, m_BindImageLayout, static_cast<VkDescriptorType>(m_DescriptorImageType));
+	m_DescriptorImageType = descriptorType;
+	writer.WriteImage(newIndex, m_ImageView, m_Sampler, m_BindImageLayout, m_DescriptorImageType);
 }
 
 void Texture::Cleanup(VkDevice device)
@@ -263,7 +260,7 @@ void Texture::TransitionToGeneralImageLayout(VkCommandBuffer commandBuffer)
 	tools::InsertImageMemoryBarrier(commandBuffer, m_Image, m_BindImageLayout, VK_IMAGE_LAYOUT_GENERAL, subresourceRange);
 
 	m_BindImageLayout = VK_IMAGE_LAYOUT_GENERAL;
-	m_DescriptorImageType = DescriptorImageType::STORAGE_IMAGE;
+	m_DescriptorImageType = DescriptorType::StorageImage;
 }
 
 void Texture::TransitionToReadableImageLayout(VkCommandBuffer commandBuffer)
@@ -279,7 +276,7 @@ void Texture::TransitionToReadableImageLayout(VkCommandBuffer commandBuffer)
 
 
 	m_BindImageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	m_DescriptorImageType = DescriptorImageType::SAMPLED_IMAGE;
+	m_DescriptorImageType = DescriptorType::SampledImage;
 }
 
 void Texture::ClearImage(VkCommandBuffer commandBuffer) const
@@ -306,7 +303,7 @@ bool Texture::IsOutputTexture() const
 	return m_IsOutputTexture;
 }
 
-DescriptorImageType Texture::GetDescriptorImageType() const
+DescriptorType Texture::GetDescriptorType() const
 {
 	return m_DescriptorImageType;
 }

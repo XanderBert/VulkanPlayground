@@ -9,7 +9,6 @@
 
 class ColorAttachment;
 class Texture;
-class DynamicBuffer;
 struct GlobalDescriptor;
 enum class PipelineType;
 class DepthResource;
@@ -31,22 +30,29 @@ enum class DescriptorType
 	InlineUniformBlock = VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK
 };
 
+//We use uint32_t because it's aligned with GLSL's uint type
+enum class DescriptorResourceHandle : uint32_t { Invalid = std::numeric_limits<uint32_t>::max() };
+
 struct DescriptorResource
 {
 	// Constructor for DynamicBuffer (move semantics)
-	DescriptorResource(DynamicBuffer&& buffer, DescriptorType descriptorType)
+	DescriptorResource(DynamicBuffer& buffer, DescriptorType descriptorType)
 		: resource(std::in_place_type<DynamicBuffer>, std::move(buffer))
-		, type(descriptorType) {}
+		, type(descriptorType)
+		{}
 
 	// Constructor for Texture
 	DescriptorResource(std::shared_ptr<Texture> texture, DescriptorType descriptorType)
 		: resource(std::in_place_type<std::shared_ptr<Texture>>, std::move(texture))
-		, type(descriptorType) {}
+		, type(descriptorType)
+		{}
+
 
 	// Constructor for ColorAttachment
 	DescriptorResource(ColorAttachment* attachment, DescriptorType descriptorType)
 		: resource(std::in_place_type<ColorAttachment*>, attachment)
-		, type(descriptorType) {}
+		, type(descriptorType)
+		{}
 
 
 	std::variant<DynamicBuffer, std::shared_ptr<Texture>, ColorAttachment*> resource;
@@ -71,8 +77,9 @@ public:
 
 	void Bind(VulkanContext* pContext, const VkCommandBuffer& commandBuffer, PipelineType pipelineType);
 
+
 	//This returns the index for the array in the shader
-	int AddResource(const DescriptorResource& resource);
+	[[nodiscard]] DescriptorResourceHandle AddResource(const DescriptorResource& resource);
 
 	[[nodiscard]] const DescriptorResource& GetResource(int index) const;
 

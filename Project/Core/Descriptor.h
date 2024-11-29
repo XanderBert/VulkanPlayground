@@ -7,12 +7,17 @@
 #include "Buffer.h"
 
 
+enum class DescriptorResourceHandle : uint32_t;
+enum class DescriptorType;
 
-namespace Descriptor 
+namespace Descriptor
 {
-	static constexpr uint32_t		 k_bindless_buffer_binding = 0;
-	static constexpr uint32_t        k_bindless_texture_binding = 10;
-	static constexpr uint32_t        k_max_bindless_resources = 1024;
+	static constexpr uint32_t		 ParametersUboBinding = 1;
+	static constexpr uint32_t		 UniformBufferBinding = 5;
+	static constexpr uint32_t		 StorageBufferBinding = 6;
+	static constexpr uint32_t        TextureBinding = 10;
+	static constexpr uint32_t        StorageTextureBinding = 11;
+	static constexpr uint32_t        MaxBindlessResources = 1024;
 
 	//manages allocation of descriptor sets.
 	//Will keep creating new descriptor pools once they get filled. it will reset the entire thing and reuse pools.
@@ -66,10 +71,10 @@ namespace Descriptor
 		DescriptorWriter& operator=(DescriptorWriter&&) = delete;
 
 		//Queue Image writes
-		void WriteImage(int binding, VkImageView image, VkSampler sampler, VkImageLayout layout, VkDescriptorType type);
+		void WriteImage(DescriptorResourceHandle resourceHandle, VkImageView image, VkSampler sampler, VkImageLayout layout, DescriptorType type);
 
 		//Queue Buffer writes
-		void WriteBuffer(int binding, VkBuffer buffer, size_t size, size_t offset, VkDescriptorType type);
+		void WriteBuffer(DescriptorResourceHandle resourceHandle, VkBuffer buffer, size_t size, size_t offset, DescriptorType type);
 
 		//Actual Write to the descriptor set
 		void UpdateSet(VkDevice device, VkDescriptorSet set);
@@ -99,10 +104,7 @@ namespace Descriptor
 
 		void Build(VkDevice device, VkDescriptorSetLayout& descriptorSetLayout);
 
-		void Cleanup();
 	private:
-
-
 		std::array<VkDescriptorSetLayoutBinding, 4> m_Bindings{};
 	};
 

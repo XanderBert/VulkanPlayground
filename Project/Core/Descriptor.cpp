@@ -167,52 +167,51 @@ namespace Descriptor
 	//		                      | |                                                   
     //	                          |_|                                                   
 
-    void DescriptorWriter::WriteImage(int binding, VkImageView image, VkSampler sampler, VkImageLayout layout,
-	    VkDescriptorType type)
+    void DescriptorWriter::WriteImage(DescriptorResourceHandle resourceHandle, VkImageView image, VkSampler sampler, VkImageLayout layout, DescriptorType type)
     {
 	    //Allowed image types:
-	    //VK_DESCRIPTOR_TYPE_SAMPLER
 	    //VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER
-	    //VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE
 	    //VK_DESCRIPTOR_TYPE_STORAGE_IMAGE
-	    //VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT
 
 	    const VkDescriptorImageInfo& info = m_ImageInfos.emplace_back(VkDescriptorImageInfo{ sampler, image, layout });
 
 	    VkWriteDescriptorSet write{};
 	    write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 
-		//Set the binding to 10, set the array element to the binding
-		write.dstBinding = k_bindless_texture_binding;
-		write.dstArrayElement = binding;
+		//Get the Correct Binding
+		write.dstBinding = type == DescriptorType::CombinedImageSampler ? TextureBinding : StorageTextureBinding;
 
-	    write.dstSet = VK_NULL_HANDLE; //left empty for now until we need to write it
+		//use the handle as array index
+		write.dstArrayElement = static_cast<uint32_t>(resourceHandle);
+
+	    write.dstSet = VK_NULL_HANDLE; //left empty for now until we actually write the set
 	    write.descriptorCount = 1;
-	    write.descriptorType = type;
+	    write.descriptorType = static_cast<VkDescriptorType>(type);
 	    write.pImageInfo = &info;
 
 	    m_Writes.emplace_back(write);
     }
 
-	void DescriptorWriter::WriteBuffer(int binding, VkBuffer buffer, size_t size, size_t offset, VkDescriptorType type)
+	void DescriptorWriter::WriteBuffer(DescriptorResourceHandle resourceHandle, VkBuffer buffer, size_t size, size_t offset, DescriptorType type)
 	{
 		//Allowed buffer types:
 		//VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER
 		//VK_DESCRIPTOR_TYPE_STORAGE_BUFFER
-		//VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC
-		//VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC
+
 		const VkDescriptorBufferInfo& info = m_BufferInfos.emplace_back(VkDescriptorBufferInfo{buffer, offset, size });
 
 		VkWriteDescriptorSet write{};
 		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 
-		//Set the binding to 0, set the array element to the binding
-		write.dstBinding = k_bindless_buffer_binding;
-		write.dstArrayElement = binding;
+		//Get the Correct Binding
+		write.dstBinding = type == DescriptorType::UniformBuffer ? UniformBufferBinding : StorageBufferBinding;
 
-		write.dstSet = VK_NULL_HANDLE; //left empty for now until we need to write it
+		//use the handle as array index
+		write.dstArrayElement = static_cast<uint32_t>(resourceHandle);
+
+		write.dstSet = VK_NULL_HANDLE; //left empty for now until we actually write the set
 		write.descriptorCount = 1;
-		write.descriptorType = type;
+		write.descriptorType = static_cast<VkDescriptorType>(type);
 		write.pBufferInfo = &info;
 
 		m_Writes.emplace_back(write);
@@ -226,49 +225,6 @@ namespace Descriptor
 		{
 			write.dstSet = set;
 		}
-
-
-		// for (VkWriteDescriptorSet& write : m_Writes)
-		// {
-		// 	//Get the texture that needs to be updated
-		// 	//ResourceUpdate& texture_to_update = texture_to_update_bindless[ it ];
-		// 	//Texture* texture = access_texture( {texture_to_update.handle } );
-		//
-		// 	//Update the write descriptor
-		// 	//VkWriteDescriptorSet& descriptor_write = bindless_descriptor_writes[ current_write_index ];
-		//
-		// 	descriptor_write.dstArrayElement = texture_to_update.handle;
-		// 	//descriptor_write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		// 	descriptor_write.dstSet = vulkan_bindless_descriptor_set;
-		// 	descriptor_write.dstBinding = k_bindless_texture_binding;
-		//
-		//
-		// 	Sampler* vk_default_sampler = access_sampler( default_sampler );
-		// 	VkDescriptorImageInfo& descriptor_image_info = bindless_image_info[ current_write_index ];
-		//
-		// 	if ( texture->sampler != nullptr )
-		// 	{
-		// 		descriptor_image_info.sampler = texture->sampler->vk_sampler;
-		// 	}
-		// 	else
-		// 	{
-		// 		descriptor_image_info.sampler = vk_default_sampler->vk_sampler;
-		// 	}
-		//
-		// 	descriptor_image_info.imageView = texture->vk_format != VK_FORMAT_UNDEFINED ? texture->vk_image_view : vk_dummy_texture->vk_image_view;
-		// 	descriptor_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		//
-		// 	//set the image info
-		// 	descriptor_write.pImageInfo = &descriptor_image_info;
-		//
-		// 	//Confusion but ill roll with it?
-		// 	texture_to_update.current_frame = u32_max;
-		//
-		// 	//Remove the texture from the list
-		// 	texture_to_update_bindless.delete_swap( it );
-		//
-		// 	++current_write_index;
-		// }
 
 		vkUpdateDescriptorSets(device, static_cast<uint32_t>(m_Writes.size()), m_Writes.data(), 0, nullptr);
 	}
@@ -297,23 +253,23 @@ namespace Descriptor
 		//Setup the bindings
 		VkDescriptorSetLayoutBinding& image_sampler_binding = m_Bindings[ 0 ];
 		image_sampler_binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		image_sampler_binding.descriptorCount = k_max_bindless_resources;
-		image_sampler_binding.binding = k_bindless_texture_binding;
+		image_sampler_binding.descriptorCount = MaxBindlessResources;
+		image_sampler_binding.binding = TextureBinding;
 
 		VkDescriptorSetLayoutBinding& storage_image_binding = m_Bindings[ 1 ];
 		storage_image_binding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-		storage_image_binding.descriptorCount = k_max_bindless_resources;
-		storage_image_binding.binding = k_bindless_texture_binding + 1;
+		storage_image_binding.descriptorCount = MaxBindlessResources;
+		storage_image_binding.binding = StorageTextureBinding;
 
 		VkDescriptorSetLayoutBinding& uniform_buffer_binding = m_Bindings[ 2 ];
 		uniform_buffer_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		uniform_buffer_binding.descriptorCount = k_max_bindless_resources;
-		uniform_buffer_binding.binding = k_bindless_buffer_binding;
+		uniform_buffer_binding.descriptorCount = MaxBindlessResources;
+		uniform_buffer_binding.binding = UniformBufferBinding;
 
 		VkDescriptorSetLayoutBinding& storage_buffer_binding = m_Bindings[ 3 ];
 		storage_buffer_binding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-		storage_buffer_binding.descriptorCount = k_max_bindless_resources;
-		storage_buffer_binding.binding = k_bindless_buffer_binding + 1;
+		storage_buffer_binding.descriptorCount = MaxBindlessResources;
+		storage_buffer_binding.binding = StorageBufferBinding ;
 	}
 
 
@@ -345,26 +301,8 @@ namespace Descriptor
 		VulkanCheck(vkCreateDescriptorSetLayout( device, &layout_info,nullptr, &descriptorSetLayout), "Failed To Create Descriptor Set Layout!");
 	}
 
-	// void DescriptorBuilder::AddBinding(uint32_t binding, VkDescriptorType type)
-	// {
-	//
-	// 	//TODO: Work out
-	//
-	// 	// VkDescriptorSetLayoutBinding layoutBinding{};
-	// 	// layoutBinding.binding = binding;
-	// 	// layoutBinding.descriptorType = type;
-	// 	// layoutBinding.descriptorCount = 1;
-	// 	// layoutBinding.pImmutableSamplers = nullptr;
-	// 	//
-	// 	// m_Bindings.emplace_back(layoutBinding);
-	// }
 
-	void DescriptorBuilder::Cleanup()
-	{
-		//m_Bindings.clear();
-	}
-
-	//_____                     _       _               __  __                                   
+	//_____                     _       _               __  __
 	//|  __ \                   (_)     | |             |  \/  |                                  
 	//| |  | | ___ ___  ___ _ __ _ _ __ | |_ ___  _ __  | \  / | __ _ _ __   __ _  __ _  ___ _ __ 
 	//| |  | |/ _ / __|/ __| '__| | '_ \| __/ _ \| '__| | |\/| |/ _` | '_ \ / _` |/ _` |/ _ | '__|

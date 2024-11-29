@@ -77,8 +77,8 @@ void Mesh::RenderDepth(VkCommandBuffer commandBuffer)
 {
     if (!m_Visible) return;
 
-    GlobalDescriptor::Bind(m_pContext, commandBuffer, m_pDepthMaterial->GetPipelineLayout());
-	m_pDepthMaterial->BindPushConstant(commandBuffer, m_ModelMatrix);
+    //GlobalDescriptor::Bind(m_pContext, commandBuffer, m_pDepthMaterial->GetPipelineLayout());
+	//m_pDepthMaterial->BindPushConstant(commandBuffer, m_ModelMatrix);
     m_pDepthMaterial->Bind(commandBuffer);
 	m_IndexBuffer.BindAsIndexBuffer(commandBuffer);
 	m_VertexBuffer.BindAsVertexBuffer(commandBuffer);

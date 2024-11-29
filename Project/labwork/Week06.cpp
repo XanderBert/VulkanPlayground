@@ -257,4 +257,6 @@ bool VulkanBase::CheckValidationLayerSupport(const std::vector<const char *> &va
 	}
 
 	return true;
+
+
 }

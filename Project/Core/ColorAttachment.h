@@ -5,6 +5,9 @@
 #include "glm/vec2.hpp"
 
 
+enum class DescriptorType;
+enum class DescriptorResourceHandle : uint32_t;
+
 namespace Descriptor
 {
 	class DescriptorWriter;
@@ -26,7 +29,7 @@ public:
 	void Recreate(const VulkanContext *vulkanContext, VkClearColorValue clearColor, const glm::ivec2& extent);
 
 	void Cleanup(VkDevice device);
-	void Bind(Descriptor::DescriptorWriter& writer) const;
+	void Write(Descriptor::DescriptorWriter &writer, DescriptorResourceHandle newIndex, DescriptorType descriptorType) const;
 
 	[[nodiscard]] VkRenderingAttachmentInfoKHR* GetRenderingAttachmentInfo();
 	[[nodiscard]] VkFormat* GetFormat();

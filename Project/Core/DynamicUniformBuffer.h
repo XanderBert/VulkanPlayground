@@ -1,13 +1,12 @@
 #pragma once
+#include <cstring>
 #include <vector>
 #include <glm/mat4x4.hpp>
 #include <glm/vec4.hpp>
-#include <vulkan/vulkan.h>
 
-#include "DescriptorSet.h"
-#include "vulkanbase/VulkanTypes.h"
 #include "Core/VmaUsage.h"
 
+enum class DescriptorResourceHandle : uint32_t;
 enum class DescriptorType;
 
 namespace Descriptor
@@ -27,7 +26,7 @@ enum class BufferType
 class DynamicBuffer final
 {
 public:
-	explicit DynamicBuffer() = default;
+	DynamicBuffer() = default;
 	~DynamicBuffer() = default;
 
 	DynamicBuffer& operator=(const DynamicBuffer&) = delete;
@@ -35,8 +34,8 @@ public:
     DynamicBuffer(DynamicBuffer&& other) noexcept;
     DynamicBuffer& operator=(DynamicBuffer&& other) noexcept = delete;
 
-	void Init(BufferType bufferType);
-	void Bind(Descriptor::DescriptorWriter& descriptorWriter, DescriptorType descriptorType) const;
+	void Write(Descriptor::DescriptorWriter &writer, DescriptorResourceHandle newIndex, DescriptorType descriptorType);
+	void Bind() const;
     void Cleanup(VkDevice device) const;
 
 	uint16_t AddVariable(float value);
@@ -50,8 +49,6 @@ public:
 	void UpdateVariable(uint16_t handle, const glm::vec4& value);
 
     void OnImGui();
-
-
 private:
 	[[nodiscard]] const float* GetData() const;
 	[[nodiscard]] size_t GetSize() const;
@@ -63,4 +60,70 @@ private:
 	VkBuffer m_UniformBuffer{};
 	VmaAllocation m_UniformBuffersMemory{};
 	void* m_UniformBuffersMapped{};
+};
+
+
+//---------------------------------------------------------------
+//-------------------------BindlessParameters-------------------------
+//---------------------------------------------------------------
+class BindlessParameters
+{
+	struct Range
+	{
+		uint32_t offset;
+		uint32_t size;
+		void *data;
+	};
+
+public:
+	BindlessParameters() = default;
+	~BindlessParameters() = default;
+
+	BindlessParameters(const BindlessParameters&) = delete;
+	BindlessParameters& operator=(const BindlessParameters&) = delete;
+	BindlessParameters(BindlessParameters&&) = delete;
+	BindlessParameters& operator=(BindlessParameters&&) = delete;
+
+
+	template<class TData>
+	uint32_t AddRange(TData &&data)
+	{
+		// Copy data to heap and store void pointer -> We don't care about the type about that point.
+		size_t dataSize = sizeof(TData);
+		auto *bytes = new TData;
+		*bytes = data;
+
+		// Add range
+		uint32_t currentOffset = m_LastOffset;
+		m_Ranges.push_back({ currentOffset, dataSize, bytes });
+
+		// Pad the data size to minimum alignment
+		// and move the offset
+		m_LastOffset += PadSizeToMinAlignment(dataSize);
+		return currentOffset;
+	}
+
+	void Build(VkDevice device, VmaAllocator allocator, VkDescriptorPool descriptorPool);
+
+
+	inline VkDescriptorSet getDescriptorSet() { return mDescriptorSet; }
+
+	inline VkDescriptorSetLayout getDescriptorSetLayout() { return mLayout; }
+
+	inline static uint32_t MinimumUniformBufferPadding;
+private:
+
+
+	//The PadSizeToMinAlignment returns the size that is a multiple of MinimumUniformBufferPadding.
+	inline static uint32_t PadSizeToMinAlignment(uint32_t originalSize)
+	{
+		return (originalSize + MinimumUniformBufferPadding - 1) & ~(MinimumUniformBufferPadding - 1);
+	}
+
+  uint32_t m_LastOffset{};
+  std::vector<Range> m_Ranges;
+  VkDescriptorSetLayout m_Layout;
+  VkDescriptorSet m_DescriptorSet;
+  VmaAllocation m_Allocation;
+  VkBuffer m_Buffer;
 };

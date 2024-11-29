@@ -10,28 +10,15 @@
 #include "Image/Texture.h"
 
 
-void DescriptorSet::Initialize(const VulkanContext *pContext) {
-    // Iterate over all resources and initialize those that need to be initialized
-    for (auto& resource : m_Resources)
-    {
-        std::visit<DescriptorResource>([&]<typename T0>(T0& res)
-        {
-            using T = std::decay_t<T0>;
-
-            //Initialize the DynamicBuffers
-            if constexpr (std::is_same_v<T, DynamicBuffer>)
-            {
-                res.Init();
-            }
-        }, resource);
-
-
-        // Build the descriptor set layout
-        m_DescriptorBuilder.Build(pContext->device, m_DescriptorSetLayout);
-    }
+void DescriptorSet::Initialize(const VulkanContext *pContext)
+{
+    // Build the descriptor set layout -> Can be done in the ctor?
+    m_DescriptorWriter.UpdateSet(pContext->device, m_DescriptorSet);
+    m_DescriptorBuilder.Build(pContext->device, m_DescriptorSetLayout);
 }
 
-void DescriptorSet::Cleanup(const VulkanContext *pContext) {
+void DescriptorSet::Cleanup(const VulkanContext *pContext)
+{
     //Cleanup all the textures and Buffers
     for (auto& resource : m_Resources)
     {
@@ -57,41 +44,50 @@ void DescriptorSet::Cleanup(const VulkanContext *pContext) {
     vkDestroyDescriptorSetLayout(pContext->device, m_DescriptorSetLayout, nullptr);
 }
 
-void DescriptorSet::Bind(VulkanContext *pContext, const VkCommandBuffer &commandBuffer, PipelineType pipelineType) {
+void DescriptorSet::Bind(VulkanContext *pContext, const VkCommandBuffer &commandBuffer, PipelineType pipelineType)
+{
+    //Only perform a memcpy for the Uniform Buffers
+    //TODO: This memcpy should only be performed once actual data is updated?
     for (auto& resource : m_Resources)
     {
         std::visit<DescriptorResource>([&]<typename T0>(T0& res)
         {
             using T = std::decay_t<T0>;
-            if constexpr (std::is_same_v<T, DynamicBuffer> || std::is_same_v<T, std::shared_ptr<Texture>>)
+            if constexpr (std::is_same_v<T, DynamicBuffer>)
             {
-                res.Bind(m_DescriptorWriter, resource.type);
-            }
-            else if constexpr (std::is_same_v<T, ColorAttachment*>)
-            {
-                res.Bind(m_DescriptorWriter);
+                res.Bind();
             }
         }, resource);
     }
 
-
-    //TODO: the sets don't need to be updated each frame
-    m_DescriptorWriter.UpdateSet(pContext->device, m_DescriptorSet);
     vkCmdBindDescriptorSets(commandBuffer, static_cast<VkPipelineBindPoint>(pipelineType), GlobalDescriptor::GetPipelineLayout(), 0, 1, &m_DescriptorSet, 0, nullptr);
 }
 
-int DescriptorSet::AddResource(const DescriptorResource &resource) {
+DescriptorResourceHandle DescriptorSet::AddResource(const DescriptorResource &resource)
+{
+    //Get the index
+    auto newHandle = static_cast<DescriptorResourceHandle>(m_Resources.size());
+
+    //Store the resource
     m_Resources.push_back(resource);
-    return static_cast<int>(m_Resources.size() - 1);
+
+    //Write the resource
+    std::visit<DescriptorResource>([&]<typename T0>(T0& res)
+    {
+        res.Write(m_DescriptorWriter, newHandle, res.type);
+    }, resource);
+
+
+    return newHandle;
 }
 
-const DescriptorResource & DescriptorSet::GetResource(int index) const {
+const DescriptorResource & DescriptorSet::GetResource(int index) const
+{
     return m_Resources.at(index);
 }
 
-const VkDescriptorSetLayout & DescriptorSet::GetDescriptorSetLayout() const {
-
+const VkDescriptorSetLayout & DescriptorSet::GetDescriptorSetLayout() const
+{
     LogAssert(m_DescriptorSetLayout != VK_NULL_HANDLE, "Make sure to Initialize the DescriptorSet before getting the Layout", true);
-
     return m_DescriptorSetLayout;
 }

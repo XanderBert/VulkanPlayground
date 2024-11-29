@@ -238,12 +238,13 @@ void VulkanBase::createLogicalDevice()
 		queueCreateInfos.push_back(queueCreateInfo);
 	}
 
+	//TODO: First check if the features are supported on the physical device before enabling them
+
 	//Set the device features
 	VkPhysicalDeviceFeatures deviceFeatures{};
 	deviceFeatures.samplerAnisotropy = VK_TRUE;
     deviceFeatures.fragmentStoresAndAtomics = VK_TRUE;
     deviceFeatures.vertexPipelineStoresAndAtomics = VK_TRUE;
-
 
 	//Set the Dynamic Rendering Extension
 	VkPhysicalDeviceDynamicRenderingFeaturesKHR dynamicRenderingFeature{};
@@ -256,8 +257,6 @@ void VulkanBase::createLogicalDevice()
 	descriptorIndexingFeatures.runtimeDescriptorArray = VK_TRUE;
 	descriptorIndexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
 	descriptorIndexingFeatures.pNext = &dynamicRenderingFeature;
-
-
 
 	VkDeviceCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -275,6 +274,11 @@ void VulkanBase::createLogicalDevice()
 		createInfo.ppEnabledLayerNames = m_ValidationLayers.data();
 #endif
 
+
+	//Get the Min UBO Padding
+	VkPhysicalDeviceProperties properties;
+	vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+	BindlessParameters::MinimumUniformBufferPadding = static_cast<uint32_t>(properties.limits.minUniformBufferOffsetAlignment);
 
 	VulkanCheck(vkCreateDevice(physicalDevice, &createInfo, nullptr, &m_pContext->device), "failed to create logical device!");
 
