@@ -78,21 +78,24 @@ void Texture::Write(Descriptor::DescriptorWriter &writer, DescriptorResourceHand
 
 void Texture::Cleanup(VkDevice device)
 {
-	if (m_TextureType != TextureType::TEXTURE_CUBE && m_ImGuiTexture)
+	if(!m_IsPendingKill)
 	{
-		m_ImGuiTexture->Cleanup();
+		if (m_TextureType != TextureType::TEXTURE_CUBE && m_ImGuiTexture)
+		{
+			m_ImGuiTexture->Cleanup();
+		}
+
+		//Cleanup the image and the memory
+		std::visit([this](auto &&arg)
+		{
+			this->CleanupImage(arg, this->m_Image);
+		}, m_ImageMemory);
+
+		vkDestroySampler(device, m_Sampler, nullptr);
+		vkDestroyImageView(device, m_ImageView, nullptr);
+
+		m_IsPendingKill = true;
 	}
-
-	//Cleanup the image and the memory
-	std::visit([this](auto &&arg)
-	{
-		this->CleanupImage(arg, this->m_Image);
-	}, m_ImageMemory);
-
-	vkDestroySampler(device, m_Sampler, nullptr);
-	vkDestroyImageView(device, m_ImageView, nullptr);
-
-	m_IsPendingKill = true;
 }
 
 void Texture::InitTexture(const TextureData &loadedImage)

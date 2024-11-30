@@ -1,6 +1,5 @@
 #include "DescriptorSet.h"
 
-#include <algorithm>
 #include <ranges>
 
 #include "ColorAttachment.h"
@@ -19,25 +18,13 @@ void DescriptorSet::Initialize(const VulkanContext *pContext)
 
 void DescriptorSet::Cleanup(const VulkanContext *pContext)
 {
-    //Cleanup all the textures and Buffers
-    for (auto& resource : m_Resources)
+	//Cleanup all the textures and Buffers
+    for (DescriptorResource& resource : m_Resources)
     {
-        std::visit<DescriptorResource>([&]<typename T0>(T0& res)
+        std::visit([pContext](auto& res)
         {
-            using T = std::decay_t<T0>;
-            if constexpr (std::is_same_v<T, DynamicBuffer>)
-            {
-                res.Cleanup(pContext->device);
-            }
-            else if constexpr (std::is_same_v<T, std::shared_ptr<Texture>>)
-            {
-
-                if(!res->IsPendingKill())
-                {
-                    res->Cleanup(pContext->device);
-                }
-            }
-        }, resource);
+			res.Cleanup(pContext->device);
+        }, resource.resource);
     }
 
     m_Resources.clear();
@@ -48,17 +35,17 @@ void DescriptorSet::Bind(VulkanContext *pContext, const VkCommandBuffer &command
 {
     //Only perform a memcpy for the Uniform Buffers
     //TODO: This memcpy should only be performed once actual data is updated?
-    for (auto& resource : m_Resources)
-    {
-        std::visit<DescriptorResource>([&]<typename T0>(T0& res)
-        {
-            using T = std::decay_t<T0>;
-            if constexpr (std::is_same_v<T, DynamicBuffer>)
-            {
-                res.Bind();
-            }
-        }, resource);
-    }
+	for (auto& resource : m_Resources)
+	{
+		std::visit([]<typename T0>(T0& res)
+		{
+			using T = std::decay_t<T0>;
+			if constexpr (std::is_same_v<T, DynamicBuffer>)
+			{
+				res.Bind();
+			}
+		}, resource.resource);
+	}
 
     vkCmdBindDescriptorSets(commandBuffer, static_cast<VkPipelineBindPoint>(pipelineType), GlobalDescriptor::GetPipelineLayout(), 0, 1, &m_DescriptorSet, 0, nullptr);
 }
@@ -72,10 +59,10 @@ DescriptorResourceHandle DescriptorSet::AddResource(const DescriptorResource &re
     m_Resources.push_back(resource);
 
     //Write the resource
-    std::visit<DescriptorResource>([&]<typename T0>(T0& res)
+    std::visit<DescriptorResource>([&](auto& res)
     {
-        res.Write(m_DescriptorWriter, newHandle, res.type);
-    }, resource);
+        res.Write(m_DescriptorWriter, newHandle, resource.type);
+    }, resource.resource);
 
 
     return newHandle;
