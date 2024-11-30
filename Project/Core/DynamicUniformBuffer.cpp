@@ -168,7 +168,7 @@ void DynamicBuffer::Update(uint16_t handle, const float* dataPtr, uint8_t size)
 	std::copy_n(dataPtr, size, m_Data.begin() + handle);
 }
 
-void BindlessParameters::Build(VkDevice device VkDescriptorPool descriptorPool)
+void BindlessParameters::Build(VkDevice device)
 {
 	//Create the buffer
 	Core::Buffer::CreateBuffer(m_LastOffset, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, m_Buffer, m_Allocation, true, false);
@@ -195,35 +195,42 @@ void BindlessParameters::Build(VkDevice device VkDescriptorPool descriptorPool)
     createInfo.pBindings = &binding;
     vkCreateDescriptorSetLayout(device, &createInfo, nullptr, &m_Layout);
 
-
-
-		// Get maximum size of a single range
-		uint32_t maxRangeSize = 0;
-		for (auto &range : mRanges)
-		{
-			maxRangeSize = std::max(range.size, maxRangeSize);
-		}
-
-		// Create descriptor
-		VkDescriptorSetAllocateInfo allocateInfo{};
-		allocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		allocateInfo.pNext = nullptr;
-		allocateInfo.descriptorPool = descriptorPool;
-		allocateInfo.pSetLayouts = &mLayout;
-		allocateInfo.descriptorSetCount = 1;
-		vkAllocateDescriptorSets(mDevice, &allocateInfo, &mDescriptorSet);
-
-		VkBufferInfo bufferInfo{};
-		bufferInfo.buffer = mBuffer;
-		bufferInfo.offset = 0;
-		bufferInfo.range = maxRangeSize;
-
-		VkWriteDescriptorSet write{};
-		write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-		write.dstBinding = 0;
-		write.dstSet = m_Descriptor;
-		write.descriptorCount = 1;
-		write.dstArrayElement = 0;
-		write.pBufferInfo = &bufferInfo;
-		vkUpdateDescriptorSets(mDevice, 1, &write, 0, nullptr);
+	// Get maximum size of a single range
+	uint32_t maxRangeSize = 0;
+	for (auto &range : m_Ranges)
+	{
+		maxRangeSize = std::max(range.size, maxRangeSize);
 	}
+
+	m_DescriptorSet = Descriptor::DescriptorManager::Allocate(device, m_Layout);
+
+	//Write the buffer
+	VkDescriptorBufferInfo bufferInfo{};
+	bufferInfo.buffer = m_Buffer;
+	bufferInfo.offset = 0;
+	bufferInfo.range = maxRangeSize;
+
+	VkWriteDescriptorSet write{};
+	write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+	write.dstBinding = 0;
+	write.dstSet = m_DescriptorSet;
+	write.descriptorCount = 1;
+	write.dstArrayElement = 0;
+	write.pBufferInfo = &bufferInfo;
+	vkUpdateDescriptorSets(device, 1, &write, 0, nullptr);
+}
+
+VkDescriptorSet BindlessParameters::GetDescriptorSet()
+{
+	return m_DescriptorSet;
+}
+
+VkDescriptorSetLayout BindlessParameters::GetDescriptorSetLayout()
+{
+	return m_Layout;
+}
+
+uint32_t BindlessParameters::PadSizeToMinAlignment(uint32_t originalSize)
+{
+	return (originalSize + MinimumUniformBufferPadding - 1) & ~(MinimumUniformBufferPadding - 1);
+}

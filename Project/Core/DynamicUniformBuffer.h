@@ -84,9 +84,8 @@ public:
 	BindlessParameters(BindlessParameters&&) = delete;
 	BindlessParameters& operator=(BindlessParameters&&) = delete;
 
-
 	template<class TData>
-	uint32_t AddRange(TData &&data)
+	inline static uint32_t AddRange(TData &&data)
 	{
 		// Copy data to heap and store void pointer -> We don't care about the type about that point.
 		size_t dataSize = sizeof(TData);
@@ -103,27 +102,22 @@ public:
 		return currentOffset;
 	}
 
-	void Build(VkDevice device, VmaAllocator allocator, VkDescriptorPool descriptorPool);
+	static void Build(VkDevice device);
 
+	[[nodiscard]] static VkDescriptorSet GetDescriptorSet();
+	[[nodiscard]] static VkDescriptorSetLayout GetDescriptorSetLayout();
 
-	inline VkDescriptorSet getDescriptorSet() { return mDescriptorSet; }
-
-	inline VkDescriptorSetLayout getDescriptorSetLayout() { return mLayout; }
-
+	//Needs to be set before doing anything else (Check the GPU limits)
 	inline static uint32_t MinimumUniformBufferPadding;
+
 private:
-
-
 	//The PadSizeToMinAlignment returns the size that is a multiple of MinimumUniformBufferPadding.
-	inline static uint32_t PadSizeToMinAlignment(uint32_t originalSize)
-	{
-		return (originalSize + MinimumUniformBufferPadding - 1) & ~(MinimumUniformBufferPadding - 1);
-	}
+	static uint32_t PadSizeToMinAlignment(uint32_t originalSize);
 
-  uint32_t m_LastOffset{};
-  std::vector<Range> m_Ranges;
-  VkDescriptorSetLayout m_Layout;
-  VkDescriptorSet m_DescriptorSet;
-  VmaAllocation m_Allocation;
-  VkBuffer m_Buffer;
+	inline static uint32_t m_LastOffset{};
+	inline static std::vector<Range> m_Ranges;
+	inline static VkDescriptorSetLayout m_Layout;
+	inline static VkDescriptorSet m_DescriptorSet;
+	inline static VmaAllocation m_Allocation;
+	inline static VkBuffer m_Buffer;
 };

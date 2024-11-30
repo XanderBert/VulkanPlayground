@@ -327,10 +327,7 @@ namespace Descriptor
 			};
 
 			//Create a new allocator
-			std::unique_ptr<DescriptorAllocator> allocator = std::make_unique<DescriptorAllocator>();
-			allocator->Init(vulkanContext->device, 1000, frame_sizes);
-
-			m_FrameAllocators.emplace_back(std::move(allocator));
+			m_FrameAllocator.Init(vulkanContext->device, 1000, frame_sizes);
 		}
 
 		GlobalDescriptor::Init(vulkanContext);
@@ -339,22 +336,19 @@ namespace Descriptor
 	void DescriptorManager::Cleanup(VkDevice device)
 	{
 		GlobalDescriptor::Cleanup(device);
-
-		for (const auto& allocator : m_FrameAllocators)
-		{
-			allocator->Cleanup(device);
-		}
+		m_FrameAllocator.Cleanup(device);
 	}
 
 
 
-	VkDescriptorSet DescriptorManager::Allocate(VkDevice device, VkDescriptorSetLayout setLayout, uint8_t frameNumber) {
-        return m_FrameAllocators[frameNumber]->Allocate(device, setLayout);
+	VkDescriptorSet DescriptorManager::Allocate(VkDevice device, VkDescriptorSetLayout setLayout)
+	{
+		return m_FrameAllocator.Allocate(device, setLayout);
     }
 
     void DescriptorManager::ClearPools(VkDevice device)
 	{
-		m_FrameAllocators[0]->ClearPools(device);
+		m_FrameAllocator.ClearPools(device);
 	}
 
 }

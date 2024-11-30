@@ -1,9 +1,7 @@
 #define NO_DEBUG_HEAP = 1
-#define NOMINMAX
 #define GLM_ENABLE_EXPERIMENTAL
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <ranges>
 
 
 #include "Core/Logger.h"

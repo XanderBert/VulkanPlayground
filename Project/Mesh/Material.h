@@ -4,39 +4,19 @@
 #include "Core/DescriptorSet.h"
 #include "Core/GraphicsPipeline.h"
 
-//Create a renderpass class
-
-//This holds information about
-//attachments
-//pipeline to use (Global or Another one)
-//
-
-
-//Some render passes only "render" one material
-//Other ones will go over each mesh to render
-
-//Do i make a pure virtual renderpass?
-
-//Do i create a different one for compute passes?
-
-
-struct RenderPass
-{
-	RenderPass() = default;
-	virtual ~RenderPass() = default;
-
-	RenderPass(const RenderPass&) = delete;
-	RenderPass(RenderPass&&) = delete;
-	RenderPass& operator=(const RenderPass&) = delete;
-	RenderPass& operator=(RenderPass&&) = delete;
-
-	virtual	void Render(VkCommandBuffer commandBuffer) = 0;
-};
-
-
 enum class ShaderType;
 class Shader;
 class VulkanContext;
+
+
+struct PBRData
+{
+	uint32_t albedoTextureIndex;
+	uint32_t normalTextureIndex;
+	uint32_t metalRoughTextureIndex;
+};
+
+
 
 class Material final
 {
@@ -99,6 +79,4 @@ private:
     bool m_IsDepthOnly = false;
 	bool m_IsSSAO = false;
 	bool m_IsComposite = false;
-
-
 };

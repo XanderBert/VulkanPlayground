@@ -1,6 +1,7 @@
 #pragma once
 
 #if defined(_WIN32)
+#define NOMINMAX
 #define VK_USE_PLATFORM_WIN32_KHR
 #define WIN32_LEAN_AND_MEAN
 #elif defined(__linux__)

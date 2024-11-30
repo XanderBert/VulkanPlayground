@@ -34,7 +34,14 @@ void Material::OnImGui()
 
 void Material::Bind(VkCommandBuffer commandBuffer) const
 {
+	//Bind the pipeline
     vkCmdBindPipeline(commandBuffer, static_cast<VkPipelineBindPoint>(m_PipelineType), m_GraphicsPipeline);
+
+	//TODO: I want it to move out of here
+	//Maybe in a struct where the indices are stored?
+	//When i do this this material is locked to a specific amount of indices
+	//Bind the indices for this material
+	vkCmdBindDescriptorSets(commandBuffer,  bindPoint,  pipelineLayout,  1, &bindlessParams.getDescriptorSet(), 1, &rangePBR);
 }
 
 Shader *Material::SetShader(const std::string &shaderPath, ShaderType shaderType)

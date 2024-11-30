@@ -1,7 +1,8 @@
 #pragma once
 
-
+//TODO: There are also some defines in VulkanBase.h merge it together
 #ifdef _WIN32
+	#define NOMINMAX
     #define WIN32_LEAN_AND_MEAN
     #define GLFW_EXPOSE_NATIVE_WIN32
     #include <windows.h>
