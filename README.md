@@ -1,5 +1,8 @@
 # VulkanPlayground
 
+
+<img width="2048" height="1152" alt="image" src="https://github.com/user-attachments/assets/e4d8fb99-4cf8-4d7e-9ef5-8965f508f3f5" />
+
 ![Skybox](gltf.gif)
 
 
